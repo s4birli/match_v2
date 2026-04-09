@@ -8,6 +8,8 @@ const PUBLIC_PATHS = [
   "/forgot-password",
   "/reset-password",
   "/join",
+  "/offline",
+  "/sw.js",
 ];
 
 const PUBLIC_PREFIXES = ["/invite/", "/api/", "/_next/", "/icons/", "/manifest", "/favicon"];
@@ -58,5 +60,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icons|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: [
+    // Exclude SW + manifest + icons + static assets so they bypass auth.
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|icons|.*\\.(?:svg|png|jpg|jpeg|gif|webp|js|css|map)$).*)",
+  ],
 };

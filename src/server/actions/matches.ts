@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { requireMembership, requireRole } from "@/server/auth/session";
+import { audit } from "@/server/audit/log";
+import { notifyMany } from "@/server/notifications/notify";
 
 const RATING_EDIT_WINDOW_MS = 60 * 1000;
 
@@ -148,6 +150,20 @@ export async function castMotmVoteAction(formData: FormData) {
   const { membership } = await requireMembership();
   const admin = createSupabaseServiceClient();
 
+  // Refuse late first-time submissions: the rating window is the 1 minute
+  // after the match closes. After that, votes are LOCKED.
+  const { data: matchTime } = await admin
+    .from("matches")
+    .select("score_entered_at")
+    .eq("id", parsed.data.matchId)
+    .maybeSingle();
+  if (matchTime?.score_entered_at) {
+    const closedAtMs = new Date(matchTime.score_entered_at).getTime();
+    if (Date.now() - closedAtMs > RATING_EDIT_WINDOW_MS) {
+      return { error: "Voting window has closed." };
+    }
+  }
+
   // Voter must have played
   const { data: voter } = await admin
     .from("match_participants")
@@ -221,6 +237,20 @@ export async function submitTeammateRatingsAction(formData: FormData) {
 
   const { membership } = await requireMembership();
   const admin = createSupabaseServiceClient();
+
+  // Lock teammate ratings the same way as MOTM votes — once 1 minute past
+  // match close, the window is closed for everyone.
+  const { data: matchTime } = await admin
+    .from("matches")
+    .select("score_entered_at")
+    .eq("id", matchId)
+    .maybeSingle();
+  if (matchTime?.score_entered_at) {
+    const closedAtMs = new Date(matchTime.score_entered_at).getTime();
+    if (Date.now() - closedAtMs > RATING_EDIT_WINDOW_MS) {
+      return { error: "Rating window has closed." };
+    }
+  }
 
   const { data: voter } = await admin
     .from("match_participants")
@@ -410,6 +440,21 @@ export async function createMatchAction(formData: FormData) {
       );
     }
   }
+
+  await audit({
+    tenantId: membership.tenant_id,
+    actorMembershipId: membership.id,
+    entityType: "match",
+    entityId: match.id,
+    actionType: "create_match",
+    after: {
+      title: match.title,
+      starts_at: match.starts_at,
+      format: parsed.data.format,
+      players_per_team: playersPerTeam,
+    },
+  });
+
   revalidatePath("/matches");
   revalidatePath("/admin/matches");
   return { ok: true, matchId: match.id };
@@ -555,18 +600,38 @@ export async function closeMatchAction(formData: FormData) {
     })
     .eq("id", parsed.data.matchId);
 
-  // Notifications for played members
+  // Notifications for played members (in-app + best-effort web push).
   if (playedMemberIds.length > 0) {
-    await admin.from("notifications").insert(
+    await notifyMany(
       playedMemberIds.map((mid) => ({
-        tenant_id: match.tenant_id,
-        membership_id: mid,
-        notification_type: "post_match_rating_open",
-        title: "Rate your teammates",
-        body: "The match is over — rate your teammates and pick the player of the match.",
+        tenantId: match.tenant_id,
+        membershipId: mid,
       })),
+      {
+        notificationType: "post_match_rating_open",
+        title: "Rate your teammates",
+        body: "The match is over — rate your teammates and pick the player of the match. You have 1 minute.",
+        payload: { matchId: parsed.data.matchId, kind: "post_match_rating_open" },
+      },
     );
   }
+
+  // Audit the close + score + fee application.
+  await audit({
+    tenantId: match.tenant_id,
+    actorAccountId: null,
+    actorMembershipId: membership.id,
+    entityType: "match",
+    entityId: parsed.data.matchId,
+    actionType: "close_match",
+    after: {
+      red_score: parsed.data.redScore,
+      blue_score: parsed.data.blueScore,
+      is_draw: isDraw,
+      played_count: playedMemberIds.length,
+      fee_charged: Number(match.match_fee) * playedMemberIds.length,
+    },
+  });
 
   revalidatePath(`/matches/${parsed.data.matchId}`);
   revalidatePath(`/admin/matches/${parsed.data.matchId}`);

@@ -6,6 +6,7 @@ import {
   Star,
   TrendingUp,
   CheckCheck,
+  Sparkles,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
@@ -14,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireRole } from "@/server/auth/session";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getLeaderboard } from "@/server/db/queries";
+import { getLeaderboard, getPairChemistry } from "@/server/db/queries";
 import { formatCurrency, initials } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 
@@ -29,6 +30,7 @@ export default async function AdminStatsPage() {
   const tenantId = membership.tenant_id;
   const isFullAdmin = membership.role === "admin" || membership.role === "owner";
 
+  const pairChemistry = await getPairChemistry(tenantId, 8);
   const [
     leaderboard,
     { count: totalMatches },
@@ -378,6 +380,51 @@ export default async function AdminStatsPage() {
           </ul>
         </Card>
       </section>
+
+      {/* Pair chemistry — duos that play (and win) together the most */}
+      <Card>
+        <header className="mb-3 flex items-center gap-2">
+          <Sparkles size={16} className="text-violet-300" />
+          <h2 className="text-base font-semibold">Strong pairs</h2>
+        </header>
+        {pairChemistry.length === 0 ? (
+          <EmptyState
+            title="Not enough match data yet"
+            description="Pairs are tracked once two players play together at least twice."
+          />
+        ) : (
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {pairChemistry.map((p) => (
+              <li
+                key={`${p.a}::${p.b}`}
+                data-testid={`pair-${p.a}-${p.b}`}
+                className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+              >
+                <div className="flex items-center -space-x-2">
+                  <Avatar className="h-9 w-9 ring-2 ring-slate-950">
+                    <AvatarFallback>{initials(p.aName)}</AvatarFallback>
+                  </Avatar>
+                  <Avatar className="h-9 w-9 ring-2 ring-slate-950">
+                    <AvatarFallback>{initials(p.bName)}</AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">
+                    {p.aName} <span className="text-muted-foreground">+</span>{" "}
+                    {p.bName}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {p.matches} matches · {p.wins}W / {p.draws}D / {p.losses}L
+                  </p>
+                </div>
+                <span className="text-sm font-bold text-emerald-300">
+                  {p.win_rate}%
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
       {/* Top rankings */}
       <section className="grid gap-4 lg:grid-cols-3">

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { requireRole } from "@/server/auth/session";
+import { audit } from "@/server/audit/log";
+import { notify, notifyMany } from "@/server/notifications/notify";
 
 // ---------- Tenant defaults (used by /admin/settings) ----------
 const tenantDefaultsSchema = z.object({
@@ -210,7 +212,7 @@ export async function createGuestMemberAction(formData: FormData) {
 
 // ---------- Archive / restore ----------
 export async function archiveMembershipAction(formData: FormData) {
-  const { membership } = await requireRole(["admin", "owner"]);
+  const { session, membership } = await requireRole(["admin", "owner"]);
   const id = String(formData.get("membershipId") ?? "");
   const reason = String(formData.get("reason") ?? "Removed by admin");
   const excludeFromStats = formData.get("excludeFromStats") === "on";
@@ -218,7 +220,7 @@ export async function archiveMembershipAction(formData: FormData) {
   const admin = createSupabaseServiceClient();
   const { data: m } = await admin
     .from("memberships")
-    .select("tenant_id")
+    .select("tenant_id, role")
     .eq("id", id)
     .maybeSingle();
   if (!m || m.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
@@ -231,12 +233,21 @@ export async function archiveMembershipAction(formData: FormData) {
       stats_visibility: excludeFromStats ? "excluded" : "included",
     })
     .eq("id", id);
+  await audit({
+    tenantId: membership.tenant_id,
+    actorAccountId: session.account.id,
+    actorMembershipId: membership.id,
+    entityType: "membership",
+    entityId: id,
+    actionType: "archive_membership",
+    after: { reason, excludeFromStats },
+  });
   revalidatePath("/admin/members");
   return { ok: true };
 }
 
 export async function restoreMembershipAction(formData: FormData) {
-  const { membership } = await requireRole(["admin", "owner"]);
+  const { session, membership } = await requireRole(["admin", "owner"]);
   const id = String(formData.get("membershipId") ?? "");
   const includeInStats = formData.get("includeInStats") === "on";
   if (!id) return { error: "Missing membership." };
@@ -255,6 +266,15 @@ export async function restoreMembershipAction(formData: FormData) {
       stats_visibility: includeInStats ? "included" : "excluded",
     })
     .eq("id", id);
+  await audit({
+    tenantId: membership.tenant_id,
+    actorAccountId: session.account.id,
+    actorMembershipId: membership.id,
+    entityType: "membership",
+    entityId: id,
+    actionType: "restore_membership",
+    after: { includeInStats },
+  });
   revalidatePath("/admin/members");
   return { ok: true };
 }
@@ -267,7 +287,7 @@ const paymentSchema = z.object({
 });
 
 export async function recordPaymentAction(formData: FormData) {
-  const { membership } = await requireRole(["admin", "owner"]);
+  const { session, membership } = await requireRole(["admin", "owner"]);
   const parsed = paymentSchema.safeParse({
     membershipId: formData.get("membershipId"),
     amount: formData.get("amount"),
@@ -288,27 +308,275 @@ export async function recordPaymentAction(formData: FormData) {
     .eq("id", membership.tenant_id)
     .single();
 
-  await admin.from("ledger_transactions").insert({
-    tenant_id: membership.tenant_id,
-    membership_id: parsed.data.membershipId,
-    transaction_type: "payment",
-    direction: "credit",
-    amount: parsed.data.amount.toString(),
-    currency_code: tenant?.currency_code ?? "GBP",
-    description: parsed.data.description || "Payment",
-    recorded_by_membership_id: membership.id,
+  const { data: tx } = await admin
+    .from("ledger_transactions")
+    .insert({
+      tenant_id: membership.tenant_id,
+      membership_id: parsed.data.membershipId,
+      transaction_type: "payment",
+      direction: "credit",
+      amount: parsed.data.amount.toString(),
+      currency_code: tenant?.currency_code ?? "GBP",
+      description: parsed.data.description || "Payment",
+      recorded_by_membership_id: membership.id,
+    })
+    .select("id")
+    .single();
+
+  await notify({
+    tenantId: membership.tenant_id,
+    membershipId: parsed.data.membershipId,
+    notificationType: "wallet_updated",
+    title: "Payment received",
+    body: `Your wallet was credited ${parsed.data.amount} ${tenant?.currency_code ?? ""}.`,
+    payload: { amount: parsed.data.amount, kind: "payment" },
   });
 
-  await admin.from("notifications").insert({
-    tenant_id: membership.tenant_id,
-    membership_id: parsed.data.membershipId,
-    notification_type: "wallet_updated",
-    title: "Payment received",
-    body: "Your wallet was just updated.",
+  await audit({
+    tenantId: membership.tenant_id,
+    actorAccountId: session.account.id,
+    actorMembershipId: membership.id,
+    entityType: "ledger_transaction",
+    entityId: tx?.id ?? parsed.data.membershipId,
+    actionType: "record_payment",
+    after: {
+      target_membership_id: parsed.data.membershipId,
+      amount: parsed.data.amount,
+      currency: tenant?.currency_code,
+      description: parsed.data.description,
+    },
   });
 
   revalidatePath("/admin/payments");
   revalidatePath("/wallet");
+  return { ok: true };
+}
+
+// ---------- Fund collections ----------
+//
+// Equipment money / referee money / pizza pool — admin defines a fund and
+// picks WHICH members to charge. Each pick becomes a `ledger_transactions`
+// debit row with reason_code='fund' and metadata.fund_id pointing back to
+// the campaign. The picked members go into negative balance until they pay.
+const createFundSchema = z.object({
+  name: z.string().min(2).max(120),
+  description: z.string().optional(),
+  amountPerMember: z.coerce.number().positive(),
+  membershipIds: z.array(z.string().uuid()).min(1),
+});
+
+export async function createFundCollectionAction(formData: FormData) {
+  const { session, membership } = await requireRole(["admin", "owner"]);
+  const ids = formData.getAll("membershipIds").map(String);
+  const parsed = createFundSchema.safeParse({
+    name: formData.get("name"),
+    description: formData.get("description") || undefined,
+    amountPerMember: formData.get("amountPerMember"),
+    membershipIds: ids,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+  const admin = createSupabaseServiceClient();
+  const { data: tenant } = await admin
+    .from("tenants")
+    .select("currency_code")
+    .eq("id", membership.tenant_id)
+    .single();
+
+  // Verify every chosen membership belongs to this tenant.
+  const { data: validMemberships } = await admin
+    .from("memberships")
+    .select("id, tenant_id")
+    .in("id", parsed.data.membershipIds)
+    .eq("tenant_id", membership.tenant_id)
+    .neq("status", "archived");
+  const validIds = (validMemberships ?? []).map((m: { id: string }) => m.id);
+  if (validIds.length === 0) return { error: "No valid members selected." };
+
+  const { data: fund, error: fundErr } = await admin
+    .from("tenant_fund_collections")
+    .insert({
+      tenant_id: membership.tenant_id,
+      name: parsed.data.name,
+      description: parsed.data.description ?? null,
+      amount_per_member: parsed.data.amountPerMember.toString(),
+      currency_code: tenant?.currency_code ?? "GBP",
+      created_by_membership_id: membership.id,
+    })
+    .select("id")
+    .single();
+  if (fundErr || !fund) return { error: fundErr?.message ?? "Failed to create fund." };
+
+  const now = new Date().toISOString();
+  const ledgerRows = validIds.map((mid) => ({
+    tenant_id: membership.tenant_id,
+    membership_id: mid,
+    transaction_type: "adjustment" as const,
+    direction: "debit" as const,
+    amount: parsed.data.amountPerMember.toString(),
+    currency_code: tenant?.currency_code ?? "GBP",
+    description: `Fund: ${parsed.data.name}`,
+    reason_code: "fund",
+    recorded_by_membership_id: membership.id,
+    recorded_at: now,
+    metadata: { fund_id: fund.id, fund_name: parsed.data.name },
+  }));
+  const { error: ledgerErr } = await admin
+    .from("ledger_transactions")
+    .insert(ledgerRows);
+  if (ledgerErr) return { error: ledgerErr.message };
+
+  await notifyMany(
+    validIds.map((mid) => ({ tenantId: membership.tenant_id, membershipId: mid })),
+    {
+      notificationType: "wallet_updated",
+      title: `New charge: ${parsed.data.name}`,
+      body: `Admin added a ${parsed.data.amountPerMember} ${tenant?.currency_code ?? ""} debit to your wallet.`,
+      payload: { fund_id: fund.id, kind: "fund_charge" },
+    },
+  );
+
+  await audit({
+    tenantId: membership.tenant_id,
+    actorAccountId: session.account.id,
+    actorMembershipId: membership.id,
+    entityType: "tenant_fund_collection",
+    entityId: fund.id,
+    actionType: "create_fund_collection",
+    after: {
+      name: parsed.data.name,
+      amount_per_member: parsed.data.amountPerMember,
+      member_count: validIds.length,
+    },
+  });
+
+  revalidatePath("/admin/payments");
+  revalidatePath("/wallet");
+  return { ok: true, fundId: fund.id, charged: validIds.length };
+}
+
+// ---------- Payment reminder (overdue notify) ----------
+const reminderSchema = z.object({ membershipId: z.string().uuid() });
+
+export async function sendPaymentReminderAction(formData: FormData) {
+  const { session, membership } = await requireRole(["admin", "owner"]);
+  const parsed = reminderSchema.safeParse({
+    membershipId: formData.get("membershipId"),
+  });
+  if (!parsed.success) return { error: "Invalid input" };
+  const admin = createSupabaseServiceClient();
+  const { data: target } = await admin
+    .from("memberships")
+    .select("tenant_id")
+    .eq("id", parsed.data.membershipId)
+    .maybeSingle();
+  if (!target || target.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
+
+  // Compute current balance to include in the reminder body.
+  const { data: txs } = await admin
+    .from("ledger_transactions")
+    .select("amount, direction, currency_code")
+    .eq("tenant_id", membership.tenant_id)
+    .eq("membership_id", parsed.data.membershipId);
+  let balance = 0;
+  let currency = "GBP";
+  for (const t of txs ?? []) {
+    const amt = Number(t.amount);
+    balance += t.direction === "credit" ? amt : -amt;
+    currency = t.currency_code ?? currency;
+  }
+  if (balance >= 0) return { error: "This member is not in debt." };
+
+  await notify({
+    tenantId: membership.tenant_id,
+    membershipId: parsed.data.membershipId,
+    notificationType: "wallet_updated",
+    title: "Payment reminder",
+    body: `You owe ${Math.abs(balance).toFixed(2)} ${currency}. Please settle with the admin.`,
+    payload: { kind: "payment_reminder", balance },
+  });
+
+  await audit({
+    tenantId: membership.tenant_id,
+    actorAccountId: session.account.id,
+    actorMembershipId: membership.id,
+    entityType: "membership",
+    entityId: parsed.data.membershipId,
+    actionType: "send_payment_reminder",
+    metadata: { balance, currency },
+  });
+
+  revalidatePath("/admin/payments");
+  return { ok: true };
+}
+
+// ---------- Existing-user picker (admin adds an already-registered player) ----------
+const addExistingSchema = z.object({ accountId: z.string().uuid() });
+
+export async function addExistingPlayerToTenantAction(formData: FormData) {
+  const { session, membership } = await requireRole(["admin", "owner"]);
+  const parsed = addExistingSchema.safeParse({
+    accountId: formData.get("accountId"),
+  });
+  if (!parsed.success) return { error: "Invalid input" };
+  const admin = createSupabaseServiceClient();
+  const { data: account } = await admin
+    .from("accounts")
+    .select("id, email, is_system_owner")
+    .eq("id", parsed.data.accountId)
+    .maybeSingle();
+  if (!account || account.is_system_owner) {
+    return { error: "Account not eligible." };
+  }
+  const { data: person } = await admin
+    .from("persons")
+    .select("id")
+    .eq("primary_account_id", account.id)
+    .maybeSingle();
+  if (!person) return { error: "Person not found." };
+
+  // Refuse duplicate membership.
+  const { data: existing } = await admin
+    .from("memberships")
+    .select("id, status")
+    .eq("tenant_id", membership.tenant_id)
+    .eq("person_id", person.id)
+    .maybeSingle();
+  if (existing) {
+    if (existing.status === "archived") {
+      // Restore in place.
+      await admin
+        .from("memberships")
+        .update({ status: "active", restored_at: new Date().toISOString() })
+        .eq("id", existing.id);
+    } else {
+      return { error: "Already a member of this tenant." };
+    }
+  } else {
+    await admin.from("memberships").insert({
+      tenant_id: membership.tenant_id,
+      person_id: person.id,
+      role: "user",
+      status: "active",
+      stats_visibility: "included",
+      joined_at: new Date().toISOString(),
+      is_guest_membership: false,
+      created_by_membership_id: membership.id,
+    });
+  }
+
+  await audit({
+    tenantId: membership.tenant_id,
+    actorAccountId: session.account.id,
+    actorMembershipId: membership.id,
+    entityType: "membership",
+    entityId: person.id,
+    actionType: "add_existing_player",
+    metadata: { account_email: account.email },
+  });
+
+  revalidatePath("/admin/members");
   return { ok: true };
 }
 

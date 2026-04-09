@@ -7,6 +7,7 @@ import { initials } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { LanguageToggle } from "@/components/layout/language-toggle";
 import { ProfileForm } from "./profile-form";
+import { PushEnableButton } from "./push-enable";
 
 export default async function ProfilePage() {
   const { session, membership } = await requireMembership();
@@ -41,6 +42,15 @@ export default async function ProfilePage() {
           Saved on your account — applies on every device next time you sign in.
         </p>
         <LanguageToggle current={locale} />
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 text-base font-semibold">Notifications</h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Enable push so we can ping your phone 1 hour before kickoff and
+          when ratings open after a match.
+        </p>
+        <PushEnableButton />
       </Card>
 
       <ProfileForm

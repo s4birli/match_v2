@@ -5,9 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { requireRole } from "@/server/auth/session";
-import { listArchivedMembers, listTenantMembers } from "@/server/db/queries";
+import {
+  listAccountsNotInTenant,
+  listArchivedMembers,
+  listTenantMembers,
+} from "@/server/db/queries";
 import { initials } from "@/lib/utils";
 import { CreateGuestForm } from "./create-guest-form";
+import { AddExistingPlayerForm } from "./add-existing-form";
 import {
   ArchiveMemberButton,
   ConvertGuestButton,
@@ -16,9 +21,10 @@ import {
 
 export default async function AdminMembersPage() {
   const { session, membership } = await requireRole(["admin", "owner"]);
-  const [members, archived] = await Promise.all([
+  const [members, archived, candidateAccounts] = await Promise.all([
     listTenantMembers(membership.tenant_id),
     listArchivedMembers(membership.tenant_id),
+    listAccountsNotInTenant(membership.tenant_id),
   ]);
 
   return (
@@ -27,6 +33,14 @@ export default async function AdminMembersPage() {
         <h1 className="text-2xl font-bold">Members</h1>
         <p className="text-sm text-muted-foreground">{membership.tenant.name}</p>
       </header>
+
+      <Card>
+        <h2 className="mb-3 text-base font-semibold">Add existing player</h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Pull a registered account from another group into this group.
+        </p>
+        <AddExistingPlayerForm accounts={candidateAccounts} />
+      </Card>
 
       <Card>
         <h2 className="mb-3 text-base font-semibold">Add guest player</h2>
