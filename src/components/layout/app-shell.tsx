@@ -1,26 +1,12 @@
 import Link from "next/link";
-import {
-  Home,
-  CalendarDays,
-  Wallet,
-  Trophy,
-  UserCircle2,
-  Bell,
-  Shield,
-  Crown,
-  LogOut,
-  Building2,
-  Layers3,
-  Receipt,
-  Ticket,
-  MapPin,
-  Users2,
-} from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { initials } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { GroupSwitcher } from "@/components/layout/group-switcher";
 import { LanguageToggle } from "@/components/layout/language-toggle";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import { NAV_ICON_MAP, type NavIconName } from "@/components/layout/nav-icons";
 import { logoutAction } from "@/server/actions/auth";
 import type { SessionContext } from "@/server/auth/session";
 import type { Role } from "@/lib/supabase/types";
@@ -28,7 +14,7 @@ import type { Role } from "@/lib/supabase/types";
 type NavItem = {
   href: string;
   label: string;
-  icon: React.ComponentType<{ size?: number }>;
+  iconName: NavIconName;
 };
 
 function buildNavForRole(role: Role | undefined, t: { nav: Record<string, string> }): {
@@ -39,28 +25,28 @@ function buildNavForRole(role: Role | undefined, t: { nav: Record<string, string
   if (role === "owner") {
     return {
       primary: [
-        { href: "/owner/dashboard", label: t.nav.dashboard, icon: Crown },
-        { href: "/owner/tenants", label: t.nav.tenants, icon: Building2 },
-        { href: "/owner/ledger", label: t.nav.ledger, icon: Wallet },
-        { href: "/owner/archived", label: t.nav.archived, icon: Layers3 },
+        { href: "/owner/dashboard", label: t.nav.dashboard, iconName: "crown" },
+        { href: "/owner/tenants", label: t.nav.tenants, iconName: "building" },
+        { href: "/owner/ledger", label: t.nav.ledger, iconName: "wallet" },
+        { href: "/owner/archived", label: t.nav.archived, iconName: "layers" },
       ],
       secondary: null,
     };
   }
 
-  // GROUP ADMIN: single flat list — all items reachable on mobile via the
-  // horizontally-scrollable bottom nav, no hidden "secondary" section.
+  // GROUP ADMIN: single flat list — every item rendered on mobile via the
+  // bottom nav (auto-cols-fr keeps them equally sized).
   if (role === "admin") {
     return {
       primary: [
-        { href: "/admin/dashboard", label: t.nav.dashboard, icon: Home },
-        { href: "/admin/matches", label: t.nav.matches, icon: CalendarDays },
-        { href: "/admin/members", label: t.nav.members, icon: Users2 },
-        { href: "/admin/venues", label: t.nav.venues, icon: MapPin },
-        { href: "/admin/payments", label: t.nav.payments, icon: Receipt },
-        { href: "/admin/stats", label: t.nav.stats, icon: Trophy },
-        { href: "/admin/invites", label: t.nav.invites, icon: Ticket },
-        { href: "/profile", label: t.nav.profile, icon: UserCircle2 },
+        { href: "/admin/dashboard", label: t.nav.dashboard, iconName: "home" },
+        { href: "/admin/matches", label: t.nav.matches, iconName: "calendar" },
+        { href: "/admin/members", label: t.nav.members, iconName: "users" },
+        { href: "/admin/venues", label: t.nav.venues, iconName: "pin" },
+        { href: "/admin/payments", label: t.nav.payments, iconName: "receipt" },
+        { href: "/admin/stats", label: t.nav.stats, iconName: "trophy" },
+        { href: "/admin/invites", label: t.nav.invites, iconName: "ticket" },
+        { href: "/profile", label: t.nav.profile, iconName: "profile" },
       ],
       secondary: null,
     };
@@ -70,10 +56,10 @@ function buildNavForRole(role: Role | undefined, t: { nav: Record<string, string
   if (role === "assistant_admin") {
     return {
       primary: [
-        { href: "/admin/dashboard", label: t.nav.dashboard, icon: Home },
-        { href: "/admin/matches", label: t.nav.matches, icon: CalendarDays },
-        { href: "/admin/stats", label: t.nav.stats, icon: Trophy },
-        { href: "/profile", label: t.nav.profile, icon: UserCircle2 },
+        { href: "/admin/dashboard", label: t.nav.dashboard, iconName: "home" },
+        { href: "/admin/matches", label: t.nav.matches, iconName: "calendar" },
+        { href: "/admin/stats", label: t.nav.stats, iconName: "trophy" },
+        { href: "/profile", label: t.nav.profile, iconName: "profile" },
       ],
       secondary: null,
     };
@@ -83,10 +69,10 @@ function buildNavForRole(role: Role | undefined, t: { nav: Record<string, string
   if (role === "guest") {
     return {
       primary: [
-        { href: "/dashboard", label: t.nav.dashboard, icon: Home },
-        { href: "/matches", label: t.nav.matches, icon: CalendarDays },
-        { href: "/wallet", label: t.nav.wallet, icon: Wallet },
-        { href: "/profile", label: t.nav.profile, icon: UserCircle2 },
+        { href: "/dashboard", label: t.nav.dashboard, iconName: "home" },
+        { href: "/matches", label: t.nav.matches, iconName: "calendar" },
+        { href: "/wallet", label: t.nav.wallet, iconName: "wallet" },
+        { href: "/profile", label: t.nav.profile, iconName: "profile" },
       ],
       secondary: null,
     };
@@ -95,11 +81,11 @@ function buildNavForRole(role: Role | undefined, t: { nav: Record<string, string
   // USER (default).
   return {
     primary: [
-      { href: "/dashboard", label: t.nav.dashboard, icon: Home },
-      { href: "/matches", label: t.nav.matches, icon: CalendarDays },
-      { href: "/wallet", label: t.nav.wallet, icon: Wallet },
-      { href: "/stats", label: t.nav.stats, icon: Trophy },
-      { href: "/profile", label: t.nav.profile, icon: UserCircle2 },
+      { href: "/dashboard", label: t.nav.dashboard, iconName: "home" },
+      { href: "/matches", label: t.nav.matches, iconName: "calendar" },
+      { href: "/wallet", label: t.nav.wallet, iconName: "wallet" },
+      { href: "/stats", label: t.nav.stats, iconName: "trophy" },
+      { href: "/profile", label: t.nav.profile, iconName: "profile" },
     ],
     secondary: null,
   };
@@ -135,7 +121,7 @@ export async function AppShell({
           </Link>
           <div className="mt-5 flex flex-col gap-1">
             {nav.primary.map((item) => {
-              const Icon = item.icon;
+              const Icon = NAV_ICON_MAP[item.iconName];
               const active = activePath?.startsWith(item.href);
               return (
                 <Link
@@ -159,15 +145,24 @@ export async function AppShell({
             <>
               <div className="mt-6 section-title">{nav.secondary.title}</div>
               <div className="flex flex-col gap-1">
-                {nav.secondary.items.map((item) => (
-                  <SidebarLink
-                    key={item.href}
-                    href={item.href}
-                    label={item.label}
-                    icon={item.icon}
-                    active={activePath?.startsWith(item.href)}
-                  />
-                ))}
+                {nav.secondary.items.map((item) => {
+                  const Icon = NAV_ICON_MAP[item.iconName];
+                  const active = activePath?.startsWith(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                        active
+                          ? "bg-white/[0.08] text-foreground"
+                          : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                      }`}
+                    >
+                      <Icon size={16} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </div>
             </>
           )}
@@ -217,61 +212,11 @@ export async function AppShell({
         <main className="animate-fade-in space-y-5">{children}</main>
       </div>
 
-      {/* Mobile bottom nav — horizontally scrollable so admins see ALL items.
-          When ≤5 items the row is centered evenly; when more, it scrolls. */}
-      <nav className="glass-strong fixed inset-x-3 bottom-3 z-50 lg:hidden">
-        <div
-          className={`no-scrollbar flex items-center gap-1 overflow-x-auto px-2 py-2 ${
-            nav.primary.length <= 5 ? "justify-around" : "justify-start"
-          }`}
-        >
-          {nav.primary.map((item) => {
-            const Icon = item.icon;
-            const active = activePath?.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                data-testid={`bottom-nav-${item.label.toLowerCase()}`}
-                className={`flex shrink-0 flex-col items-center gap-0.5 rounded-2xl px-3 py-2 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
-                  nav.primary.length <= 5 ? "flex-1" : "min-w-[64px]"
-                } ${
-                  active ? "bg-white/[0.1] text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                <Icon size={18} />
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Mobile bottom nav — first 4 items + a "More" sheet for the rest. */}
+      <MobileBottomNav items={nav.primary} activePath={activePath} />
+
     </div>
   );
 }
 
-function SidebarLink({
-  href,
-  label,
-  icon: Icon,
-  active,
-}: {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ size?: number }>;
-  active?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
-        active
-          ? "bg-white/[0.08] text-foreground"
-          : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-      }`}
-    >
-      <Icon size={16} />
-      {label}
-    </Link>
-  );
-}
+// (SidebarLink removed — desktop sidebar now renders inline against NAV_ICON_MAP.)
