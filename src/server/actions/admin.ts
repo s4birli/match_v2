@@ -5,6 +5,32 @@ import { z } from "zod";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { requireRole } from "@/server/auth/session";
 
+// ---------- Tenant defaults (used by /admin/settings) ----------
+const tenantDefaultsSchema = z.object({
+  tenantId: z.string().uuid(),
+  defaultMatchFee: z.coerce.number().min(0),
+});
+
+export async function updateTenantDefaultsAction(formData: FormData) {
+  const { membership } = await requireRole(["admin", "owner"]);
+  const parsed = tenantDefaultsSchema.safeParse({
+    tenantId: formData.get("tenantId"),
+    defaultMatchFee: formData.get("defaultMatchFee"),
+  });
+  if (!parsed.success) return { error: "Invalid input." };
+  if (parsed.data.tenantId !== membership.tenant_id) return { error: "Forbidden" };
+  const admin = createSupabaseServiceClient();
+  const { error } = await admin
+    .from("tenants")
+    .update({ default_match_fee: parsed.data.defaultMatchFee.toString() })
+    .eq("id", membership.tenant_id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin/matches/new");
+  revalidatePath("/admin/dashboard");
+  return { ok: true };
+}
+
 // ---------- Venues ----------
 const venueSchema = z.object({
   name: z.string().min(2).max(120),

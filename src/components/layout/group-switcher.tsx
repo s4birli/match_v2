@@ -37,6 +37,28 @@ export function GroupSwitcher({ session }: { session: SessionContext }) {
     );
   }
 
+  // Single-group user: render a static badge — no dropdown to switch into.
+  if (session.memberships.length <= 1) {
+    return (
+      <div
+        data-testid="group-static"
+        className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2"
+      >
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-violet-600 text-base font-black text-emerald-950">
+          {active.tenant.name.slice(0, 1).toUpperCase()}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold leading-tight">
+            {active.tenant.name}
+          </p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {active.role.replace("_", " ")}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>

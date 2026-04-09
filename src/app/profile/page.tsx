@@ -1,15 +1,16 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { requireNonOwner } from "@/server/auth/session";
+import { requireMembership } from "@/server/auth/session";
 import { listPositionPreferences } from "@/server/db/queries";
 import { initials } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
+import { LanguageToggle } from "@/components/layout/language-toggle";
 import { ProfileForm } from "./profile-form";
 
 export default async function ProfilePage() {
-  const { session, membership } = await requireNonOwner();
-  const { t } = await getServerDictionary();
+  const { session, membership } = await requireMembership();
+  const { t, locale } = await getServerDictionary();
   const positions = await listPositionPreferences(membership.id);
   const positionCodes = positions.map((p) => p.position_code);
 
@@ -32,6 +33,14 @@ export default async function ProfilePage() {
             <p className="text-xs text-muted-foreground">{membership.role}</p>
           </div>
         </div>
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 text-base font-semibold">Language</h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Saved on your account — applies on every device next time you sign in.
+        </p>
+        <LanguageToggle current={locale} />
       </Card>
 
       <ProfileForm

@@ -8,17 +8,11 @@ test.describe("Match lifecycle (admin)", () => {
     test.setTimeout(60_000);
     await login(page, "admin.demo@example.com", "Test1234!");
 
-    // Go to create match page
+    // Go to create match page — defaults take care of venue + tomorrow 18:00 + 6v6.
     await page.goto("/admin/matches/new", { waitUntil: "domcontentloaded" });
-    await page.getByTestId("match-title").waitFor({ state: "visible" });
+    await page.getByTestId("match-venue").waitFor({ state: "visible" });
 
-    // Fill the form
-    await page.getByTestId("match-title").fill("E2E Test Match");
-    await page.getByTestId("match-format").fill("6v6");
-    await page.getByTestId("match-players").fill("6");
-    await page.getByTestId("match-fee").fill("5");
-
-    // Submit
+    // Submit straight away with all defaults.
     await page.getByTestId("match-submit").click();
 
     // Wait for navigation to /admin/matches/{id}
@@ -38,7 +32,6 @@ test.describe("Match lifecycle (admin)", () => {
       const target = page.locator('[data-testid^="add-participant-"]').first();
       const targetId = await target.getAttribute("data-testid");
       await target.click();
-      // Wait until that specific testid disappears from the list
       await expect(page.locator(`[data-testid="${targetId}"]`)).toHaveCount(0, {
         timeout: 10_000,
       });

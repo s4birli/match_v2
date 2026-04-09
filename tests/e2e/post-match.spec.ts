@@ -18,13 +18,12 @@ test.describe("Post-match (admin closes a match)", () => {
   test("creates → assigns → closes", async ({ page }) => {
     await login(page, "admin.demo@example.com");
 
-    // 1. create match
+    // 1. create match — defaults take care of everything (venue + tomorrow 18:00 + 6v6)
     await page.goto("/admin/matches/new");
     await page.waitForLoadState("domcontentloaded");
-    await page.getByTestId("match-title").fill(`Smoke ${Date.now()}`);
-    await page.getByTestId("match-format").fill("5v5");
-    await page.getByTestId("match-players").fill("5");
-    await page.getByTestId("match-fee").fill("3");
+    await page.getByTestId("match-venue").waitFor({ state: "visible" });
+    // Pick the 5v5 radio so we don't collide with the lifecycle test's 6v6 default.
+    await page.getByTestId("match-format-5v5").click({ force: true });
     await page.getByTestId("match-submit").click();
 
     // Should land on /admin/matches/<id>

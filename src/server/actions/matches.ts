@@ -254,47 +254,77 @@ export async function submitTeammateRatingsAction(formData: FormData) {
 }
 
 // ---------- Admin: create match ----------
+//
+// Simplified flow per product feedback:
+//   - Admin only enters startsAt (1 hour fixed duration; ends_at = +1h server-side)
+//   - Format is a dropdown (5v5..8v8); players_per_team derived from the prefix
+//   - Title is auto-generated as "{Venue} - {YYYYMMDD} - {HHmm}"
+//   - Match fee comes from tenant.default_match_fee (admin sets it once in settings)
+const FORMAT_OPTIONS = ["5v5", "6v6", "7v7", "8v8"] as const;
 const createMatchSchema = z.object({
-  venueId: z.string().uuid().nullable().optional(),
-  title: z.string().optional(),
-  startsAt: z.string(),
-  endsAt: z.string(),
-  teamFormatLabel: z.string().min(2),
-  playersPerTeam: z.coerce.number().int().min(2).max(11),
-  matchFee: z.coerce.number().min(0),
+  venueId: z.string().uuid(),
+  startsAt: z.string().min(10),
+  format: z.enum(FORMAT_OPTIONS),
 });
+
+function pad2(n: number) {
+  return n.toString().padStart(2, "0");
+}
+
+function autoMatchTitle(venueName: string, startsAt: Date) {
+  const ymd = `${startsAt.getFullYear()}${pad2(startsAt.getMonth() + 1)}${pad2(startsAt.getDate())}`;
+  const hm = `${pad2(startsAt.getHours())}${pad2(startsAt.getMinutes())}`;
+  return `${venueName} - ${ymd} - ${hm}`;
+}
 
 export async function createMatchAction(formData: FormData) {
   const { membership } = await requireRole(["admin", "owner", "assistant_admin"]);
   const parsed = createMatchSchema.safeParse({
-    venueId: formData.get("venueId") || null,
-    title: formData.get("title") || undefined,
+    venueId: formData.get("venueId"),
     startsAt: formData.get("startsAt"),
-    endsAt: formData.get("endsAt"),
-    teamFormatLabel: formData.get("teamFormatLabel"),
-    playersPerTeam: formData.get("playersPerTeam"),
-    matchFee: formData.get("matchFee"),
+    format: formData.get("format"),
   });
-  if (!parsed.success) return { error: "Invalid match input." };
+  if (!parsed.success) {
+    return {
+      error: parsed.error.issues[0]?.message ?? "Invalid match input.",
+    };
+  }
   const admin = createSupabaseServiceClient();
 
   const { data: tenant } = await admin
     .from("tenants")
-    .select("currency_code")
+    .select("currency_code, default_match_fee")
     .eq("id", membership.tenant_id)
     .single();
+
+  const { data: venue } = await admin
+    .from("venues")
+    .select("name")
+    .eq("id", parsed.data.venueId)
+    .eq("tenant_id", membership.tenant_id)
+    .maybeSingle();
+  if (!venue) {
+    return { error: "Venue not found — create one first." };
+  }
+
+  const startsAtDate = new Date(parsed.data.startsAt);
+  if (Number.isNaN(startsAtDate.getTime())) {
+    return { error: "Invalid start date." };
+  }
+  const endsAtDate = new Date(startsAtDate.getTime() + 60 * 60 * 1000);
+  const playersPerTeam = parseInt(parsed.data.format[0], 10); // "6" from "6v6"
 
   const { data: match, error } = await admin
     .from("matches")
     .insert({
       tenant_id: membership.tenant_id,
-      venue_id: parsed.data.venueId || null,
-      title: parsed.data.title || null,
-      starts_at: parsed.data.startsAt,
-      ends_at: parsed.data.endsAt,
-      team_format_label: parsed.data.teamFormatLabel,
-      players_per_team: parsed.data.playersPerTeam,
-      match_fee: parsed.data.matchFee.toString(),
+      venue_id: parsed.data.venueId,
+      title: autoMatchTitle(venue.name, startsAtDate),
+      starts_at: startsAtDate.toISOString(),
+      ends_at: endsAtDate.toISOString(),
+      team_format_label: parsed.data.format,
+      players_per_team: playersPerTeam,
+      match_fee: (tenant?.default_match_fee ?? "0").toString(),
       currency_code: tenant?.currency_code ?? "GBP",
       status: "open",
       created_by_membership_id: membership.id,

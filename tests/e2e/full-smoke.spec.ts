@@ -19,6 +19,7 @@ const ADMIN_ROUTES = [
   { path: "/admin/payments", title: /Payments|Ödemeler/i },
   { path: "/admin/invites", title: /Invites|Davetler/i },
   { path: "/admin/stats", title: /Group analytics|analytics/i },
+  { path: "/admin/settings", title: /Settings|Match defaults/i },
 ];
 
 test.describe("Full smoke (user)", () => {

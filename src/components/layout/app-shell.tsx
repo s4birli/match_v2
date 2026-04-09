@@ -46,6 +46,7 @@ function buildNavForRole(role: Role | undefined, t: { nav: Record<string, string
         { href: "/admin/payments", label: t.nav.payments, iconName: "receipt" },
         { href: "/admin/stats", label: t.nav.stats, iconName: "trophy" },
         { href: "/admin/invites", label: t.nav.invites, iconName: "ticket" },
+        { href: "/admin/settings", label: t.nav.settings, iconName: "settings" },
         { href: "/profile", label: t.nav.profile, iconName: "profile" },
       ],
       secondary: null,

@@ -42,6 +42,7 @@ export const NAV_ICON_MAP = {
   star: Star,
   plus: Plus,
   settings: Settings,
+  cog: Settings,
 } as const;
 
 export type NavIconName = keyof typeof NAV_ICON_MAP;

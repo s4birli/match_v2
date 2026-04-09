@@ -242,6 +242,25 @@ export async function switchActiveTenantAction(tenantId: string) {
 export async function setLocaleAction(locale: "en" | "tr") {
   const cookieStore = await cookies();
   cookieStore.set("locale", locale, { path: "/" });
+
+  // Persist the choice on the account row when the user is logged in, so the
+  // preference survives across sessions / devices.
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      const admin = createSupabaseServiceClient();
+      await admin
+        .from("accounts")
+        .update({ preferred_language: locale })
+        .eq("auth_user_id", user.id);
+    }
+  } catch {
+    // Anonymous user → cookie-only is fine.
+  }
+
   revalidatePath("/", "layout");
 }
 

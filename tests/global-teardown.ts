@@ -27,9 +27,13 @@ export default async function globalTeardown() {
     await client.connect();
 
     // ---- Smoke matches ----
+    // The new auto-title is "{Venue} - YYYYMMDD - HHmm" — anything titled
+    // "Demo Pitch - %" came from a test run.
     const { rows: smokeMatches } = await client.query<{ id: string; tenant_id: string }>(
       `SELECT id, tenant_id FROM matches
-        WHERE title LIKE 'Smoke %' OR title = 'E2E Test Match'`,
+        WHERE title LIKE 'Smoke %'
+           OR title = 'E2E Test Match'
+           OR title LIKE 'Demo Pitch -%'`,
     );
     if (smokeMatches.length > 0) {
       const ids = smokeMatches.map((m) => m.id);
