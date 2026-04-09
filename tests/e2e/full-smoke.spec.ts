@@ -11,12 +11,14 @@ const ROUTES = [
 ];
 
 const ADMIN_ROUTES = [
+  { path: "/admin/dashboard", title: /Admin|Demo Admin/i },
   { path: "/admin/matches", title: /Manage matches|Maçlar/i },
   { path: "/admin/matches/new", title: /Create match|Maç oluştur/i },
   { path: "/admin/members", title: /Members|Üyeler/i },
   { path: "/admin/venues", title: /Venues|Mekanlar/i },
   { path: "/admin/payments", title: /Payments|Ödemeler/i },
   { path: "/admin/invites", title: /Invites|Davetler/i },
+  { path: "/admin/stats", title: /Group analytics|analytics/i },
 ];
 
 test.describe("Full smoke (user)", () => {

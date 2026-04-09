@@ -13,13 +13,13 @@ import {
   listNotifications,
   getLeaderboard,
 } from "@/server/db/queries";
-import { requireNonOwner } from "@/server/auth/session";
+import { requireUserOnly } from "@/server/auth/session";
 import { formatCurrency, formatDate, initials, relativeFromNow } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { AttendanceQuickActions } from "@/components/match/attendance-quick-actions";
 
 export default async function DashboardPage() {
-  const { session, membership } = await requireNonOwner();
+  const { session, membership } = await requireUserOnly();
   const { t, locale } = await getServerDictionary();
 
   const [matches, stats, wallet, notifs, leaderboard] = await Promise.all([

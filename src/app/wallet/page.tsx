@@ -3,13 +3,13 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { requireNonOwner } from "@/server/auth/session";
+import { requireUserOnly } from "@/server/auth/session";
 import { getWalletBalance, listLedgerForMembership } from "@/server/db/queries";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 
 export default async function WalletPage() {
-  const { session, membership } = await requireNonOwner();
+  const { session, membership } = await requireUserOnly();
   const { t, locale } = await getServerDictionary();
 
   const [{ balance, currency }, ledger] = await Promise.all([

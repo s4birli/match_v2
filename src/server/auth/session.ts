@@ -166,7 +166,8 @@ export async function requireRole(roles: Role[]): Promise<{
 
 export function landingForRole(role: Role): string {
   if (role === "owner") return "/owner/dashboard";
-  if (role === "assistant_admin") return "/admin/matches";
+  if (role === "admin") return "/admin/dashboard";
+  if (role === "assistant_admin") return "/admin/dashboard";
   return "/dashboard";
 }
 
@@ -176,6 +177,25 @@ export async function requireNonOwner(): Promise<{
   membership: Membership & { tenant: Tenant };
 }> {
   return requireMembership();
+}
+
+/**
+ * USER-ONLY surface: pages like /dashboard, /matches, /wallet, /stats are
+ * for regular players. Admins/assistants get bounced to their own
+ * /admin/dashboard. Owners go to /owner/dashboard.
+ *
+ * `profile` and `notifications` are SHARED — they don't use this helper.
+ */
+export async function requireUserOnly(): Promise<{
+  session: SessionContext;
+  membership: Membership & { tenant: Tenant };
+}> {
+  const ctx = await requireMembership();
+  if (ctx.membership.role === "admin" || ctx.membership.role === "assistant_admin") {
+    const { redirect } = await import("next/navigation");
+    redirect("/admin/dashboard");
+  }
+  return ctx;
 }
 
 export const ACTIVE_TENANT_COOKIE_NAME = ACTIVE_TENANT_COOKIE;

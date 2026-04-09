@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getMatchFull } from "@/server/db/queries";
-import { requireNonOwner } from "@/server/auth/session";
+import { requireUserOnly } from "@/server/auth/session";
 import { formatDate, initials } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { AttendanceQuickActions } from "@/components/match/attendance-quick-actions";
@@ -18,7 +18,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { session, membership } = await requireNonOwner();
+  const { session, membership } = await requireUserOnly();
   const { t, locale } = await getServerDictionary();
 
   const data = await getMatchFull(id);

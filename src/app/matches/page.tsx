@@ -5,13 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { listMatches } from "@/server/db/queries";
-import { requireNonOwner } from "@/server/auth/session";
+import { requireUserOnly } from "@/server/auth/session";
 import { formatDate } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { CalendarDays, MapPin } from "lucide-react";
 
 export default async function MatchesPage() {
-  const { session, membership } = await requireNonOwner();
+  const { session, membership } = await requireUserOnly();
   const { t, locale } = await getServerDictionary();
   const all = await listMatches(membership.tenant_id);
 

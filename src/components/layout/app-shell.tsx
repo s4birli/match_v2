@@ -48,42 +48,34 @@ function buildNavForRole(role: Role | undefined, t: { nav: Record<string, string
     };
   }
 
-  // GROUP ADMIN: full user nav + full admin section.
+  // GROUP ADMIN: single flat list — all items reachable on mobile via the
+  // horizontally-scrollable bottom nav, no hidden "secondary" section.
   if (role === "admin") {
     return {
       primary: [
-        { href: "/dashboard", label: t.nav.dashboard, icon: Home },
-        { href: "/matches", label: t.nav.matches, icon: CalendarDays },
-        { href: "/wallet", label: t.nav.wallet, icon: Wallet },
-        { href: "/stats", label: t.nav.stats, icon: Trophy },
+        { href: "/admin/dashboard", label: t.nav.dashboard, icon: Home },
+        { href: "/admin/matches", label: t.nav.matches, icon: CalendarDays },
+        { href: "/admin/members", label: t.nav.members, icon: Users2 },
+        { href: "/admin/venues", label: t.nav.venues, icon: MapPin },
+        { href: "/admin/payments", label: t.nav.payments, icon: Receipt },
+        { href: "/admin/stats", label: t.nav.stats, icon: Trophy },
+        { href: "/admin/invites", label: t.nav.invites, icon: Ticket },
         { href: "/profile", label: t.nav.profile, icon: UserCircle2 },
       ],
-      secondary: {
-        title: t.nav.admin,
-        items: [
-          { href: "/admin/matches", label: t.nav.matches, icon: Layers3 },
-          { href: "/admin/members", label: t.nav.members, icon: Users2 },
-          { href: "/admin/venues", label: t.nav.venues, icon: MapPin },
-          { href: "/admin/payments", label: t.nav.payments, icon: Receipt },
-          { href: "/admin/invites", label: t.nav.invites, icon: Ticket },
-        ],
-      },
+      secondary: null,
     };
   }
 
-  // ASSISTANT ADMIN: user nav minus finance + match-ops admin nav.
+  // ASSISTANT ADMIN: minimal admin workspace (no finance, no member mgmt).
   if (role === "assistant_admin") {
     return {
       primary: [
-        { href: "/dashboard", label: t.nav.dashboard, icon: Home },
-        { href: "/matches", label: t.nav.matches, icon: CalendarDays },
-        { href: "/stats", label: t.nav.stats, icon: Trophy },
+        { href: "/admin/dashboard", label: t.nav.dashboard, icon: Home },
+        { href: "/admin/matches", label: t.nav.matches, icon: CalendarDays },
+        { href: "/admin/stats", label: t.nav.stats, icon: Trophy },
         { href: "/profile", label: t.nav.profile, icon: UserCircle2 },
       ],
-      secondary: {
-        title: t.nav.admin,
-        items: [{ href: "/admin/matches", label: t.nav.matches, icon: Layers3 }],
-      },
+      secondary: null,
     };
   }
 
@@ -225,25 +217,34 @@ export async function AppShell({
         <main className="animate-fade-in space-y-5">{children}</main>
       </div>
 
-      {/* Mobile bottom nav */}
-      <nav className="glass-strong fixed inset-x-3 bottom-3 z-50 flex items-center justify-around gap-1 px-2 py-2 lg:hidden">
-        {nav.primary.slice(0, 5).map((item) => {
-          const Icon = item.icon;
-          const active = activePath?.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              data-testid={`bottom-nav-${item.label.toLowerCase()}`}
-              className={`flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
-                active ? "bg-white/[0.1] text-foreground" : "text-muted-foreground"
-              }`}
-            >
-              <Icon size={18} />
-              {item.label}
-            </Link>
-          );
-        })}
+      {/* Mobile bottom nav — horizontally scrollable so admins see ALL items.
+          When ≤5 items the row is centered evenly; when more, it scrolls. */}
+      <nav className="glass-strong fixed inset-x-3 bottom-3 z-50 lg:hidden">
+        <div
+          className={`no-scrollbar flex items-center gap-1 overflow-x-auto px-2 py-2 ${
+            nav.primary.length <= 5 ? "justify-around" : "justify-start"
+          }`}
+        >
+          {nav.primary.map((item) => {
+            const Icon = item.icon;
+            const active = activePath?.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                data-testid={`bottom-nav-${item.label.toLowerCase()}`}
+                className={`flex shrink-0 flex-col items-center gap-0.5 rounded-2xl px-3 py-2 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
+                  nav.primary.length <= 5 ? "flex-1" : "min-w-[64px]"
+                } ${
+                  active ? "bg-white/[0.1] text-foreground" : "text-muted-foreground"
+                }`}
+              >
+                <Icon size={18} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
       </nav>
     </div>
   );

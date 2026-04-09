@@ -36,7 +36,7 @@ export async function loginAction(prevState: unknown, formData: FormData) {
   const role = await syncActiveTenantCookie();
   // Role-based landing
   if (role === "system_owner") redirect("/owner/dashboard");
-  if (role === "assistant_admin") redirect("/admin/matches");
+  if (role === "admin" || role === "assistant_admin") redirect("/admin/dashboard");
   redirect("/dashboard");
 }
 
