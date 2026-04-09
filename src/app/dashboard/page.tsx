@@ -31,7 +31,9 @@ export default async function DashboardPage() {
   ]);
 
   const nextMatch = matches[0];
-  const topPlayers = [...leaderboard]
+  // Only members who have actually played count for the dashboard top-list.
+  const topPlayers = leaderboard
+    .filter((r) => Number(r?.total_matches_played ?? 0) > 0)
     .sort((a, b) => Number(b?.avg_teammate_rating ?? 0) - Number(a?.avg_teammate_rating ?? 0))
     .slice(0, 4);
 

@@ -17,13 +17,20 @@ export default async function StatsPage() {
     getLeaderboard(membership.tenant_id),
   ]);
 
-  const sortedByRating = [...leaderboard].sort(
+  // Only members who actually played at least one match should appear on
+  // any leaderboard. Otherwise we'd be ranking people on 0/0/0 which is
+  // both meaningless and ugly.
+  const ranked = leaderboard.filter(
+    (r) => Number(r?.total_matches_played ?? 0) > 0,
+  );
+
+  const sortedByRating = [...ranked].sort(
     (a, b) => Number(b?.avg_teammate_rating ?? 0) - Number(a?.avg_teammate_rating ?? 0),
   );
-  const sortedByWinRate = [...leaderboard].sort(
+  const sortedByWinRate = [...ranked].sort(
     (a, b) => Number(b?.win_rate ?? 0) - Number(a?.win_rate ?? 0),
   );
-  const sortedByMotm = [...leaderboard].sort(
+  const sortedByMotm = [...ranked].sort(
     (a, b) => Number(b?.motm_count ?? 0) - Number(a?.motm_count ?? 0),
   );
 
