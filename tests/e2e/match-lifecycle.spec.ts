@@ -8,11 +8,17 @@ test.describe("Match lifecycle (admin)", () => {
     test.setTimeout(60_000);
     await login(page, "admin.demo@example.com", "Test1234!");
 
-    // Go to create match page — defaults take care of venue + tomorrow 18:00 + 6v6.
+    // Go to create match page — defaults take care of venue + 6v6.
     await page.goto("/admin/matches/new", { waitUntil: "domcontentloaded" });
     await page.getByTestId("match-venue").waitFor({ state: "visible" });
 
-    // Submit straight away with all defaults.
+    // Override startsAt to 2 hours ago so the close-match form is unlocked
+    // (matches are fixed at 1h, close form gates on starts_at + 1h).
+    const past = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const local = `${past.getFullYear()}-${pad(past.getMonth() + 1)}-${pad(past.getDate())}T${pad(past.getHours())}:${pad(past.getMinutes())}`;
+    await page.getByTestId("match-starts-at").fill(local);
+
     await page.getByTestId("match-submit").click();
 
     // Wait for navigation to /admin/matches/{id}

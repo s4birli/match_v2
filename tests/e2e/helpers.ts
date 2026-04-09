@@ -10,6 +10,12 @@ export async function login(
   email = "user.demo@example.com",
   password = "Test1234!",
 ) {
+  // Force English locale so tests are independent of the test machine's
+  // system language and any leftover account.preferred_language state.
+  await page.context().addCookies([
+    { name: "locale", value: "en", url: "http://localhost:3737" },
+  ]);
+
   // Next.js dev (turbopack) compiles on-demand, so the first request to a route
   // may take 20–30s. Use generous timeouts here and allow a retry.
   await page.goto("/login", { waitUntil: "domcontentloaded", timeout: 60_000 });
@@ -21,6 +27,8 @@ export async function login(
   await page.waitForURL((url) => !url.pathname.startsWith("/login"), {
     timeout: 20_000,
   });
+  // Wait for the streamed page to mount its <main> wrapper.
+  await page.waitForSelector("main", { timeout: 20_000 });
 }
 
 export async function expectNoAppError(page: Page) {

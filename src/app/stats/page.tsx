@@ -3,13 +3,13 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
-import { requireUserOnly } from "@/server/auth/session";
+import { requireMembership } from "@/server/auth/session";
 import { getLeaderboard, getMemberStats } from "@/server/db/queries";
 import { initials } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 
 export default async function StatsPage() {
-  const { session, membership } = await requireUserOnly();
+  const { session, membership } = await requireMembership();
   const { t } = await getServerDictionary();
 
   const [my, leaderboard] = await Promise.all([

@@ -79,6 +79,35 @@ export async function castPollVoteAction(formData: FormData) {
   if (!poll || poll.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
   if (poll.status === "closed") return { error: "Poll is closed." };
 
+  // Voting is gated until BOTH teams are fully filled — predicting a winner
+  // before the rosters are set is meaningless.
+  const { data: match } = await admin
+    .from("matches")
+    .select("players_per_team, status")
+    .eq("id", parsed.data.matchId)
+    .maybeSingle();
+  if (!match) return { error: "Match not found" };
+  if (match.status === "completed" || match.status === "cancelled") {
+    return { error: "Match is no longer accepting predictions." };
+  }
+  const { data: counts } = await admin
+    .from("match_participants")
+    .select("team_id")
+    .eq("match_id", parsed.data.matchId)
+    .not("team_id", "is", null)
+    .in("attendance_status", ["confirmed", "checked_in", "played"]);
+  const perTeam = new Map<string, number>();
+  for (const row of counts ?? []) {
+    if (row.team_id) perTeam.set(row.team_id, (perTeam.get(row.team_id) ?? 0) + 1);
+  }
+  const required = match.players_per_team;
+  const teamsReady = perTeam.size >= 2 && [...perTeam.values()].every((c) => c >= required);
+  if (!teamsReady) {
+    return {
+      error: `Voting opens once both teams have ${required} players each.`,
+    };
+  }
+
   const { data: existing } = await admin
     .from("pre_match_poll_votes")
     .select("id")
@@ -432,6 +461,17 @@ export async function closeMatchAction(formData: FormData) {
     .maybeSingle();
   if (!match || match.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
   if (match.status === "completed") return { error: "Match already closed." };
+
+  // A match is fixed at 1 hour. We refuse to close it before that hour
+  // is up — admins shouldn't be able to settle the score (and charge
+  // fees!) before kickoff has even happened.
+  const startsAtMs = new Date(match.starts_at).getTime();
+  if (Date.now() < startsAtMs + 60 * 60 * 1000) {
+    const minutesLeft = Math.ceil((startsAtMs + 60 * 60 * 1000 - Date.now()) / 60000);
+    return {
+      error: `Match isn't over yet — try again in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}.`,
+    };
+  }
 
   const { data: teams } = await admin
     .from("match_teams")

@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getMatchFull } from "@/server/db/queries";
-import { requireUserOnly } from "@/server/auth/session";
+import { requireMembership } from "@/server/auth/session";
 import { formatDate, initials } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { AttendanceQuickActions } from "@/components/match/attendance-quick-actions";
@@ -18,7 +18,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { session, membership } = await requireUserOnly();
+  const { session, membership } = await requireMembership();
   const { t, locale } = await getServerDictionary();
 
   const data = await getMatchFull(id);
@@ -30,6 +30,20 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
 
   const red = teams.find((tt) => tt.team_key === "red");
   const blue = teams.find((tt) => tt.team_key === "blue");
+
+  // Pre-match poll lock state — voting opens only when both teams are full.
+  const ROSTER_STATUSES = new Set(["confirmed", "checked_in", "played"]);
+  const required = match.players_per_team;
+  const redCount = participants.filter(
+    (p) => p.team_id === red?.id && ROSTER_STATUSES.has(p.attendance_status),
+  ).length;
+  const blueCount = participants.filter(
+    (p) => p.team_id === blue?.id && ROSTER_STATUSES.has(p.attendance_status),
+  ).length;
+  const teamsReady = redCount >= required && blueCount >= required;
+  const pollLockReason = teamsReady
+    ? null
+    : `Voting opens once both teams are full (${redCount}/${required} red · ${blueCount}/${required} blue).`;
 
   // Aggregate-only data for closed match (privacy-safe)
   let myRatingAvg: number | null = null;
@@ -205,6 +219,8 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
           votes={pollVotes}
           matchId={match.id}
           status={poll.status}
+          locked={!teamsReady}
+          lockReason={pollLockReason}
         />
       )}
 

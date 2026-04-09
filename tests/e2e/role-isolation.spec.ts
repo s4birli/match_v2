@@ -41,19 +41,20 @@ test.describe("Role isolation", () => {
     expect(ownerLinks).toBe(0);
   });
 
-  test("assistant_admin does NOT see finance / members / venues / invites", async ({ page }) => {
+  test("assistant_admin does NOT see finance / members / invites (admin-only surfaces)", async ({ page }) => {
     await login(page, "assistant.demo@example.com");
-    // Assistant is allowed at /admin/matches
-    const walletLinks = await page.locator('a[href="/wallet"]').count();
+    // Per CLAUDE.md the assistant runs match operations only — no member
+    // mgmt, no payments/finance, no invite mgmt, no admin settings.
+    // They DO need to see venues (to schedule a match) and they DO get
+    // a "Player view" section (because they're a player too).
     const memberLinks = await page.locator('a[href="/admin/members"]').count();
-    const venueLinks = await page.locator('a[href="/admin/venues"]').count();
     const paymentLinks = await page.locator('a[href="/admin/payments"]').count();
     const inviteLinks = await page.locator('a[href="/admin/invites"]').count();
-    expect(walletLinks).toBe(0);
+    const settingsLinks = await page.locator('a[href="/admin/settings"]').count();
     expect(memberLinks).toBe(0);
-    expect(venueLinks).toBe(0);
     expect(paymentLinks).toBe(0);
     expect(inviteLinks).toBe(0);
+    expect(settingsLinks).toBe(0);
   });
 
   test("regular user cannot reach admin pages (server-side redirect)", async ({ page }) => {

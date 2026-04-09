@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Lock } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -72,10 +73,38 @@ export default async function AdminMatchDetail({
       />
 
       {isAdmin && match.status !== "completed" && (
-        <Card>
-          <h2 className="mb-3 text-base font-semibold">Close match</h2>
-          <CloseMatchForm matchId={match.id} />
-        </Card>
+        (() => {
+          // Match is fixed at 1 hour. The close form only unlocks once
+          // the match has actually finished (now >= starts_at + 1h).
+          const startsAtMs = new Date(match.starts_at).getTime();
+          const endsAtMs = startsAtMs + 60 * 60 * 1000;
+          const now = Date.now();
+          const finished = now >= endsAtMs;
+          const minutesLeft = Math.max(0, Math.ceil((endsAtMs - now) / 60000));
+          return (
+            <Card>
+              <h2 className="mb-3 text-base font-semibold">Close match</h2>
+              {finished ? (
+                <CloseMatchForm matchId={match.id} />
+              ) : (
+                <div
+                  data-testid="close-locked-banner"
+                  className="flex items-start gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-amber-100"
+                >
+                  <Lock size={16} className="mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold">Match isn&apos;t over yet</p>
+                    <p className="text-xs text-amber-200/80">
+                      The close-match form unlocks {minutesLeft} minute
+                      {minutesLeft === 1 ? "" : "s"} from now (matches always run
+                      for 1 hour from kickoff).
+                    </p>
+                  </div>
+                </div>
+              )}
+            </Card>
+          );
+        })()
       )}
 
       {match.status === "completed" && result && (

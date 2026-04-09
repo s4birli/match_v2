@@ -33,8 +33,9 @@ function buildNavForRole(role: Role | undefined, t: { nav: Record<string, string
     };
   }
 
-  // GROUP ADMIN: single flat list — every item rendered on mobile via the
-  // bottom nav (auto-cols-fr keeps them equally sized).
+  // GROUP ADMIN: dedicated admin workspace + a "Player view" section,
+  // because the admin is also a regular player and may want to check their
+  // own next match / wallet / personal stats.
   if (role === "admin") {
     return {
       primary: [
@@ -46,22 +47,38 @@ function buildNavForRole(role: Role | undefined, t: { nav: Record<string, string
         { href: "/admin/stats", label: t.nav.stats, iconName: "trophy" },
         { href: "/admin/invites", label: t.nav.invites, iconName: "ticket" },
         { href: "/admin/settings", label: t.nav.settings, iconName: "settings" },
-        { href: "/profile", label: t.nav.profile, iconName: "profile" },
       ],
-      secondary: null,
+      secondary: {
+        title: "Player view",
+        items: [
+          { href: "/matches", label: "My matches", iconName: "calendar" },
+          { href: "/wallet", label: "My wallet", iconName: "wallet" },
+          { href: "/stats", label: "My stats", iconName: "trophy" },
+          { href: "/profile", label: t.nav.profile, iconName: "profile" },
+        ],
+      },
     };
   }
 
-  // ASSISTANT ADMIN: minimal admin workspace (no finance, no member mgmt).
+  // ASSISTANT ADMIN: match-ops admin + same player view section.
+  // No finance (payments/settings), no member mgmt, no invites.
   if (role === "assistant_admin") {
     return {
       primary: [
         { href: "/admin/dashboard", label: t.nav.dashboard, iconName: "home" },
         { href: "/admin/matches", label: t.nav.matches, iconName: "calendar" },
+        { href: "/admin/venues", label: t.nav.venues, iconName: "pin" },
         { href: "/admin/stats", label: t.nav.stats, iconName: "trophy" },
-        { href: "/profile", label: t.nav.profile, iconName: "profile" },
       ],
-      secondary: null,
+      secondary: {
+        title: "Player view",
+        items: [
+          { href: "/matches", label: "My matches", iconName: "calendar" },
+          { href: "/wallet", label: "My wallet", iconName: "wallet" },
+          { href: "/stats", label: "My stats", iconName: "trophy" },
+          { href: "/profile", label: t.nav.profile, iconName: "profile" },
+        ],
+      },
     };
   }
 

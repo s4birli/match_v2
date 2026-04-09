@@ -104,12 +104,22 @@ export default async function AdminDashboardPage() {
           icon={<CalendarDays size={18} />}
           accent
         />
-        <StatLink
-          href="/admin/members"
-          label={t.nav.members}
-          value={members.length}
-          icon={<Users2 size={18} />}
-        />
+        {isFullAdmin ? (
+          <StatLink
+            href="/admin/members"
+            label={t.nav.members}
+            value={members.length}
+            icon={<Users2 size={18} />}
+          />
+        ) : (
+          <div className="stat-card">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-[11px] uppercase tracking-wider">{t.nav.members}</span>
+              <Users2 size={18} />
+            </div>
+            <div className="mt-1.5 text-3xl font-black">{members.length}</div>
+          </div>
+        )}
         <StatLink
           href="/admin/stats"
           label="Completed"
@@ -130,14 +140,9 @@ export default async function AdminDashboardPage() {
         )}
       </section>
 
-      {/* Quick actions */}
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <ActionCard
-          href="/admin/matches/new"
-          icon={<Plus size={18} />}
-          title={t.admin.createMatch}
-          description="Schedule the next game"
-        />
+      {/* Quick actions — note: "Create match" lives in the hero CTA above
+          (de-duplicated per UX feedback). */}
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {isFullAdmin && (
           <ActionCard
             href="/admin/members"
@@ -146,14 +151,12 @@ export default async function AdminDashboardPage() {
             description="Add guests, archive, restore"
           />
         )}
-        {isFullAdmin && (
-          <ActionCard
-            href="/admin/venues"
-            icon={<MapPin size={18} />}
-            title="Venues"
-            description="Pitches and locations"
-          />
-        )}
+        <ActionCard
+          href="/admin/venues"
+          icon={<MapPin size={18} />}
+          title="Venues"
+          description="Pitches and locations"
+        />
         {isFullAdmin && (
           <ActionCard
             href="/admin/payments"
