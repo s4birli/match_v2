@@ -117,7 +117,10 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
             <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
               {t.dashboard.attendance}
             </p>
-            <AttendanceQuickActions matchId={match.id} />
+            <AttendanceQuickActions
+              matchId={match.id}
+              currentStatus={myParticipant?.attendance_status}
+            />
             {myParticipant && (
               <p className="mt-2 text-xs text-foreground/80">
                 Status: <span className="font-semibold">{myParticipant.attendance_status}</span>

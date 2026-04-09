@@ -12,7 +12,7 @@ const SAFE_TESTID_PATTERNS = [
   /^bottom-nav-/,
   /^nav-/,
   /^poll-vote-/,
-  /^attendance-confirm$/,
+  /^attendance-(reserve|decline)$/,
   /^attendance-reserve$/,
   /^lang-(en|tr)$/,
   /^group-switcher$/,

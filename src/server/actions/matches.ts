@@ -8,9 +8,17 @@ import { requireMembership, requireRole } from "@/server/auth/session";
 const RATING_EDIT_WINDOW_MS = 60 * 1000;
 
 // ---------- Attendance ----------
+//
+// Product rule (per CLAUDE.md + user clarification):
+//   Admins decide WHO plays. A regular user can only:
+//     - pull themselves to RESERVE
+//     - DECLINE
+//   They cannot self-confirm. If they were never added as a participant by
+//   the admin, they cannot self-add either: a player who is not invited has
+//   nothing to opt out of.
 const attendanceSchema = z.object({
   matchId: z.string().uuid(),
-  status: z.enum(["confirmed", "declined", "reserve"]),
+  status: z.enum(["declined", "reserve"]),
 });
 
 export async function setMyAttendanceAction(formData: FormData) {
@@ -29,30 +37,18 @@ export async function setMyAttendanceAction(formData: FormData) {
     .eq("membership_id", membership.id)
     .maybeSingle();
 
-  if (existing) {
-    if (existing.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
-    await admin
-      .from("match_participants")
-      .update({
-        attendance_status: parsed.data.status,
-        attendance_updated_at: new Date().toISOString(),
-      })
-      .eq("id", existing.id);
-  } else {
-    // Verify match belongs to membership tenant
-    const { data: match } = await admin
-      .from("matches")
-      .select("tenant_id")
-      .eq("id", parsed.data.matchId)
-      .maybeSingle();
-    if (!match || match.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
-    await admin.from("match_participants").insert({
-      match_id: parsed.data.matchId,
-      tenant_id: membership.tenant_id,
-      membership_id: membership.id,
-      attendance_status: parsed.data.status,
-    });
+  if (!existing) {
+    return { error: "You're not on this match — only the admin can add players." };
   }
+  if (existing.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
+
+  await admin
+    .from("match_participants")
+    .update({
+      attendance_status: parsed.data.status,
+      attendance_updated_at: new Date().toISOString(),
+    })
+    .eq("id", existing.id);
 
   revalidatePath(`/matches/${parsed.data.matchId}`);
   revalidatePath("/dashboard");
