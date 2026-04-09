@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   CalendarDays,
   Trophy,
@@ -511,22 +512,25 @@ function Leaderboard({
           {rows.map((r, i) => {
             const display = memberLookup.get(r.membership_id) ?? "Player";
             return (
-              <li
-                key={r.membership_id}
-                className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
-              >
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.06] text-xs font-bold">
-                  {i + 1}
-                </div>
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback>{initials(display)}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{display}</p>
-                </div>
-                <span className="text-sm font-bold text-emerald-300">
-                  {metric(r)}
-                </span>
+              <li key={r.membership_id}>
+                <Link
+                  href={`/admin/members/${r.membership_id}`}
+                  data-testid={`leaderboard-row-${r.membership_id}`}
+                  className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5 transition-colors hover:bg-white/[0.06]"
+                >
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.06] text-xs font-bold">
+                    {i + 1}
+                  </div>
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback>{initials(display)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{display}</p>
+                  </div>
+                  <span className="text-sm font-bold text-emerald-300">
+                    {metric(r)}
+                  </span>
+                </Link>
               </li>
             );
           })}

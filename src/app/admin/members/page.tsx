@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -66,16 +67,22 @@ export default async function AdminMembersPage() {
                     data-testid={`member-${m.id}`}
                     className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
                   >
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback>{initials(display)}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold">{display}</p>
-                      <div className="flex items-center gap-1.5">
-                        <Badge variant="default">{m.role}</Badge>
-                        {m.is_guest_membership ? <Badge variant="warning">{t.admin.guestBadge}</Badge> : null}
+                    <Link
+                      href={`/admin/members/${m.id}`}
+                      className="flex min-w-0 flex-1 items-center gap-3"
+                      data-testid={`member-link-${m.id}`}
+                    >
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback>{initials(display)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold hover:text-emerald-300">{display}</p>
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="default">{m.role}</Badge>
+                          {m.is_guest_membership ? <Badge variant="warning">{t.admin.guestBadge}</Badge> : null}
+                        </div>
                       </div>
-                    </div>
+                    </Link>
                     <div className="flex items-center gap-1.5">
                       {m.is_guest_membership && <ConvertGuestButton id={m.id} />}
                       <ArchiveMemberButton id={m.id} />

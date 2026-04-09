@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, Trophy, Wallet, Sparkles, Users } from "lucide-react";
+import { CalendarDays, Trophy, Wallet, Sparkles, Users, Star, Crown } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -84,9 +84,19 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-3">
+      <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <StatBlock label={t.dashboard.played} value={stats?.total_matches_played ?? 0} icon={<Users size={16} />} />
         <StatBlock label={t.dashboard.winRate} value={`${stats?.win_rate ?? 0}%`} icon={<Trophy size={16} />} accent />
+        <StatBlock
+          label={t.dashboard.avgRating}
+          value={stats?.avg_teammate_rating ? Number(stats.avg_teammate_rating).toFixed(1) : "—"}
+          icon={<Star size={16} />}
+        />
+        <StatBlock
+          label={t.dashboard.motm}
+          value={stats?.motm_count ?? 0}
+          icon={<Crown size={16} />}
+        />
         <StatBlock
           label={t.dashboard.walletBalance}
           value={formatCurrency(wallet.balance, wallet.currency, locale === "tr" ? "tr-TR" : "en-GB")}
