@@ -100,6 +100,71 @@ export async function getMatchFull(matchId: string) {
   return { match, teams: teams ?? [], participants: participants ?? [], result, poll, pollVotes };
 }
 
+/**
+ * Aggregate-only post-match insights for the public match detail page.
+ * Returns:
+ *   - perPlayerAverages: Map<membership_id, { avg, raters }> — avg teammate
+ *     rating each player received in this match. Privacy rule: only the
+ *     average + the count of raters is exposed, never the individual rows
+ *     or the rater identities.
+ *   - motm: { membershipId, votes } | null — the membership_id with the
+ *     highest player_of_match_votes count, and the count itself. Ties
+ *     resolved by the first encountered.
+ *
+ * Both queries use the SERVICE client and bypass RLS, but only return
+ * privacy-safe aggregates so the application layer can hand them straight
+ * to the public match page (anyone in the tenant can see them — that's
+ * the product rule from CLAUDE.md, "everyone sees match outcomes, MOTM,
+ * and per-player averages, but never who voted for whom").
+ */
+export async function getMatchAggregateInsights(matchId: string): Promise<{
+  perPlayerAverages: Map<string, { avg: number; raters: number }>;
+  motm: { membershipId: string; votes: number } | null;
+}> {
+  const supabase = db();
+  const [{ data: ratings }, { data: motmVotes }] = await Promise.all([
+    supabase
+      .from("teammate_ratings")
+      .select("target_membership_id, rating_value")
+      .eq("match_id", matchId)
+      .eq("is_invalidated", false),
+    supabase
+      .from("player_of_match_votes")
+      .select("target_membership_id")
+      .eq("match_id", matchId),
+  ]);
+
+  // Per-player average (running total + count, no per-rater retention).
+  const totals = new Map<string, { sum: number; n: number }>();
+  for (const row of ratings ?? []) {
+    const cur = totals.get(row.target_membership_id) ?? { sum: 0, n: 0 };
+    cur.sum += Number(row.rating_value) || 0;
+    cur.n += 1;
+    totals.set(row.target_membership_id, cur);
+  }
+  const perPlayerAverages = new Map<string, { avg: number; raters: number }>();
+  for (const [id, t] of totals) {
+    perPlayerAverages.set(id, {
+      avg: t.n > 0 ? t.sum / t.n : 0,
+      raters: t.n,
+    });
+  }
+
+  // MOTM = membership_id with the highest vote count.
+  const voteCounts = new Map<string, number>();
+  for (const v of motmVotes ?? []) {
+    voteCounts.set(v.target_membership_id, (voteCounts.get(v.target_membership_id) ?? 0) + 1);
+  }
+  let motm: { membershipId: string; votes: number } | null = null;
+  for (const [id, votes] of voteCounts) {
+    if (!motm || votes > motm.votes) {
+      motm = { membershipId: id, votes };
+    }
+  }
+
+  return { perPlayerAverages, motm };
+}
+
 export async function getWalletBalance(tenantId: string, membershipId: string) {
   const { data } = await db()
     .from("ledger_transactions")

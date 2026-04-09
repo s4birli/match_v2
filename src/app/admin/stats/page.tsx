@@ -17,7 +17,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { requireRole } from "@/server/auth/session";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getLeaderboard, getPairChemistry } from "@/server/db/queries";
-import { formatCurrency, initials } from "@/lib/utils";
+import { formatCurrency, initials , bcp47Locale } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 
 export default async function AdminStatsPage() {
@@ -216,7 +216,7 @@ export default async function AdminStatsPage() {
                   {formatCurrency(
                     feesCharged,
                     membership.tenant.currency_code,
-                    locale === "tr" ? "tr-TR" : "en-GB",
+                    bcp47Locale(locale),
                   )}
                 </span>
               </li>
@@ -227,7 +227,7 @@ export default async function AdminStatsPage() {
                   {formatCurrency(
                     paymentsReceived,
                     membership.tenant.currency_code,
-                    locale === "tr" ? "tr-TR" : "en-GB",
+                    bcp47Locale(locale),
                   )}
                 </span>
               </li>
@@ -243,7 +243,7 @@ export default async function AdminStatsPage() {
                   {formatCurrency(
                     feesCharged - paymentsReceived,
                     membership.tenant.currency_code,
-                    locale === "tr" ? "tr-TR" : "en-GB",
+                    bcp47Locale(locale),
                   )}
                 </span>
               </li>
@@ -276,7 +276,7 @@ export default async function AdminStatsPage() {
                         {formatCurrency(
                           row.balance,
                           membership.tenant.currency_code,
-                          locale === "tr" ? "tr-TR" : "en-GB",
+                          bcp47Locale(locale),
                         )}
                       </span>
                     </li>

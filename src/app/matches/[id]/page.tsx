@@ -1,15 +1,14 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { CalendarDays, MapPin, Users, Trophy } from "lucide-react";
+import { CalendarDays, MapPin, Users, Trophy, Star, Crown } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getMatchFull } from "@/server/db/queries";
+import { getMatchFull, getMatchAggregateInsights } from "@/server/db/queries";
 import { requireMembership } from "@/server/auth/session";
-import { formatDate, initials } from "@/lib/utils";
+import { formatDate, initials , bcp47Locale } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { AttendanceQuickActions } from "@/components/match/attendance-quick-actions";
 import { PreMatchPoll } from "@/components/match/pre-match-poll";
@@ -45,22 +44,26 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
     ? null
     : `Voting opens once both teams are full (${redCount}/${required} red · ${blueCount}/${required} blue).`;
 
-  // Aggregate-only data for closed match (privacy-safe)
-  let myRatingAvg: number | null = null;
+  // Aggregate-only post-match data (privacy-safe). Pulled for every viewer
+  // when the match is completed — anyone in the tenant can see the per-
+  // player averages and the player of the match. CLAUDE.md still forbids
+  // exposing the raw rating rows or per-rater identities.
+  let perPlayerAverages = new Map<string, { avg: number; raters: number }>();
+  let motm: { membershipId: string; votes: number } | null = null;
   if (match.status === "completed") {
-    const admin = createSupabaseServiceClient();
-    const { data: rows } = await admin
-      .from("teammate_ratings")
-      .select("rating_value")
-      .eq("match_id", match.id)
-      .eq("target_membership_id", membership.id)
-      .eq("is_invalidated", false);
-    if (rows && rows.length > 0) {
-      myRatingAvg =
-        rows.reduce((s: number, r: { rating_value: number }) => s + r.rating_value, 0) /
-        rows.length;
-    }
+    const insights = await getMatchAggregateInsights(match.id);
+    perPlayerAverages = insights.perPlayerAverages;
+    motm = insights.motm;
   }
+  const myRatingAvg =
+    perPlayerAverages.get(membership.id)?.avg ?? null;
+  const motmName = motm
+    ? (
+        playedParticipants.find((p) => p.membership_id === motm.membershipId) as
+          | { membership?: { person?: { display_name?: string } } }
+          | undefined
+      )?.membership?.person?.display_name ?? "Player"
+    : null;
 
   const isAdmin = membership.role === "admin" || membership.role === "owner";
   const venueName = (match as { venue?: { name?: string } }).venue?.name;
@@ -81,7 +84,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
             </h1>
             <p className="mt-1 flex items-center gap-1.5 text-sm text-foreground/80">
               <CalendarDays size={14} />
-              {formatDate(match.starts_at, locale === "tr" ? "tr-TR" : "en-GB")}
+              {formatDate(match.starts_at, bcp47Locale(locale))}
             </p>
             {venueName && (
               <p className="mt-1 flex items-center gap-1.5 text-sm text-foreground/80">
@@ -123,6 +126,16 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                   ? `${t.match.teamRed} wins`
                   : `${t.match.teamBlue} wins`}
             </p>
+            {motm && motmName && (
+              <div
+                data-testid="match-motm"
+                className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-200"
+              >
+                <Crown size={12} />
+                {t.dashboard.motm}: {motmName}
+                <span className="opacity-70">· {motm.votes}</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -158,6 +171,8 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
           <PlayerList
             participants={participants.filter((p) => p.team_id === red?.id)}
             isMe={(id) => id === membership.id}
+            perPlayerAverages={perPlayerAverages}
+            motmId={motm?.membershipId ?? null}
           />
         </Card>
         <Card>
@@ -173,6 +188,8 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
           <PlayerList
             participants={participants.filter((p) => p.team_id === blue?.id)}
             isMe={(id) => id === membership.id}
+            perPlayerAverages={perPlayerAverages}
+            motmId={motm?.membershipId ?? null}
           />
         </Card>
       </section>
@@ -272,9 +289,13 @@ type ParticipantRow = Awaited<ReturnType<typeof getMatchFull>> extends infer T
 function PlayerList({
   participants,
   isMe,
+  perPlayerAverages,
+  motmId,
 }: {
   participants: ParticipantRow[];
   isMe: (membershipId: string) => boolean;
+  perPlayerAverages?: Map<string, { avg: number; raters: number }>;
+  motmId?: string | null;
 }) {
   if (participants.length === 0) {
     return <p className="text-xs text-muted-foreground">No players assigned yet.</p>;
@@ -284,23 +305,44 @@ function PlayerList({
       {participants.map((p) => {
         const display =
           (p as { membership?: { person?: { display_name?: string } } }).membership?.person?.display_name ?? "Player";
+        const avg = perPlayerAverages?.get(p.membership_id);
+        const isMotm = motmId === p.membership_id;
         return (
           <li
             key={p.id}
+            data-testid={`player-row-${p.membership_id}`}
             className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
           >
             <Avatar className="h-9 w-9">
               <AvatarFallback>{initials(display)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">
-                {display}
+              <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
+                <span className="truncate">{display}</span>
                 {isMe(p.membership_id) ? (
-                  <span className="ml-1.5 text-[10px] uppercase text-emerald-300">you</span>
+                  <span className="text-[10px] uppercase text-emerald-300">you</span>
+                ) : null}
+                {isMotm ? (
+                  <span
+                    title="Player of the match"
+                    className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-400/20 text-amber-300"
+                  >
+                    <Crown size={10} />
+                  </span>
                 ) : null}
               </p>
               <p className="text-[11px] text-muted-foreground">{p.attendance_status}</p>
             </div>
+            {avg && avg.raters > 0 ? (
+              <span
+                data-testid={`player-avg-${p.membership_id}`}
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] font-bold text-emerald-200"
+                title={`${avg.raters} rater${avg.raters === 1 ? "" : "s"}`}
+              >
+                <Star size={10} />
+                {avg.avg.toFixed(1)}
+              </span>
+            ) : null}
           </li>
         );
       })}

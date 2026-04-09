@@ -14,7 +14,7 @@ import {
   getLeaderboard,
 } from "@/server/db/queries";
 import { requireMembership } from "@/server/auth/session";
-import { formatCurrency, formatDate, initials, relativeFromNow } from "@/lib/utils";
+import { formatCurrency, formatDate, initials, relativeFromNow , bcp47Locale } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { AttendanceQuickActions } from "@/components/match/attendance-quick-actions";
 
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
                   {nextMatch.title ?? `${nextMatch.team_format_label} match`}
                 </p>
                 <p className="text-xs text-foreground/70">
-                  {formatDate(nextMatch.starts_at, locale === "tr" ? "tr-TR" : "en-GB")}
+                  {formatDate(nextMatch.starts_at, bcp47Locale(locale))}
                 </p>
               </div>
               <Badge variant="info">{nextMatch.team_format_label}</Badge>
@@ -99,7 +99,7 @@ export default async function DashboardPage() {
         />
         <StatBlock
           label={t.dashboard.walletBalance}
-          value={formatCurrency(wallet.balance, wallet.currency, locale === "tr" ? "tr-TR" : "en-GB")}
+          value={formatCurrency(wallet.balance, wallet.currency, bcp47Locale(locale))}
           icon={<Wallet size={16} />}
         />
       </section>
@@ -126,7 +126,7 @@ export default async function DashboardPage() {
                     <div>
                       <p className="font-semibold">{m.title ?? `${m.team_format_label} match`}</p>
                       <p className="text-xs text-muted-foreground">
-                        {formatDate(m.starts_at, locale === "tr" ? "tr-TR" : "en-GB")} ·{" "}
+                        {formatDate(m.starts_at, bcp47Locale(locale))} ·{" "}
                         {(m as { venue?: { name?: string } }).venue?.name ?? "—"}
                       </p>
                     </div>

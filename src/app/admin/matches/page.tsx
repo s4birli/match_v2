@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { requireRole } from "@/server/auth/session";
 import { listMatches } from "@/server/db/queries";
-import { formatDate } from "@/lib/utils";
+import { formatDate , bcp47Locale } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 
 export default async function AdminMatchesPage() {
@@ -43,7 +43,7 @@ export default async function AdminMatchesPage() {
                       {m.title ?? `${m.team_format_label} match`}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDate(m.starts_at, locale === "tr" ? "tr-TR" : "en-GB")}
+                      {formatDate(m.starts_at, bcp47Locale(locale))}
                     </p>
                     {venue && <p className="text-xs text-muted-foreground">{venue}</p>}
                   </div>

@@ -4,6 +4,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import { PwaInstaller } from "@/components/pwa/pwa-installer";
 import { resolveLocale } from "@/lib/i18n/server";
 import { I18nProvider } from "@/lib/i18n/client";
+import { resolveThemeChoice, themeBootstrapScript } from "@/lib/theme/server";
 
 export const metadata: Metadata = {
   title: "Match Club — Football group operations",
@@ -27,9 +28,19 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = await resolveLocale();
+  const [locale, themeChoice] = await Promise.all([resolveLocale(), resolveThemeChoice()]);
+  // SSR-side guess at the resolved class so we don't ship an empty <html>.
+  // The inline bootstrap script then refines it from `prefers-color-scheme`
+  // when choice = system, before React hydrates.
+  const ssrDark = themeChoice === "dark" || themeChoice === "system";
   return (
-    <html lang={locale} className="dark">
+    <html lang={locale} className={ssrDark ? "dark" : ""} suppressHydrationWarning>
+      <head>
+        <script
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: themeBootstrapScript }}
+        />
+      </head>
       <body className="font-sans">
         <I18nProvider locale={locale}>
           <ToastProvider>

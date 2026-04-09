@@ -27,7 +27,8 @@ export default async function RegisterPage({
           inviteToken={sp.token}
           inviteCode={sp.code}
           labels={{
-            name: t.profile.displayName,
+            firstName: t.profile.firstName,
+            lastName: t.profile.lastName,
             email: t.common.email,
             password: t.common.password,
             inviteCode: t.auth.inviteCodePlaceholder,

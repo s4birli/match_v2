@@ -42,6 +42,50 @@ export function formatTime(date: Date | string, locale = "en-GB") {
   }).format(d);
 }
 
+/**
+ * Map an app `Locale` to the BCP-47 tag the Intl APIs expect.
+ * Centralised so adding a new language is one place. The fallback is en-GB
+ * because that's what `formatCurrency` / `formatDate` defaulted to before.
+ */
+export function bcp47Locale(locale: string): string {
+  switch (locale) {
+    case "tr":
+      return "tr-TR";
+    case "es":
+      return "es-ES";
+    case "en":
+    default:
+      return "en-GB";
+  }
+}
+
+/**
+ * Build the public-facing display name from a first + last name pair.
+ * Format: "Mehmet Y." — first name in full + last name's initial + dot.
+ *
+ * Why this format: lots of football groups have multiple players with the
+ * same first name, so we need *some* disambiguator, but full last names
+ * feel formal and bloat the small avatar / row layouts. The user picked
+ * first + initial as the right balance.
+ *
+ * Edge cases:
+ *   - Empty/whitespace last name → returns just the first name.
+ *   - Multi-part last name ("De La Cruz") → first letter of the first
+ *     part: "Carlos D."
+ *   - Both empty → "?"
+ */
+export function formatDisplayName(
+  firstName: string | null | undefined,
+  lastName: string | null | undefined,
+): string {
+  const f = (firstName ?? "").trim();
+  const l = (lastName ?? "").trim();
+  if (!f && !l) return "?";
+  if (!l) return f;
+  const initial = l[0]?.toUpperCase() ?? "";
+  return initial ? `${f} ${initial}.` : f;
+}
+
 export function initials(name: string | null | undefined) {
   if (!name) return "??";
   return name

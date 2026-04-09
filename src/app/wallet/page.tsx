@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireMembership } from "@/server/auth/session";
 import { getWalletBalance, listLedgerForMembership } from "@/server/db/queries";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate , bcp47Locale } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 
 export default async function WalletPage() {
@@ -30,7 +30,7 @@ export default async function WalletPage() {
           data-testid="wallet-balance"
           className={`mt-2 text-4xl font-black ${balance >= 0 ? "text-emerald-300" : "text-red-300"}`}
         >
-          {formatCurrency(balance, currency, locale === "tr" ? "tr-TR" : "en-GB")}
+          {formatCurrency(balance, currency, bcp47Locale(locale))}
         </p>
         <p className="mt-2 text-xs text-foreground/70">
           {t.wallet.derivedFrom} · {ledger.length}
@@ -71,13 +71,13 @@ export default async function WalletPage() {
                       {matchTitle ? ` · ${matchTitle}` : ""}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      {formatDate(tx.recorded_at, locale === "tr" ? "tr-TR" : "en-GB")}
+                      {formatDate(tx.recorded_at, bcp47Locale(locale))}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className={`text-sm font-bold ${credit ? "text-emerald-300" : "text-red-300"}`}>
                       {credit ? "+" : "-"}
-                      {formatCurrency(tx.amount, tx.currency_code, locale === "tr" ? "tr-TR" : "en-GB")}
+                      {formatCurrency(tx.amount, tx.currency_code, bcp47Locale(locale))}
                     </p>
                     <Badge variant={credit ? "success" : "danger"}>
                       {(t.wallet.transactionType as Record<string, string>)[tx.transaction_type] ?? tx.transaction_type}

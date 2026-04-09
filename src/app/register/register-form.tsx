@@ -18,7 +18,15 @@ export function RegisterForm({
 }: {
   inviteToken?: string;
   inviteCode?: string;
-  labels: { name: string; email: string; password: string; inviteCode: string; submit: string; pending: string };
+  labels: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    inviteCode: string;
+    submit: string;
+    pending: string;
+  };
 }) {
   const [state, formAction] = useActionState<RegisterState, FormData>(registerAction, initialState);
   const { t } = useI18n();
@@ -26,13 +34,31 @@ export function RegisterForm({
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="inviteToken" value={inviteToken ?? ""} />
       <input type="hidden" name="inviteCode" value={inviteCode ?? ""} />
-      <div className="space-y-2">
-        <Label htmlFor="displayName">{labels.name}</Label>
-        <Input id="displayName" name="displayName" required data-testid="register-name" />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="firstName">{labels.firstName}</Label>
+          <Input
+            id="firstName"
+            name="firstName"
+            required
+            autoComplete="given-name"
+            data-testid="register-first-name"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="lastName">{labels.lastName}</Label>
+          <Input
+            id="lastName"
+            name="lastName"
+            required
+            autoComplete="family-name"
+            data-testid="register-last-name"
+          />
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="email">{labels.email}</Label>
-        <Input id="email" name="email" type="email" required data-testid="register-email" />
+        <Input id="email" name="email" type="email" required autoComplete="email" data-testid="register-email" />
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">{labels.password}</Label>

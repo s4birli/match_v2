@@ -6,6 +6,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { requireRole } from "@/server/auth/session";
 import { audit } from "@/server/audit/log";
 import { notify, notifyMany } from "@/server/notifications/notify";
+import { formatDisplayName } from "@/lib/utils";
 
 // ---------- Tenant defaults (used by /admin/settings) ----------
 const tenantDefaultsSchema = z.object({
@@ -180,15 +181,17 @@ export async function startGuestConversionAction(
 // ---------- Members: guest create ----------
 export async function createGuestMemberAction(formData: FormData) {
   const { membership } = await requireRole(["admin", "owner"]);
-  const displayName = String(formData.get("displayName") ?? "").trim();
-  if (!displayName) return { error: "nameRequired" };
+  const firstName = String(formData.get("firstName") ?? "").trim();
+  const lastName = String(formData.get("lastName") ?? "").trim();
+  if (!firstName || !lastName) return { error: "nameRequired" };
+  const displayName = formatDisplayName(firstName, lastName);
   const admin = createSupabaseServiceClient();
 
   const { data: person, error: pErr } = await admin
     .from("persons")
     .insert({
-      first_name: displayName.split(" ")[0],
-      last_name: displayName.split(" ").slice(1).join(" ") || null,
+      first_name: firstName,
+      last_name: lastName,
       display_name: displayName,
       is_guest_profile: true,
     })
@@ -624,15 +627,18 @@ function randomCode() {
 // ---------- Profile / position prefs ----------
 export async function updateProfileAction(formData: FormData) {
   const { membership, session } = await requireRole(["user", "admin", "assistant_admin", "owner"]);
-  const displayName = String(formData.get("displayName") ?? "").trim();
-  if (!displayName) return { error: "displayNameRequired" };
+  const firstName = String(formData.get("firstName") ?? "").trim();
+  const lastName = String(formData.get("lastName") ?? "").trim();
+  if (!firstName || !lastName) return { error: "displayNameRequired" };
+  // "Mehmet Y." style — first name + last initial.
+  const displayName = formatDisplayName(firstName, lastName);
   const admin = createSupabaseServiceClient();
   await admin
     .from("persons")
     .update({
       display_name: displayName,
-      first_name: displayName.split(" ")[0],
-      last_name: displayName.split(" ").slice(1).join(" ") || null,
+      first_name: firstName,
+      last_name: lastName,
     })
     .eq("id", session.person.id);
 

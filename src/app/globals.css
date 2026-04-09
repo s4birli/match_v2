@@ -3,7 +3,47 @@
 @tailwind utilities;
 
 @layer base {
+  /* Light mode (default for :root). */
   :root {
+    --background: 0 0% 99%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 158 64% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 263 70% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 158 64% 42%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 222 47% 11%;
+
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 158 64% 42%;
+
+    --radius: 1rem;
+  }
+
+  /* Dark mode — applied when <html class="dark"> is set. */
+  .dark {
     --background: 222 47% 8%;
     --foreground: 213 31% 95%;
 
@@ -37,8 +77,6 @@
     --border: 217 33% 20%;
     --input: 217 33% 20%;
     --ring: 158 64% 52%;
-
-    --radius: 1rem;
   }
 
   * {
@@ -53,11 +91,17 @@
 
   body {
     background-image:
+      radial-gradient(1200px 600px at 10% -10%, rgba(124, 58, 237, 0.10), transparent 50%),
+      radial-gradient(1000px 700px at 100% 10%, rgba(16, 185, 129, 0.08), transparent 45%),
+      linear-gradient(180deg, #f6f8fb 0%, #eef2f8 45%, #f6f8fb 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  .dark body {
+    background-image:
       radial-gradient(1200px 600px at 10% -10%, rgba(124, 58, 237, 0.18), transparent 50%),
       radial-gradient(1000px 700px at 100% 10%, rgba(16, 185, 129, 0.14), transparent 45%),
       linear-gradient(180deg, #08101d 0%, #0d1729 45%, #09111f 100%);
-    background-attachment: fixed;
-    min-height: 100vh;
   }
 
   ::selection {
@@ -80,10 +124,16 @@
 
 @layer components {
   .glass {
-    @apply rounded-3xl border border-white/10 bg-white/[0.04] shadow-[0_18px_45px_rgba(0,0,0,0.35)] backdrop-blur-xl;
+    @apply rounded-3xl border border-black/[0.06] bg-white/80 shadow-[0_18px_45px_rgba(15,23,42,0.10)] backdrop-blur-xl;
+  }
+  .dark .glass {
+    @apply border-white/10 bg-white/[0.04] shadow-[0_18px_45px_rgba(0,0,0,0.35)];
   }
   .glass-strong {
-    @apply rounded-3xl border border-white/10 bg-slate-950/70 shadow-[0_18px_45px_rgba(0,0,0,0.45)] backdrop-blur-xl;
+    @apply rounded-3xl border border-black/[0.06] bg-white/95 shadow-[0_18px_45px_rgba(15,23,42,0.14)] backdrop-blur-xl;
+  }
+  .dark .glass-strong {
+    @apply border-white/10 bg-slate-950/70 shadow-[0_18px_45px_rgba(0,0,0,0.45)];
   }
   .hero-card {
     @apply rounded-3xl border border-white/10 p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)];

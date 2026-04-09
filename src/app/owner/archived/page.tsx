@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { requireRole } from "@/server/auth/session";
 import { listAllArchivedMembers } from "@/server/db/queries-owner";
 import { getServerDictionary } from "@/lib/i18n/server";
-import { initials, formatDate } from "@/lib/utils";
+import { initials, formatDate , bcp47Locale } from "@/lib/utils";
 
 export default async function OwnerArchivedPage() {
   const { session } = await requireRole(["owner"]);
@@ -55,7 +55,7 @@ export default async function OwnerArchivedPage() {
                   )}
                   {m.archived_at && (
                     <p className="text-[10px] text-muted-foreground">
-                      {formatDate(m.archived_at, locale === "tr" ? "tr-TR" : "en-GB")}
+                      {formatDate(m.archived_at, bcp47Locale(locale))}
                     </p>
                   )}
                 </div>

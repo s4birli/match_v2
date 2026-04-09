@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { listMatches } from "@/server/db/queries";
 import { requireMembership } from "@/server/auth/session";
-import { formatDate } from "@/lib/utils";
+import { formatDate , bcp47Locale } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { CalendarDays, MapPin } from "lucide-react";
 
@@ -56,7 +56,7 @@ export default async function MatchesPage() {
   );
 }
 
-type Locale = "en" | "tr";
+type Locale = "en" | "tr" | "es";
 type Dict = Awaited<ReturnType<typeof getServerDictionary>>["t"];
 
 function MatchList({
@@ -91,7 +91,7 @@ function MatchList({
                   </p>
                   <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                     <CalendarDays size={12} />
-                    {formatDate(m.starts_at, locale === "tr" ? "tr-TR" : "en-GB")}
+                    {formatDate(m.starts_at, bcp47Locale(locale))}
                   </p>
                   {venue && (
                     <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">

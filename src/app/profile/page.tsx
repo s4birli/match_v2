@@ -46,10 +46,12 @@ export default async function ProfilePage() {
       </Card>
 
       <ProfileForm
-        initialDisplayName={session.person.display_name}
+        initialFirstName={session.person.first_name ?? ""}
+        initialLastName={session.person.last_name ?? ""}
         initialPositions={positionCodes}
         labels={{
-          displayName: t.profile.displayName,
+          firstName: t.profile.firstName,
+          lastName: t.profile.lastName,
           positionsTitle: t.profile.positionsTitle,
           positionGoalkeeper: t.profile.positions.goalkeeper,
           positionDefender: t.profile.positions.defender,

@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { requireRole } from "@/server/auth/session";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { listMatches, listTenantMembers } from "@/server/db/queries";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate , bcp47Locale } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 
 export default async function AdminDashboardPage() {
@@ -133,7 +133,7 @@ export default async function AdminDashboardPage() {
             value={formatCurrency(
               outstanding,
               membership.tenant.currency_code,
-              locale === "tr" ? "tr-TR" : "en-GB",
+              bcp47Locale(locale),
             )}
             icon={<Wallet size={18} />}
           />
@@ -191,7 +191,7 @@ export default async function AdminDashboardPage() {
                     <CalendarDays size={12} />
                     {formatDate(
                       nextMatch.starts_at,
-                      locale === "tr" ? "tr-TR" : "en-GB",
+                      bcp47Locale(locale),
                     )}
                   </p>
                   {venueName && (
@@ -238,7 +238,7 @@ export default async function AdminDashboardPage() {
                       {m.title ?? `${m.team_format_label} match`}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      {formatDate(m.starts_at, locale === "tr" ? "tr-TR" : "en-GB")}
+                      {formatDate(m.starts_at, bcp47Locale(locale))}
                     </p>
                   </div>
                   <Badge variant="success">completed</Badge>

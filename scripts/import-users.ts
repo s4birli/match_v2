@@ -59,13 +59,28 @@ type Role = "user" | "admin" | "assistant_admin" | "guest";
 
 type UserRecord = {
   email?: string | null;
-  displayName: string;
+  // Either pass firstName + lastName (preferred — display_name is then
+  // computed as "Mehmet Y." style) or pass a pre-built displayName.
+  // At least one of the two forms must be present.
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
   tenantSlug: string;
   role?: Role;
   isGuest?: boolean;
   password?: string;
   positions?: string[];
 };
+
+/** "Mehmet Y." style display name. Mirrors src/lib/utils.ts. */
+function formatDisplayName(first: string, last: string): string {
+  const f = first.trim();
+  const l = last.trim();
+  if (!f && !l) return "?";
+  if (!l) return f;
+  const init = l[0]?.toUpperCase() ?? "";
+  return init ? `${f} ${init}.` : f;
+}
 
 type GroupedInput = {
   tenants: Array<{
@@ -156,6 +171,8 @@ async function ensurePerson(
   opts: {
     email?: string | null;
     displayName: string;
+    firstName?: string;
+    lastName?: string;
     primaryAccountId?: string | null;
     isGuest?: boolean;
   },
@@ -191,8 +208,15 @@ async function ensurePerson(
     if (byName[0]) return byName[0].id;
   }
 
-  const first = opts.displayName.split(" ")[0];
-  const last = opts.displayName.split(" ").slice(1).join(" ") || null;
+  // Prefer the explicit firstName/lastName the caller passed (matches the
+  // register/profile/createGuest flows which all store the real names).
+  // Fall back to splitting the display name only when the caller didn't
+  // provide structured fields (back-compat with displayName-only inputs).
+  const first =
+    opts.firstName?.trim() || opts.displayName.split(" ")[0] || "";
+  const last =
+    opts.lastName?.trim() ||
+    (opts.displayName.split(" ").slice(1).join(" ") || null);
   const { rows } = await client.query<{ id: string }>(
     `INSERT INTO persons
        (primary_account_id, first_name, last_name, display_name, email, is_guest_profile)
@@ -279,9 +303,29 @@ async function main() {
   try {
     for (const r of records) {
       try {
-        if (!r.displayName || !r.tenantSlug) {
-          throw new Error("displayName and tenantSlug are required");
+        if (!r.tenantSlug) {
+          throw new Error("tenantSlug is required");
         }
+        // Resolve first/last/display: caller can pass either form. If only
+        // displayName is supplied (back-compat), split it on whitespace.
+        let firstName = (r.firstName ?? "").trim();
+        let lastName = (r.lastName ?? "").trim();
+        if (!firstName && !lastName) {
+          if (!r.displayName) {
+            throw new Error(
+              "either firstName + lastName or displayName is required",
+            );
+          }
+          const parts = r.displayName.trim().split(/\s+/);
+          firstName = parts[0] ?? "";
+          lastName = parts.slice(1).join(" ");
+        }
+        if (!firstName) throw new Error("firstName is required");
+        // The DB uses display_name for everything user-facing. Compute the
+        // "Mehmet Y." form once so it stays consistent with the register
+        // and profile flows.
+        const displayName = formatDisplayName(firstName, lastName);
+
         const tenantId = await findTenantBySlug(client, r.tenantSlug);
         if (!tenantId) {
           throw new Error(`Tenant slug "${r.tenantSlug}" not found`);
@@ -290,10 +334,6 @@ async function main() {
 
         let primaryAccountId: string | null = null;
         if (r.email) {
-          // Bcrypt the supplied password? We use the seed hash for everyone
-          // who didn't pass an explicit hash so all imports share Test1234!
-          // unless the JSON includes a pre-hashed string under
-          // `password` (advanced).
           const passwordHash = r.password ?? TEST_PASSWORD_HASH;
           const authUserBefore = await client.query<{ id: string }>(
             `SELECT id FROM auth.users WHERE email = $1`,
@@ -302,7 +342,7 @@ async function main() {
           const authUserId = await ensureAuthUser(
             client,
             r.email,
-            r.displayName,
+            displayName,
             passwordHash,
           );
           if (authUserBefore.rowCount === 0) createdAuthUsers++;
@@ -311,7 +351,9 @@ async function main() {
 
         const personId = await ensurePerson(client, {
           email: r.email ?? null,
-          displayName: r.displayName,
+          displayName,
+          firstName,
+          lastName,
           primaryAccountId,
           isGuest: r.isGuest ?? r.role === "guest",
         });
@@ -346,8 +388,12 @@ async function main() {
   if (errors.length > 0) {
     console.error(`[import-users] ${errors.length} error(s):`);
     for (const e of errors) {
+      const who =
+        e.record.displayName ??
+        [e.record.firstName, e.record.lastName].filter(Boolean).join(" ") ??
+        "(no name)";
       console.error(
-        `  - ${e.record.displayName} (${e.record.email ?? "no-email"} → ${e.record.tenantSlug}): ${e.error}`,
+        `  - ${who} (${e.record.email ?? "no-email"} → ${e.record.tenantSlug ?? "no-tenant"}): ${e.error}`,
       );
     }
     process.exitCode = 1;

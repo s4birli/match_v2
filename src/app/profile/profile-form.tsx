@@ -12,14 +12,17 @@ import { updateProfileAction } from "@/server/actions/admin";
 const POSITION_CODES = ["goalkeeper", "defender", "midfield", "forward"] as const;
 
 export function ProfileForm({
-  initialDisplayName,
+  initialFirstName,
+  initialLastName,
   initialPositions,
   labels,
 }: {
-  initialDisplayName: string;
+  initialFirstName: string;
+  initialLastName: string;
   initialPositions: string[];
   labels: {
-    displayName: string;
+    firstName: string;
+    lastName: string;
     positionsTitle: string;
     positionGoalkeeper: string;
     positionDefender: string;
@@ -52,15 +55,29 @@ export function ProfileForm({
   return (
     <Card>
       <form action={action} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="displayName">{labels.displayName}</Label>
-          <Input
-            id="displayName"
-            name="displayName"
-            defaultValue={initialDisplayName}
-            data-testid="profile-display-name"
-            required
-          />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">{labels.firstName}</Label>
+            <Input
+              id="firstName"
+              name="firstName"
+              defaultValue={initialFirstName}
+              autoComplete="given-name"
+              data-testid="profile-first-name"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastName">{labels.lastName}</Label>
+            <Input
+              id="lastName"
+              name="lastName"
+              defaultValue={initialLastName}
+              autoComplete="family-name"
+              data-testid="profile-last-name"
+              required
+            />
+          </div>
         </div>
         <div className="space-y-2">
           <Label>{labels.positionsTitle}</Label>

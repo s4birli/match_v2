@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase/server";
 import { ACTIVE_TENANT_COOKIE_NAME } from "@/server/auth/session";
+import { formatDisplayName } from "@/lib/utils";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -15,7 +16,8 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
-  displayName: z.string().min(2).max(80),
+  firstName: z.string().trim().min(1).max(60),
+  lastName: z.string().trim().min(1).max(60),
   inviteCode: z.string().optional().nullable(),
   inviteToken: z.string().optional().nullable(),
 });
@@ -44,14 +46,17 @@ export async function registerAction(prevState: unknown, formData: FormData) {
   const parsed = registerSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
-    displayName: formData.get("displayName"),
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
     inviteCode: formData.get("inviteCode") || null,
     inviteToken: formData.get("inviteToken") || null,
   });
   if (!parsed.success) {
     return { error: "fillAllFields" };
   }
-  const { email, password, displayName, inviteCode, inviteToken } = parsed.data;
+  const { email, password, firstName, lastName, inviteCode, inviteToken } = parsed.data;
+  // Public display name = "Mehmet Y." — first name + last initial.
+  const displayName = formatDisplayName(firstName, lastName);
 
   const supabase = await createSupabaseServerClient();
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -116,8 +121,8 @@ export async function registerAction(prevState: unknown, formData: FormData) {
           .from("persons")
           .update({
             primary_account_id: account.id,
-            first_name: displayName.split(" ")[0],
-            last_name: displayName.split(" ").slice(1).join(" ") || null,
+            first_name: firstName,
+            last_name: lastName,
             display_name: displayName,
             email,
             is_guest_profile: false,
@@ -182,8 +187,8 @@ export async function registerAction(prevState: unknown, formData: FormData) {
       .from("persons")
       .insert({
         primary_account_id: account.id,
-        first_name: displayName.split(" ")[0],
-        last_name: displayName.split(" ").slice(1).join(" ") || null,
+        first_name: firstName,
+        last_name: lastName,
         display_name: displayName,
         email,
         is_guest_profile: false,
@@ -355,7 +360,13 @@ export async function switchActiveTenantAction(tenantId: string) {
   revalidatePath("/", "layout");
 }
 
-export async function setLocaleAction(locale: "en" | "tr") {
+export async function setThemeAction(theme: "light" | "dark" | "system") {
+  const cookieStore = await cookies();
+  cookieStore.set("theme", theme, { path: "/", maxAge: 60 * 60 * 24 * 365 });
+  revalidatePath("/", "layout");
+}
+
+export async function setLocaleAction(locale: "en" | "tr" | "es") {
   const cookieStore = await cookies();
   cookieStore.set("locale", locale, { path: "/" });
 
@@ -398,7 +409,11 @@ async function syncActiveTenantCookie(): Promise<string | null> {
   // The browser may have a stale cookie from a previous user on the same
   // device — we want every login to honour THIS user's saved preference.
   const cookieStore = await cookies();
-  if (account.preferred_language === "tr" || account.preferred_language === "en") {
+  if (
+    account.preferred_language === "tr" ||
+    account.preferred_language === "en" ||
+    account.preferred_language === "es"
+  ) {
     cookieStore.set("locale", account.preferred_language, { path: "/" });
   }
 

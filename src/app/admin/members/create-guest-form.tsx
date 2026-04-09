@@ -27,13 +27,29 @@ export function CreateGuestForm() {
   }
 
   return (
-    <form action={action} className="flex flex-wrap items-end gap-3">
-      <div className="flex-1 space-y-2">
-        <Label htmlFor="displayName">Display name</Label>
-        <Input id="displayName" name="displayName" required data-testid="guest-name" />
+    <form action={action} className="grid gap-3 sm:grid-cols-3 sm:items-end">
+      <div className="space-y-2">
+        <Label htmlFor="firstName">{t.profile.firstName}</Label>
+        <Input
+          id="firstName"
+          name="firstName"
+          required
+          autoComplete="given-name"
+          data-testid="guest-first-name"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="lastName">{t.profile.lastName}</Label>
+        <Input
+          id="lastName"
+          name="lastName"
+          required
+          autoComplete="family-name"
+          data-testid="guest-last-name"
+        />
       </div>
       <Button type="submit" disabled={pending} data-testid="guest-create">
-        {pending ? "Adding…" : "Add guest"}
+        {pending ? t.admin.adding : t.admin.addGuestBtn}
       </Button>
     </form>
   );

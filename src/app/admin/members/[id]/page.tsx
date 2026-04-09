@@ -13,7 +13,7 @@ import {
   getWalletBalance,
   listLedgerForMembership,
 } from "@/server/db/queries";
-import { formatCurrency, formatDate, initials } from "@/lib/utils";
+import { formatCurrency, formatDate, initials , bcp47Locale } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 
 /**
@@ -63,7 +63,7 @@ export default async function AdminMemberDetailPage({
 
   const display = (target.person as { display_name?: string } | null)?.display_name ?? "Player";
   const isSelf = target.id === viewer.id;
-  const dateLocale = locale === "tr" ? "tr-TR" : "en-GB";
+  const dateLocale = bcp47Locale(locale);
 
   return (
     <AppShell session={session} activePath="/admin/members">

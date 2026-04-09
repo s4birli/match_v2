@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { requireRole } from "@/server/auth/session";
 import { listAllLedgerForOwner } from "@/server/db/queries-owner";
 import { getServerDictionary } from "@/lib/i18n/server";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate , bcp47Locale } from "@/lib/utils";
 
 export default async function OwnerLedgerPage() {
   const { session } = await requireRole(["owner"]);
@@ -55,7 +55,7 @@ export default async function OwnerLedgerPage() {
                     </p>
                     <p className="text-[11px] text-muted-foreground">
                       {tx.description ?? tx.transaction_type} ·{" "}
-                      {formatDate(tx.recorded_at, locale === "tr" ? "tr-TR" : "en-GB")}
+                      {formatDate(tx.recorded_at, bcp47Locale(locale))}
                     </p>
                   </div>
                   <div className="text-right">

@@ -1,6 +1,22 @@
-export const locales = ["en", "tr"] as const;
+export const locales = ["en", "tr", "es"] as const;
 export type Locale = (typeof locales)[number];
 export const defaultLocale: Locale = "en";
+
+/**
+ * Human-readable label for each locale, used by the LanguageToggle dropdown.
+ * Lives next to the dictionary so adding a new language is one place.
+ */
+export const localeLabels: Record<Locale, string> = {
+  en: "English",
+  tr: "Türkçe",
+  es: "Español",
+};
+
+export const localeFlags: Record<Locale, string> = {
+  en: "🇬🇧",
+  tr: "🇹🇷",
+  es: "🇪🇸",
+};
 
 const dictionaries = {
   en: {
@@ -391,6 +407,8 @@ const dictionaries = {
       pushUnsupported: "This browser does not support web push notifications.",
       positionsTitle: "Positions",
       displayName: "Display name",
+      firstName: "First name",
+      lastName: "Last name",
       saveChanges: "Save changes",
       saved: "Profile saved",
       positions: {
@@ -986,6 +1004,8 @@ const dictionaries = {
       pushUnsupported: "Bu tarayıcı web push bildirimlerini desteklemiyor.",
       positionsTitle: "Pozisyonlar",
       displayName: "Görünen ad",
+      firstName: "Ad",
+      lastName: "Soyad",
       saveChanges: "Değişiklikleri kaydet",
       saved: "Profil kaydedildi",
       positions: {
@@ -1195,8 +1215,153 @@ const dictionaries = {
   },
 } as const;
 
-export type Dictionary = (typeof dictionaries)[Locale];
+export type Dictionary = (typeof dictionaries)["en"];
+
+/**
+ * Partial Spanish overrides — shallow-merged on top of the English defaults
+ * at lookup time. Add more keys here as the product matures; anything not
+ * listed will fall back to English so the UI never has missing strings.
+ *
+ * Translation principle: keep namespaces flat enough to merge without
+ * dropping nested objects. We deep-merge two levels (namespace → key)
+ * which covers the existing dictionary shape.
+ */
+const esOverrides = {
+  common: {
+    appName: "Match Club",
+    tagline: "Gestiona tu grupo de fútbol como un profesional",
+    signIn: "Iniciar sesión",
+    signUp: "Registrarse",
+    logout: "Cerrar sesión",
+    email: "Correo",
+    password: "Contraseña",
+    submit: "Enviar",
+    cancel: "Cancelar",
+    save: "Guardar",
+    delete: "Eliminar",
+    edit: "Editar",
+    back: "Atrás",
+    next: "Siguiente",
+    yes: "Sí",
+    no: "No",
+    loading: "Cargando…",
+    empty: "Aún no hay nada",
+    confirm: "Confirmar",
+    decline: "Rechazar",
+    players: "jugadores",
+    vs: "vs",
+    red: "Rojo",
+    blue: "Azul",
+    draw: "Empate",
+    win: "Victoria",
+    loss: "Derrota",
+    open: "Abierto",
+    closed: "Cerrado",
+    upcoming: "Próximo",
+    past: "Pasado",
+    copy: "Copiar",
+    created: "Creado",
+    status: "Estado",
+    role: "Rol",
+  },
+  nav: {
+    dashboard: "Inicio",
+    matches: "Partidos",
+    wallet: "Cartera",
+    stats: "Estadísticas",
+    profile: "Perfil",
+    notifications: "Notificaciones",
+    admin: "Admin",
+    owner: "Propietario",
+    members: "Miembros",
+    venues: "Canchas",
+    payments: "Pagos",
+    invites: "Invitaciones",
+    archived: "Archivados",
+    settings: "Ajustes",
+    tenants: "Grupos",
+    groups: "Grupos",
+    ledger: "Libro mayor",
+  },
+  auth: {
+    loginTitle: "Inicia sesión en tu grupo de fútbol",
+    loginSubtitle: "Reúne a tu equipo y juega partidos hermosos.",
+    registerTitle: "Crea tu cuenta",
+    forgotTitle: "Restablece tu contraseña",
+    resetTitle: "Elige una nueva contraseña",
+    noAccount: "¿No tienes una cuenta?",
+    hasAccount: "¿Ya tienes una cuenta?",
+    forgot: "¿Olvidaste tu contraseña?",
+    sendResetLink: "Enviar enlace",
+    backToLogin: "Volver a iniciar sesión",
+    checkInbox: "Revisa tu bandeja de entrada para el enlace.",
+    passwordUpdated: "Tu contraseña ha sido actualizada.",
+    registerSuccess: "¡Cuenta creada! Ya puedes iniciar sesión.",
+    joinWithCode: "Unirse con código",
+    inviteCodePlaceholder: "Código de invitación del grupo",
+    acceptInvite: "Aceptar invitación",
+    joining: "Uniéndose al grupo…",
+  },
+  dashboard: {
+    hello: "Hola",
+    yourNextMatch: "Tu próximo partido",
+    noUpcoming: "No hay partidos próximos.",
+    attendance: "Asistencia",
+    walletBalance: "Saldo de cartera",
+    played: "Jugados",
+    wins: "Victorias",
+    losses: "Derrotas",
+    draws: "Empates",
+    winRate: "% de victorias",
+    motm: "Jugador del partido",
+    avgRating: "Puntuación media",
+    recentMatches: "Partidos recientes",
+    leaderboard: "Mejores jugadores",
+  },
+  profile: {
+    languageTitle: "Idioma",
+    notificationsTitle: "Notificaciones",
+    enablePush: "Activar notificaciones push",
+    disablePush: "Desactivar notificaciones push",
+    pushUnsupported: "Este navegador no soporta notificaciones web push.",
+    positionsTitle: "Posiciones",
+    displayName: "Nombre visible",
+    firstName: "Nombre",
+    lastName: "Apellido",
+    saveChanges: "Guardar cambios",
+    saved: "Perfil guardado",
+  },
+} as const;
+
+/**
+ * Deep-merge a 2-level dict (namespace → keys) so that partial overrides
+ * for `tr` / `es` still resolve to fully-typed Dictionary objects with
+ * EN fallback for any missing field.
+ */
+function mergeDict<T extends Record<string, Record<string, unknown>>>(base: T, over: object): T {
+  const out = { ...base } as T;
+  for (const [ns, value] of Object.entries(over as Record<string, Record<string, unknown>>)) {
+    out[ns as keyof T] = {
+      ...(base[ns as keyof T] ?? {}),
+      ...value,
+    } as T[keyof T];
+  }
+  return out;
+}
+
+const merged: Record<Locale, Dictionary> = {
+  // tr/es are structurally compatible with the en shape (same keys, same
+  // value types — just different literal strings). The literal-types lose
+  // information after the cast but we don't rely on the *value* of any
+  // dictionary key in TypeScript code, only on the *path* to it.
+  en: dictionaries.en as unknown as Dictionary,
+  tr: dictionaries.tr as unknown as Dictionary,
+  es: mergeDict(
+    dictionaries.en as unknown as Record<string, Record<string, unknown>>,
+    esOverrides,
+  ) as unknown as Dictionary,
+};
 
 export function getDictionary(locale: Locale): Dictionary {
-  return dictionaries[locale] ?? dictionaries[defaultLocale];
+  return merged[locale] ?? merged[defaultLocale];
 }
