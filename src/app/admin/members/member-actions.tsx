@@ -1,10 +1,17 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { UserPlus, Copy, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
-import { archiveMembershipAction, restoreMembershipAction } from "@/server/actions/admin";
+import {
+  archiveMembershipAction,
+  restoreMembershipAction,
+  startGuestConversionAction,
+} from "@/server/actions/admin";
 
 export function ArchiveMemberButton({ id }: { id: string }) {
   const { push } = useToast();
@@ -51,5 +58,150 @@ export function RestoreMemberButton({ id }: { id: string }) {
     <Button size="sm" variant="secondary" disabled={pending} onClick={restore} data-testid={`restore-${id}`}>
       Restore
     </Button>
+  );
+}
+
+/**
+ * Convert a guest into a registered member without losing any history.
+ * Opens a small popover, takes the new user's email, generates an invite
+ * URL the admin can share. When the invitee registers via that URL, the
+ * server re-links the existing person + membership instead of inserting
+ * new rows — every match_participants / ledger / rating / motm row that
+ * already references this membership stays intact.
+ */
+export function ConvertGuestButton({ id }: { id: string }) {
+  const { push } = useToast();
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
+
+  function submit() {
+    if (!email) return;
+    start(async () => {
+      const fd = new FormData();
+      fd.set("membershipId", id);
+      fd.set("email", email);
+      const res = await startGuestConversionAction(fd);
+      if ("error" in res) {
+        push({ title: res.error, tone: "danger" });
+        return;
+      }
+      setGeneratedUrl(res.url);
+      push({ title: "Invite link ready", tone: "success" });
+      router.refresh();
+    });
+  }
+
+  function copy() {
+    if (!generatedUrl) return;
+    navigator.clipboard.writeText(generatedUrl).then(
+      () => push({ title: "Copied", tone: "success" }),
+      () => push({ title: "Copy failed", tone: "danger" }),
+    );
+  }
+
+  function close() {
+    setOpen(false);
+    setEmail("");
+    setGeneratedUrl(null);
+  }
+
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="accent"
+        onClick={() => setOpen(true)}
+        data-testid={`convert-guest-${id}`}
+      >
+        <UserPlus size={14} />
+        Convert
+      </Button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+          aria-modal="true"
+          role="dialog"
+        >
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={close}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+          <div className="glass-strong relative w-full max-w-md animate-slide-up rounded-3xl p-5">
+            <header className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-semibold">Convert guest to member</h3>
+              <button
+                type="button"
+                onClick={close}
+                className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08]"
+              >
+                <X size={14} />
+              </button>
+            </header>
+            <p className="mb-3 text-xs text-muted-foreground">
+              All match history, ratings, MOTM votes and ledger entries stay
+              attached to this player. We just link them to a real account.
+            </p>
+
+            {!generatedUrl ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="convert-email">Email</Label>
+                  <Input
+                    id="convert-email"
+                    type="email"
+                    placeholder="player@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    data-testid="convert-email"
+                  />
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <Button
+                    onClick={submit}
+                    disabled={pending || !email}
+                    className="flex-1"
+                    data-testid="convert-submit"
+                  >
+                    {pending ? "Generating…" : "Generate invite link"}
+                  </Button>
+                  <Button variant="ghost" onClick={close}>
+                    Cancel
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-3">
+                  <p className="text-[11px] text-emerald-200">
+                    Share this link with {email}. When they register, every match
+                    row stays under their existing player profile.
+                  </p>
+                  <code
+                    className="block break-all rounded-lg bg-black/30 px-3 py-2 text-xs"
+                    data-testid="convert-url"
+                  >
+                    {generatedUrl}
+                  </code>
+                  <Button size="sm" variant="secondary" onClick={copy}>
+                    <Copy size={14} /> Copy link
+                  </Button>
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <Button variant="ghost" onClick={close}>
+                    Done
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

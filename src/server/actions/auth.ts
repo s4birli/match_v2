@@ -63,7 +63,7 @@ export async function registerAction(prevState: unknown, formData: FormData) {
   const authUserId = signUpData.user?.id;
   if (!authUserId) return { error: "Sign-up failed." };
 
-  // Create app rows via service client
+  // Create the account row first.
   const admin = createSupabaseServiceClient();
   const { data: account, error: accountError } = await admin
     .from("accounts")
@@ -72,23 +72,18 @@ export async function registerAction(prevState: unknown, formData: FormData) {
     .single();
   if (accountError) return { error: accountError.message };
 
-  const { data: person, error: personError } = await admin
-    .from("persons")
-    .insert({
-      primary_account_id: account.id,
-      first_name: displayName.split(" ")[0],
-      last_name: displayName.split(" ").slice(1).join(" ") || null,
-      display_name: displayName,
-      email,
-      is_guest_profile: false,
-    })
-    .select()
-    .single();
-  if (personError) return { error: personError.message };
-
-  // Optional: attach to a tenant via invite token / code
+  // ─────────────────────────────────────────────────────────────────────
+  // GUEST CONVERSION fast-path: if the invite token is a `claim_*` token,
+  // do NOT create a new person/membership. Instead, find the existing
+  // guest membership recorded against this token in audit_logs and re-link
+  // it. All FKs (match_participants, ledger, ratings, MOTM votes) stay
+  // valid because we're updating the same row IDs.
+  // ─────────────────────────────────────────────────────────────────────
   let tenantToActivate: string | null = null;
-  if (inviteToken) {
+  let person: { id: string; email: string | null } | null = null;
+  let claimedExistingMembership = false;
+
+  if (inviteToken && inviteToken.startsWith("claim_")) {
     const { data: invite } = await admin
       .from("tenant_invites")
       .select("*")
@@ -96,6 +91,117 @@ export async function registerAction(prevState: unknown, formData: FormData) {
       .eq("is_active", true)
       .maybeSingle();
     if (invite) {
+      const { data: claim } = await admin
+        .from("audit_logs")
+        .select("metadata")
+        .eq("entity_type", "guest_conversion")
+        .eq("action_type", "start_guest_conversion")
+        .contains("metadata", { invite_token: inviteToken })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const md = claim?.metadata as
+        | { claim_membership_id?: string; claim_person_id?: string; recipient_email?: string }
+        | undefined;
+      if (md?.claim_membership_id && md?.claim_person_id) {
+        if (md.recipient_email && md.recipient_email !== email) {
+          return {
+            error: `This invite is for ${md.recipient_email}. Please register with that email.`,
+          };
+        }
+
+        // Re-link the EXISTING person row to the brand new account.
+        const { data: updatedPerson, error: linkErr } = await admin
+          .from("persons")
+          .update({
+            primary_account_id: account.id,
+            first_name: displayName.split(" ")[0],
+            last_name: displayName.split(" ").slice(1).join(" ") || null,
+            display_name: displayName,
+            email,
+            is_guest_profile: false,
+          })
+          .eq("id", md.claim_person_id)
+          .select("id, email")
+          .single();
+        if (linkErr) return { error: linkErr.message };
+        person = updatedPerson;
+
+        // Promote the membership in place — same row id, all FKs survive.
+        await admin
+          .from("memberships")
+          .update({
+            role: "user",
+            is_guest_membership: false,
+            status: "active",
+          })
+          .eq("id", md.claim_membership_id);
+
+        // Audit + invite bookkeeping.
+        await admin.from("person_account_links").insert({
+          person_id: md.claim_person_id,
+          account_id: account.id,
+          link_type: "claimed_guest",
+        });
+        await admin.from("invite_consumptions").insert({
+          tenant_invite_id: invite.id,
+          account_id: account.id,
+          person_id: md.claim_person_id,
+          membership_id: md.claim_membership_id,
+          source_type: "link",
+          metadata: { converted_from_guest: true },
+        });
+        await admin
+          .from("tenant_invites")
+          .update({
+            used_count: (invite.used_count ?? 0) + 1,
+            is_active: false,
+          })
+          .eq("id", invite.id);
+        await admin.from("audit_logs").insert({
+          tenant_id: invite.tenant_id,
+          actor_account_id: account.id,
+          entity_type: "guest_conversion",
+          entity_id: md.claim_membership_id,
+          action_type: "complete_guest_conversion",
+          metadata: { account_id: account.id },
+        });
+
+        tenantToActivate = invite.tenant_id;
+        claimedExistingMembership = true;
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Standard path: brand-new person row for a brand-new player.
+  // ─────────────────────────────────────────────────────────────────────
+  if (!claimedExistingMembership) {
+    const { data: newPerson, error: personError } = await admin
+      .from("persons")
+      .insert({
+        primary_account_id: account.id,
+        first_name: displayName.split(" ")[0],
+        last_name: displayName.split(" ").slice(1).join(" ") || null,
+        display_name: displayName,
+        email,
+        is_guest_profile: false,
+      })
+      .select()
+      .single();
+    if (personError) return { error: personError.message };
+    person = newPerson;
+  }
+
+  // Standard tenant invite token (non-claim) — attach via membership insert.
+  if (!claimedExistingMembership && inviteToken) {
+    const { data: invite } = await admin
+      .from("tenant_invites")
+      .select("*")
+      .eq("token", inviteToken)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (invite && person) {
       const { data: m } = await admin
         .from("memberships")
         .insert({
@@ -122,7 +228,7 @@ export async function registerAction(prevState: unknown, formData: FormData) {
         .update({ used_count: (invite.used_count ?? 0) + 1 })
         .eq("id", invite.id);
     }
-  } else if (inviteCode) {
+  } else if (inviteCode && person) {
     const { data: tenant } = await admin
       .from("tenants")
       .select("*")

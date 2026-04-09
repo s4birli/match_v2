@@ -55,6 +55,126 @@ export async function createVenueAction(formData: FormData) {
   return { ok: true };
 }
 
+// ---------- Members: guest convert to registered member ----------
+//
+// Key product rule (CLAUDE.md): the guest's history (matches played, team
+// assignments, ratings received, wallet, MOTM) MUST be preserved. We achieve
+// this by NOT creating a new person/membership. Instead:
+//
+//   1. Admin clicks "Convert" on a guest row + enters an email.
+//   2. We stamp the email on the existing persons row and create a single-use
+//      tenant_invites row whose metadata holds `{ claim_guest_membership_id }`.
+//   3. We return the /invite/<token> URL for the admin to share.
+//   4. When the invitee registers via that link, registerAction sees the
+//      claim metadata and re-links: persons.primary_account_id = new account,
+//      persons.is_guest_profile = false, memberships.role = 'user',
+//      memberships.is_guest_membership = false. Same row IDs → all FKs
+//      (match_participants, ledger, ratings, motm votes) stay valid.
+const convertGuestSchema = z.object({
+  membershipId: z.string().uuid(),
+  email: z.string().email(),
+});
+
+function randomConvertToken() {
+  return (
+    "claim_" +
+    Math.random().toString(36).slice(2, 10) +
+    Math.random().toString(36).slice(2, 10)
+  );
+}
+
+export async function startGuestConversionAction(
+  formData: FormData,
+): Promise<{ ok: true; token: string; url: string } | { error: string }> {
+  const { session, membership } = await requireRole(["admin", "owner"]);
+  const parsed = convertGuestSchema.safeParse({
+    membershipId: formData.get("membershipId"),
+    email: formData.get("email"),
+  });
+  if (!parsed.success) return { error: "Invalid input" };
+  const admin = createSupabaseServiceClient();
+
+  const { data: target } = await admin
+    .from("memberships")
+    .select("id, tenant_id, person_id, is_guest_membership, role")
+    .eq("id", parsed.data.membershipId)
+    .maybeSingle();
+  if (!target) return { error: "Membership not found" };
+  if (target.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
+  if (!target.is_guest_membership && target.role !== "guest") {
+    return { error: "This member is already a registered user." };
+  }
+
+  // Refuse if a real account already uses this email anywhere.
+  const { data: clash } = await admin
+    .from("accounts")
+    .select("id")
+    .eq("email", parsed.data.email)
+    .maybeSingle();
+  if (clash) {
+    return { error: "An account with this email already exists." };
+  }
+
+  // Stamp the email on the existing person row so the registration flow can
+  // double-check the match.
+  await admin
+    .from("persons")
+    .update({ email: parsed.data.email })
+    .eq("id", target.person_id);
+
+  // Find an existing admin membership to satisfy the FK on tenant_invites.
+  // (System owners aren't members of any tenant — see migration 20260409020000.)
+  const { data: anyAdmin } = await admin
+    .from("memberships")
+    .select("id")
+    .eq("tenant_id", membership.tenant_id)
+    .eq("role", "admin")
+    .neq("status", "archived")
+    .limit(1)
+    .maybeSingle();
+
+  const token = randomConvertToken();
+  const { data: invite, error: inviteErr } = await admin
+    .from("tenant_invites")
+    .insert({
+      tenant_id: membership.tenant_id,
+      token,
+      created_by_membership_id: anyAdmin?.id ?? membership.id,
+      default_role: "user",
+      max_uses: 1,
+      is_active: true,
+      // Stash the claim payload + recipient email here.
+      // (tenant_invites has no metadata column, so we re-purpose the
+      // invite_consumptions metadata at consume time. We encode the
+      // claim id into the token prefix instead.)
+    })
+    .select("id, token")
+    .single();
+  if (inviteErr || !invite) {
+    return { error: inviteErr?.message ?? "Failed to create invite." };
+  }
+
+  // Persist the claim mapping in audit_logs so registerAction can look it up.
+  await admin.from("audit_logs").insert({
+    tenant_id: membership.tenant_id,
+    actor_account_id: session.account.id,
+    entity_type: "guest_conversion",
+    entity_id: target.id,
+    action_type: "start_guest_conversion",
+    metadata: {
+      invite_token: invite.token,
+      claim_membership_id: target.id,
+      claim_person_id: target.person_id,
+      recipient_email: parsed.data.email,
+    },
+  });
+
+  const baseUrl = process.env.APP_URL ?? "http://localhost:3737";
+  const url = `${baseUrl}/invite/${invite.token}`;
+  revalidatePath("/admin/members");
+  return { ok: true, token: invite.token, url };
+}
+
 // ---------- Members: guest create ----------
 export async function createGuestMemberAction(formData: FormData) {
   const { membership } = await requireRole(["admin", "owner"]);

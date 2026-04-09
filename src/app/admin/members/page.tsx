@@ -8,7 +8,11 @@ import { requireRole } from "@/server/auth/session";
 import { listArchivedMembers, listTenantMembers } from "@/server/db/queries";
 import { initials } from "@/lib/utils";
 import { CreateGuestForm } from "./create-guest-form";
-import { ArchiveMemberButton, RestoreMemberButton } from "./member-actions";
+import {
+  ArchiveMemberButton,
+  ConvertGuestButton,
+  RestoreMemberButton,
+} from "./member-actions";
 
 export default async function AdminMembersPage() {
   const { session, membership } = await requireRole(["admin", "owner"]);
@@ -58,7 +62,10 @@ export default async function AdminMembersPage() {
                         {m.is_guest_membership ? <Badge variant="warning">guest</Badge> : null}
                       </div>
                     </div>
-                    <ArchiveMemberButton id={m.id} />
+                    <div className="flex items-center gap-1.5">
+                      {m.is_guest_membership && <ConvertGuestButton id={m.id} />}
+                      <ArchiveMemberButton id={m.id} />
+                    </div>
                   </li>
                 );
               })}
