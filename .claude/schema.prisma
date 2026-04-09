@@ -1,0 +1,605 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  owner
+  admin
+  assistant_admin
+  user
+  guest
+}
+
+enum MembershipStatus {
+  active
+  inactive
+  archived
+  invited
+}
+
+enum StatsVisibility {
+  included
+  excluded
+}
+
+enum MatchStatus {
+  draft
+  open
+  teams_ready
+  completed
+  cancelled
+}
+
+enum AttendanceStatus {
+  invited
+  confirmed
+  declined
+  reserve
+  checked_in
+  played
+  no_show
+}
+
+enum TeamKey {
+  red
+  blue
+}
+
+enum PollStatus {
+  open
+  closed
+}
+
+enum PollType {
+  winner_prediction
+}
+
+enum TransactionType {
+  payment
+  match_fee
+  adjustment
+  bonus
+  penalty
+}
+
+enum Direction {
+  debit
+  credit
+}
+
+enum NotificationType {
+  match_starting_soon
+  pre_match_poll_open
+  post_match_rating_open
+  wallet_updated
+}
+
+enum PositionCode {
+  goalkeeper
+  defender
+  midfield
+  forward
+}
+
+enum InviteSourceType {
+  link
+  code
+  manual
+}
+
+enum LinkType {
+  primary
+  claimed_guest
+  migrated
+}
+
+model Account {
+  id                   String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authUserId           String              @unique @db.Uuid
+  email                String              @unique @db.Citext
+  passwordManagedByAuth Boolean            @default(true)
+  emailVerifiedAt      DateTime?           @db.Timestamptz(6)
+  lastLoginAt          DateTime?           @db.Timestamptz(6)
+  isActive             Boolean             @default(true)
+  isArchived           Boolean             @default(false)
+  preferredLanguage    String              @default("en")
+  createdAt            DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime            @updatedAt @db.Timestamptz(6)
+
+  persons              Person[]
+  personAccountLinks   PersonAccountLink[]
+  inviteConsumptions   InviteConsumption[]
+  pushSubscriptions    PushSubscription[]
+  auditLogs            AuditLog[]
+}
+
+model Person {
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  primaryAccountId String?             @db.Uuid
+  firstName        String
+  lastName         String?
+  displayName      String
+  email            String?             @db.Citext
+  phone            String?
+  dateOfBirth      DateTime?           @db.Date
+  avatarUrl        String?
+  isGuestProfile   Boolean             @default(false)
+  globalNotes      String?
+  createdAt        DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime            @updatedAt @db.Timestamptz(6)
+
+  primaryAccount   Account?            @relation(fields: [primaryAccountId], references: [id])
+  memberships      Membership[]
+  personAccountLinks PersonAccountLink[]
+  inviteConsumptions InviteConsumption[]
+
+  @@index([primaryAccountId])
+  @@index([displayName])
+  @@index([email])
+}
+
+model PersonAccountLink {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  personId           String    @db.Uuid
+  accountId          String    @db.Uuid
+  linkType           LinkType
+  linkedAt           DateTime  @default(now()) @db.Timestamptz(6)
+  unlinkedAt         DateTime? @db.Timestamptz(6)
+  createdByAccountId String?   @db.Uuid
+
+  person             Person    @relation(fields: [personId], references: [id])
+  account            Account   @relation("PersonAccountLinkAccount", fields: [accountId], references: [id])
+
+  @@index([personId])
+  @@index([accountId])
+}
+
+model Tenant {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String
+  slug              String              @unique
+  currencyCode      String              @default("GBP")
+  defaultLanguage   String              @default("en")
+  inviteCode        String              @unique
+  inviteCodeActive  Boolean             @default(true)
+  inviteLinkActive  Boolean             @default(true)
+  defaultMatchFee   Decimal             @default(0) @db.Decimal(10, 2)
+  isActive          Boolean             @default(true)
+  isArchived        Boolean             @default(false)
+  createdAt         DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime            @updatedAt @db.Timestamptz(6)
+
+  featureFlags      TenantFeatureFlag[]
+  memberships       Membership[]
+  invites           TenantInvite[]
+  venues            Venue[]
+  matches           Match[]
+  matchTeams        MatchTeam[]
+  matchParticipants MatchParticipant[]
+  matchResults      MatchResult[]
+  preMatchPolls     PreMatchPoll[]
+  preMatchPollVotes PreMatchPollVote[]
+  playerOfMatchVotes PlayerOfMatchVote[]
+  teammateRatings   TeammateRating[]
+  ledgerTransactions LedgerTransaction[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+}
+
+model TenantFeatureFlag {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String   @db.Uuid
+  featureKey String
+  isEnabled  Boolean  @default(true)
+  configJson Json?
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, featureKey])
+}
+
+model Membership {
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId             String             @db.Uuid
+  personId             String             @db.Uuid
+  role                 Role
+  status               MembershipStatus   @default(active)
+  statsVisibility      StatsVisibility    @default(included)
+  joinedAt             DateTime?          @db.Timestamptz(6)
+  archivedAt           DateTime?          @db.Timestamptz(6)
+  archivedReason       String?
+  restoredAt           DateTime?          @db.Timestamptz(6)
+  isGuestMembership    Boolean            @default(false)
+  createdByMembershipId String?           @db.Uuid
+  createdAt            DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime           @updatedAt @db.Timestamptz(6)
+
+  tenant               Tenant             @relation(fields: [tenantId], references: [id])
+  person               Person             @relation(fields: [personId], references: [id])
+  createdByMembership  Membership?        @relation("MembershipCreator", fields: [createdByMembershipId], references: [id])
+  createdMemberships   Membership[]       @relation("MembershipCreator")
+  invitesCreated       TenantInvite[]
+  matchesCreated       Match[]            @relation("MatchCreatedBy")
+  matchesClosed        Match[]            @relation("MatchClosedBy")
+  matchResultsEntered  MatchResult[]
+  matchParticipants    MatchParticipant[]
+  preMatchPollsCreated PreMatchPoll[]
+  preMatchPollVotes    PreMatchPollVote[]
+  playerOfMatchVotesCast   PlayerOfMatchVote[] @relation("PlayerOfMatchVoter")
+  playerOfMatchVotesReceived PlayerOfMatchVote[] @relation("PlayerOfMatchTarget")
+  teammateRatingsGiven TeammateRating[]   @relation("TeammateRatingRater")
+  teammateRatingsReceived TeammateRating[] @relation("TeammateRatingTarget")
+  ratingRevisions      RatingRevision[]
+  ledgerTransactions   LedgerTransaction[] @relation("LedgerMembership")
+  ledgerRecorded       LedgerTransaction[] @relation("LedgerRecordedBy")
+  positionPreferences  PositionPreference[]
+  notifications        Notification[]
+  auditLogs            AuditLog[]         @relation("AuditActorMembership")
+
+  @@unique([tenantId, personId])
+  @@index([tenantId, role, status])
+  @@index([personId, status])
+  @@index([tenantId, statsVisibility])
+}
+
+model TenantInvite {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId            String    @db.Uuid
+  token               String    @unique
+  createdByMembershipId String  @db.Uuid
+  defaultRole         Role      @default(user)
+  maxUses             Int?
+  usedCount           Int       @default(0)
+  expiresAt           DateTime? @db.Timestamptz(6)
+  isActive            Boolean   @default(true)
+  createdAt           DateTime  @default(now()) @db.Timestamptz(6)
+
+  tenant              Tenant    @relation(fields: [tenantId], references: [id])
+  createdByMembership Membership @relation(fields: [createdByMembershipId], references: [id])
+  consumptions        InviteConsumption[]
+
+  @@index([tenantId, isActive])
+}
+
+model InviteConsumption {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantInviteId String           @db.Uuid
+  accountId      String?          @db.Uuid
+  personId       String?          @db.Uuid
+  membershipId   String?          @db.Uuid
+  consumedAt     DateTime         @default(now()) @db.Timestamptz(6)
+  sourceType     InviteSourceType
+  metadata       Json?
+
+  tenantInvite   TenantInvite     @relation(fields: [tenantInviteId], references: [id])
+  account        Account?         @relation(fields: [accountId], references: [id])
+  person         Person?          @relation(fields: [personId], references: [id])
+  membership     Membership?      @relation(fields: [membershipId], references: [id])
+}
+
+model PositionPreference {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  membershipId String       @db.Uuid
+  positionCode PositionCode
+  priorityRank Int          @default(1)
+  createdAt    DateTime     @default(now()) @db.Timestamptz(6)
+
+  membership   Membership   @relation(fields: [membershipId], references: [id])
+
+  @@unique([membershipId, positionCode])
+}
+
+model Venue {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String    @db.Uuid
+  name        String
+  addressLine String?
+  notes       String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(6)
+
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  matches     Match[]
+
+  @@unique([tenantId, name])
+}
+
+model Match {
+  id                  String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId            String       @db.Uuid
+  venueId             String?      @db.Uuid
+  title               String?
+  startsAt            DateTime     @db.Timestamptz(6)
+  endsAt              DateTime     @db.Timestamptz(6)
+  teamFormatLabel     String
+  playersPerTeam      Int
+  matchFee            Decimal      @db.Decimal(10, 2)
+  currencyCode        String
+  status              MatchStatus  @default(draft)
+  scoreEnteredAt      DateTime?    @db.Timestamptz(6)
+  closedByMembershipId String?     @db.Uuid
+  createdByMembershipId String     @db.Uuid
+  createdAt           DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime     @updatedAt @db.Timestamptz(6)
+
+  tenant              Tenant       @relation(fields: [tenantId], references: [id])
+  venue               Venue?       @relation(fields: [venueId], references: [id])
+  createdByMembership Membership   @relation("MatchCreatedBy", fields: [createdByMembershipId], references: [id])
+  closedByMembership  Membership?  @relation("MatchClosedBy", fields: [closedByMembershipId], references: [id])
+  teams               MatchTeam[]
+  participants        MatchParticipant[]
+  result              MatchResult?
+  preMatchPolls       PreMatchPoll[]
+  playerOfMatchVotes  PlayerOfMatchVote[]
+  teammateRatings     TeammateRating[]
+  ledgerTransactions  LedgerTransaction[]
+
+  @@index([tenantId, startsAt])
+  @@index([tenantId, status, startsAt])
+}
+
+model MatchTeam {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matchId     String    @db.Uuid
+  tenantId    String    @db.Uuid
+  teamKey     TeamKey
+  displayName String
+  sortOrder   Int
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+
+  match       Match     @relation(fields: [matchId], references: [id])
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  participants MatchParticipant[]
+  redResults  MatchResult[] @relation("RedTeam")
+  blueResults MatchResult[] @relation("BlueTeam")
+  wonResults  MatchResult[] @relation("WinnerTeam")
+  pollOptions PreMatchPollOption[]
+
+  @@unique([matchId, teamKey])
+}
+
+model MatchParticipant {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matchId            String           @db.Uuid
+  tenantId           String           @db.Uuid
+  membershipId       String           @db.Uuid
+  teamId             String?          @db.Uuid
+  attendanceStatus   AttendanceStatus @default(invited)
+  enteredAsReserve   Boolean          @default(false)
+  positionPlayedCode PositionCode?
+  joinedTeamAt       DateTime?        @db.Timestamptz(6)
+  attendanceUpdatedAt DateTime        @default(now()) @db.Timestamptz(6)
+  notes              String?
+  createdAt          DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime         @updatedAt @db.Timestamptz(6)
+
+  match              Match            @relation(fields: [matchId], references: [id])
+  tenant             Tenant           @relation(fields: [tenantId], references: [id])
+  membership         Membership       @relation(fields: [membershipId], references: [id])
+  team               MatchTeam?       @relation(fields: [teamId], references: [id])
+
+  @@unique([matchId, membershipId])
+  @@index([matchId, attendanceStatus])
+  @@index([membershipId, attendanceStatus])
+  @@index([matchId, teamId])
+}
+
+model MatchResult {
+  id                  String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matchId             String      @unique @db.Uuid
+  tenantId            String      @db.Uuid
+  redTeamId           String      @db.Uuid
+  blueTeamId          String      @db.Uuid
+  redScore            Int
+  blueScore           Int
+  winnerTeamId        String?     @db.Uuid
+  isDraw              Boolean     @default(false)
+  enteredByMembershipId String    @db.Uuid
+  enteredAt           DateTime    @default(now()) @db.Timestamptz(6)
+  notes               String?
+
+  match               Match       @relation(fields: [matchId], references: [id])
+  tenant              Tenant      @relation(fields: [tenantId], references: [id])
+  redTeam             MatchTeam   @relation("RedTeam", fields: [redTeamId], references: [id])
+  blueTeam            MatchTeam   @relation("BlueTeam", fields: [blueTeamId], references: [id])
+  winnerTeam          MatchTeam?  @relation("WinnerTeam", fields: [winnerTeamId], references: [id])
+  enteredByMembership Membership  @relation(fields: [enteredByMembershipId], references: [id])
+}
+
+model PreMatchPoll {
+  id                  String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matchId             String      @db.Uuid
+  tenantId            String      @db.Uuid
+  pollType            PollType    @default(winner_prediction)
+  status              PollStatus  @default(open)
+  openedAt            DateTime    @default(now()) @db.Timestamptz(6)
+  closedAt            DateTime?   @db.Timestamptz(6)
+  createdByMembershipId String    @db.Uuid
+
+  match               Match       @relation(fields: [matchId], references: [id])
+  tenant              Tenant      @relation(fields: [tenantId], references: [id])
+  createdByMembership Membership  @relation(fields: [createdByMembershipId], references: [id])
+  options             PreMatchPollOption[]
+  votes               PreMatchPollVote[]
+}
+
+model PreMatchPollOption {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pollId     String       @db.Uuid
+  teamId     String       @db.Uuid
+  label      String
+  sortOrder  Int
+
+  poll       PreMatchPoll @relation(fields: [pollId], references: [id])
+  team       MatchTeam    @relation(fields: [teamId], references: [id])
+  votes      PreMatchPollVote[]
+
+  @@unique([pollId, teamId])
+}
+
+model PreMatchPollVote {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pollId        String      @db.Uuid
+  optionId      String      @db.Uuid
+  membershipId  String      @db.Uuid
+  tenantId      String      @db.Uuid
+  submittedAt   DateTime    @default(now()) @db.Timestamptz(6)
+
+  poll          PreMatchPoll @relation(fields: [pollId], references: [id])
+  option        PreMatchPollOption @relation(fields: [optionId], references: [id])
+  membership    Membership   @relation(fields: [membershipId], references: [id])
+  tenant        Tenant       @relation(fields: [tenantId], references: [id])
+
+  @@unique([pollId, membershipId])
+}
+
+model PlayerOfMatchVote {
+  id                 String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matchId            String      @db.Uuid
+  tenantId           String      @db.Uuid
+  voterMembershipId  String      @db.Uuid
+  targetMembershipId String      @db.Uuid
+  submittedAt        DateTime    @default(now()) @db.Timestamptz(6)
+  editableUntil      DateTime    @db.Timestamptz(6)
+  lockedAt           DateTime?   @db.Timestamptz(6)
+  isInvalidated      Boolean     @default(false)
+  invalidatedAt      DateTime?   @db.Timestamptz(6)
+  invalidatedReason  String?
+
+  match              Match       @relation(fields: [matchId], references: [id])
+  tenant             Tenant      @relation(fields: [tenantId], references: [id])
+  voterMembership    Membership  @relation("PlayerOfMatchVoter", fields: [voterMembershipId], references: [id])
+  targetMembership   Membership  @relation("PlayerOfMatchTarget", fields: [targetMembershipId], references: [id])
+
+  @@unique([matchId, voterMembershipId])
+}
+
+model TeammateRating {
+  id                 String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matchId            String      @db.Uuid
+  tenantId           String      @db.Uuid
+  raterMembershipId  String      @db.Uuid
+  targetMembershipId String      @db.Uuid
+  ratingValue        Int
+  submittedAt        DateTime    @default(now()) @db.Timestamptz(6)
+  editableUntil      DateTime    @db.Timestamptz(6)
+  lockedAt           DateTime?   @db.Timestamptz(6)
+  isInvalidated      Boolean     @default(false)
+  invalidatedAt      DateTime?   @db.Timestamptz(6)
+  invalidatedReason  String?
+
+  match              Match       @relation(fields: [matchId], references: [id])
+  tenant             Tenant      @relation(fields: [tenantId], references: [id])
+  raterMembership    Membership  @relation("TeammateRatingRater", fields: [raterMembershipId], references: [id])
+  targetMembership   Membership  @relation("TeammateRatingTarget", fields: [targetMembershipId], references: [id])
+
+  @@unique([matchId, raterMembershipId, targetMembershipId])
+  @@index([matchId])
+  @@index([targetMembershipId])
+}
+
+model RatingRevision {
+  id                   String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType           String
+  entityId             String      @db.Uuid
+  previousValueJson    Json
+  newValueJson         Json
+  changedByMembershipId String     @db.Uuid
+  changedAt            DateTime    @default(now()) @db.Timestamptz(6)
+
+  changedByMembership  Membership  @relation(fields: [changedByMembershipId], references: [id])
+
+  @@index([entityType, entityId])
+}
+
+model LedgerTransaction {
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId             String          @db.Uuid
+  membershipId         String          @db.Uuid
+  matchId              String?         @db.Uuid
+  transactionType      TransactionType
+  direction            Direction
+  amount               Decimal         @db.Decimal(10, 2)
+  currencyCode         String
+  description          String?
+  reasonCode           String?
+  recordedByMembershipId String?       @db.Uuid
+  recordedAt           DateTime        @default(now()) @db.Timestamptz(6)
+  isReversed           Boolean         @default(false)
+  reversedByTransactionId String?      @db.Uuid
+  metadata             Json?
+
+  tenant               Tenant          @relation(fields: [tenantId], references: [id])
+  membership           Membership      @relation("LedgerMembership", fields: [membershipId], references: [id])
+  match                Match?          @relation(fields: [matchId], references: [id])
+  recordedByMembership Membership?     @relation("LedgerRecordedBy", fields: [recordedByMembershipId], references: [id])
+  reversedByTransaction LedgerTransaction? @relation("LedgerReverse", fields: [reversedByTransactionId], references: [id])
+  reverses             LedgerTransaction[] @relation("LedgerReverse")
+
+  @@index([tenantId, membershipId, recordedAt(sort: Desc)])
+  @@index([tenantId, transactionType, recordedAt(sort: Desc)])
+  @@index([matchId, transactionType])
+}
+
+model Notification {
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String            @db.Uuid
+  membershipId     String            @db.Uuid
+  notificationType NotificationType
+  title            String
+  body             String
+  payloadJson      Json?
+  isRead           Boolean           @default(false)
+  readAt           DateTime?         @db.Timestamptz(6)
+  createdAt        DateTime          @default(now()) @db.Timestamptz(6)
+
+  tenant           Tenant            @relation(fields: [tenantId], references: [id])
+  membership       Membership        @relation(fields: [membershipId], references: [id])
+
+  @@index([membershipId, isRead, createdAt(sort: Desc)])
+}
+
+model PushSubscription {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId  String    @db.Uuid
+  endpoint   String
+  p256dh     String
+  auth       String
+  userAgent  String?
+  isActive   Boolean   @default(true)
+  lastUsedAt DateTime? @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+
+  account    Account   @relation(fields: [accountId], references: [id])
+
+  @@index([accountId, isActive])
+}
+
+model AuditLog {
+  id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String?     @db.Uuid
+  actorMembershipId String?     @db.Uuid
+  actorAccountId    String?     @db.Uuid
+  entityType        String
+  entityId          String      @db.Uuid
+  actionType        String
+  beforeJson        Json?
+  afterJson         Json?
+  metadata          Json?
+  createdAt         DateTime    @default(now()) @db.Timestamptz(6)
+
+  tenant            Tenant?     @relation(fields: [tenantId], references: [id])
+  actorMembership   Membership? @relation("AuditActorMembership", fields: [actorMembershipId], references: [id])
+  actorAccount      Account?    @relation(fields: [actorAccountId], references: [id])
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([entityType, entityId])
+}

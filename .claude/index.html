@@ -1,0 +1,1105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Football Group App UI Prototype</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: rgba(15, 23, 42, 0.78);
+      --panel-2: rgba(15, 23, 42, 0.92);
+      --text: #ecf2ff;
+      --muted: #9fb0d1;
+      --line: rgba(255,255,255,0.08);
+      --accent: #36c58c;
+      --accent-2: #7c3aed;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --blue: #3b82f6;
+      --chip: rgba(255,255,255,0.06);
+      --shadow: 0 18px 45px rgba(0,0,0,0.35);
+      --radius: 24px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(124,58,237,0.22), transparent 50%),
+        radial-gradient(1000px 700px at 100% 10%, rgba(54,197,140,0.16), transparent 45%),
+        linear-gradient(180deg, #08101d 0%, #0d1729 45%, #09111f 100%);
+      min-height: 100vh;
+    }
+    .page {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px 20px 36px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand-badge {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(54,197,140,0.18), rgba(124,58,237,0.22));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      font-weight: 800;
+    }
+    h1,h2,h3,h4,p { margin: 0; }
+    .subtitle { color: var(--muted); margin-top: 6px; max-width: 760px; line-height: 1.45; }
+    .lang-toggle {
+      display: inline-flex;
+      background: var(--chip);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 4px;
+    }
+    .lang-toggle button,
+    .screen-pill,
+    .action,
+    .mini-btn,
+    .small-pill {
+      cursor: pointer;
+      border: 0;
+      color: var(--text);
+      background: transparent;
+      font: inherit;
+    }
+    .lang-toggle button {
+      padding: 10px 16px;
+      border-radius: 999px;
+      color: var(--muted);
+      transition: .2s ease;
+    }
+    .lang-toggle button.active {
+      background: rgba(255,255,255,0.1);
+      color: var(--text);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 320px minmax(360px, 460px) minmax(320px, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+    .menu {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+    }
+    .section-title {
+      font-size: 12px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: #8ea0c2;
+      margin: 14px 0 10px;
+    }
+    .screen-list { display: flex; flex-direction: column; gap: 8px; }
+    .screen-pill {
+      text-align: left;
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: transparent;
+      border: 1px solid transparent;
+      transition: .2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .screen-pill:hover { background: rgba(255,255,255,0.03); }
+    .screen-pill.active {
+      background: linear-gradient(135deg, rgba(59,130,246,0.14), rgba(124,58,237,0.14));
+      border-color: rgba(255,255,255,0.08);
+    }
+    .screen-pill span { color: var(--muted); font-size: 12px; }
+    .phone-wrap {
+      padding: 18px;
+      display: flex;
+      justify-content: center;
+      position: sticky;
+      top: 20px;
+    }
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      background: linear-gradient(180deg, #131c2f 0%, #0d1526 100%);
+      border-radius: 36px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+      overflow: hidden;
+      position: relative;
+    }
+    .notch {
+      width: 124px;
+      height: 30px;
+      background: #08101d;
+      border-radius: 0 0 18px 18px;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+    .phone-screen {
+      padding: 44px 16px 88px;
+      height: 844px;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    .phone-screen::-webkit-scrollbar { display: none; }
+    .statusbar {
+      display: flex;
+      justify-content: space-between;
+      color: #b9c7e4;
+      font-size: 12px;
+      padding: 0 6px 14px;
+      align-items: center;
+    }
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .avatar, .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+    }
+    .muted { color: var(--muted); }
+    .hero {
+      padding: 18px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.24), rgba(124,58,237,0.26));
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 14px;
+    }
+    .hero .chips,
+    .chips,
+    .row-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .chip,
+    .small-pill {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .metric {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+    }
+    .metric .num {
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .item:last-child { border-bottom: 0; padding-bottom: 0; }
+    .item:first-child { padding-top: 0; }
+    .badge {
+      border-radius: 999px;
+      font-size: 11px;
+      padding: 6px 10px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+    .green { background: rgba(54,197,140,0.14); color: #9df0cb; }
+    .red { background: rgba(239,68,68,0.16); color: #ffb3b3; }
+    .blue { background: rgba(59,130,246,0.16); color: #b8d4ff; }
+    .amber { background: rgba(245,158,11,0.16); color: #ffd899; }
+    .purple { background: rgba(124,58,237,0.18); color: #dbc1ff; }
+    .progress {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .progress span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), var(--blue));
+    }
+    .action-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+    .action {
+      padding: 13px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--line);
+      text-align: center;
+      font-weight: 600;
+    }
+    .action.primary { background: linear-gradient(135deg, rgba(54,197,140,0.24), rgba(59,130,246,0.2)); }
+    .mini-btn {
+      padding: 8px 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--line);
+      color: var(--text);
+    }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tabs .small-pill.active {
+      background: linear-gradient(135deg, rgba(54,197,140,0.22), rgba(59,130,246,0.18));
+      color: var(--text);
+    }
+    .segment {
+      display: inline-grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 6px;
+      margin: 10px 0 0;
+    }
+    .segment span {
+      text-align: center;
+      padding: 10px;
+      border-radius: 12px;
+      color: var(--muted);
+    }
+    .segment span.active { background: rgba(255,255,255,0.08); color: var(--text); }
+    .stack { display: flex; flex-direction: column; gap: 12px; }
+    .input {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 14px;
+      color: var(--text);
+    }
+    .field label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .checkbox-row,
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .toggle {
+      width: 46px;
+      height: 28px;
+      border-radius: 999px;
+      background: rgba(54,197,140,0.45);
+      position: relative;
+      flex: 0 0 auto;
+    }
+    .toggle::after {
+      content: "";
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: white;
+      position: absolute;
+      top: 3px;
+      right: 3px;
+    }
+    .leaders .item strong { font-size: 15px; }
+    .bottom-nav {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      background: rgba(6,11,22,0.9);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      padding: 8px;
+      backdrop-filter: blur(12px);
+    }
+    .nav-item {
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      border-radius: 16px;
+    }
+    .nav-item.active {
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      font-weight: 600;
+    }
+    .detail-panel {
+      padding: 22px;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .detail-grid .card { margin: 0; }
+    .wire-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+    .wire-item {
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+    }
+    .caption { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .footer-note {
+      color: var(--muted);
+      margin-top: 16px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    @media (max-width: 1280px) {
+      .layout { grid-template-columns: 300px 1fr; }
+      .details-col { grid-column: 1 / -1; }
+      .phone-wrap { position: relative; top: auto; }
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .menu, .phone-wrap { position: relative; top: auto; }
+      .phone-wrap { padding: 12px; }
+      .phone { width: 100%; max-width: 420px; }
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-badge">FM</div>
+        <div>
+          <h1 data-en="Football Match Group App, Mobile UI Prototype" data-tr="Halı Saha Grup Uygulaması, Mobil UI Prototipi">Football Match Group App, Mobile UI Prototype</h1>
+          <p class="subtitle" data-en="Interactive mobile-first concept for Owner, Group Admin, Assistant Admin, User and Guest flows. Includes bilingual support, finance, voting, stats and invitations." data-tr="Owner, Group Admin, Assistant Admin, User ve Guest akışları için etkileşimli mobil öncelikli konsept. İki dil desteği, finans, oylama, istatistik ve davet akışlarını içerir.">Interactive mobile-first concept for Owner, Group Admin, Assistant Admin, User and Guest flows. Includes bilingual support, finance, voting, stats and invitations.</p>
+        </div>
+      </div>
+      <div class="lang-toggle">
+        <button class="active" data-lang="en">EN</button>
+        <button data-lang="tr">TR</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="panel menu">
+        <div class="section-title" data-en="Screens" data-tr="Ekranlar">Screens</div>
+        <div class="screen-list" id="screenList"></div>
+        <div class="section-title" data-en="Prototype notes" data-tr="Prototip notları">Prototype notes</div>
+        <div class="wire-list">
+          <div class="wire-item">
+            <strong data-en="Multi-tenant" data-tr="Çok kiracılı">Multi-tenant</strong>
+            <div class="caption" data-en="Each group is isolated. One person can belong to multiple groups." data-tr="Her grup izole. Bir kişi birden fazla gruba ait olabilir.">Each group is isolated. One person can belong to multiple groups.</div>
+          </div>
+          <div class="wire-item">
+            <strong data-en="Guest to member" data-tr="Misafirden üyeye">Guest to member</strong>
+            <div class="caption" data-en="Guest players keep history, then claim account later with email and password." data-tr="Misafir oyuncular geçmişini korur, sonra e-posta ve şifre ile hesabı sahiplenir.">Guest players keep history, then claim account later with email and password.</div>
+          </div>
+          <div class="wire-item">
+            <strong data-en="Private ratings" data-tr="Gizli puanlar">Private ratings</strong>
+            <div class="caption" data-en="No one sees raw player-to-player ratings. Only summaries, averages and ranking signals are exposed." data-tr="Hiç kimse ham oyuncu puanlarını görmez. Sadece özetler, ortalamalar ve sıralama sinyalleri gösterilir.">No one sees raw player-to-player ratings. Only summaries, averages and ranking signals are exposed.</div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel phone-wrap">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="phone-screen" id="phoneScreen"></div>
+          <div class="bottom-nav">
+            <div class="nav-item active" data-en="Home" data-tr="Ana Sayfa">Home</div>
+            <div class="nav-item" data-en="Matches" data-tr="Maçlar">Matches</div>
+            <div class="nav-item" data-en="Stats" data-tr="İstatistik">Stats</div>
+            <div class="nav-item" data-en="More" data-tr="Diğer">More</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel detail-panel details-col">
+        <h2 id="detailTitle">User Home</h2>
+        <p class="subtitle" id="detailText">Next match, balance, quick actions and live notifications.</p>
+
+        <div class="detail-grid">
+          <div class="card">
+            <h3 data-en="What this screen is for" data-tr="Bu ekran ne için">What this screen is for</h3>
+            <div class="footer-note" id="detailPurpose"></div>
+          </div>
+          <div class="card">
+            <h3 data-en="Key interactions" data-tr="Ana etkileşimler">Key interactions</h3>
+            <div class="footer-note" id="detailActions"></div>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:20px" data-en="Main modules covered in this prototype" data-tr="Bu prototipte yer alan ana modüller">Main modules covered in this prototype</div>
+        <div class="detail-grid">
+          <div class="card">
+            <strong data-en="Authentication and onboarding" data-tr="Kimlik doğrulama ve başlangıç">Authentication and onboarding</strong>
+            <div class="caption" data-en="Register, login, invite link, invite code and guest claim flow." data-tr="Kayıt, giriş, davet linki, davet kodu ve misafir sahiplenme akışı.">Register, login, invite link, invite code and guest claim flow.</div>
+          </div>
+          <div class="card">
+            <strong data-en="Match operations" data-tr="Maç operasyonları">Match operations</strong>
+            <div class="caption" data-en="Attendance, team split, score entry, star vote and teammate rating." data-tr="Katılım, takım bölme, skor girişi, maçın yıldızı ve takım arkadaşı puanlama.">Attendance, team split, score entry, star vote and teammate rating.</div>
+          </div>
+          <div class="card">
+            <strong data-en="Finance" data-tr="Finans">Finance</strong>
+            <div class="caption" data-en="Manual payment records, match fee posting and balance history." data-tr="Manuel ödeme kayıtları, maç ücreti işleme ve bakiye geçmişi.">Manual payment records, match fee posting and balance history.</div>
+          </div>
+          <div class="card">
+            <strong data-en="Insights" data-tr="İçgörü">Insights</strong>
+            <div class="caption" data-en="Leaderboards, win rate, star count, pair chemistry and form trends." data-tr="Lider tabloları, kazanma oranı, yıldız sayısı, ikili uyumu ve form trendleri.">Leaderboards, win rate, star count, pair chemistry and form trends.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const screens = [
+      {
+        id: 'login',
+        name: { en: 'Login', tr: 'Giriş' },
+        tag: { en: 'Public', tr: 'Genel' },
+        detailTitle: { en: 'Login', tr: 'Giriş' },
+        detailText: { en: 'Simple, fast email and password login for mobile users.', tr: 'Mobil kullanıcılar için basit ve hızlı e-posta ve şifre girişi.' },
+        purpose: { en: 'Lets existing users sign in quickly. Includes language toggle, forgot password and group invitation context.', tr: 'Mevcut kullanıcıların hızlıca giriş yapmasını sağlar. Dil değişimi, şifre sıfırlama ve grup daveti bağlamını içerir.' },
+        actions: { en: 'Sign in, switch language, go to register, reset password.', tr: 'Giriş yap, dil değiştir, kayda git, şifre sıfırla.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="hero">
+            <div class="muted" data-en="Welcome back" data-tr="Tekrar hoş geldin">Welcome back</div>
+            <h2 style="margin-top:6px" data-en="Sign in to your football group" data-tr="Halı saha grubuna giriş yap">Sign in to your football group</h2>
+            <div class="chips">
+              <div class="chip" data-en="Invite aware" data-tr="Davet uyumlu">Invite aware</div>
+              <div class="chip" data-en="EN / TR" data-tr="EN / TR">EN / TR</div>
+            </div>
+          </div>
+          <div class="card stack">
+            <div class="field">
+              <label data-en="Email" data-tr="E-posta">Email</label>
+              <div class="input">hello@player.com</div>
+            </div>
+            <div class="field">
+              <label data-en="Password" data-tr="Şifre">Password</label>
+              <div class="input">••••••••••</div>
+            </div>
+            <button class="action primary" data-en="Login" data-tr="Giriş Yap">Login</button>
+            <button class="action" data-en="Forgot password" data-tr="Şifremi unuttum">Forgot password</button>
+          </div>
+          <div class="card">
+            <div class="item">
+              <div>
+                <strong data-en="No account yet" data-tr="Henüz hesabın yok mu">No account yet</strong>
+                <div class="caption" data-en="Create one and join your group with invite link or code." data-tr="Bir hesap oluştur ve davet linki veya kodu ile grubuna katıl.">Create one and join your group with invite link or code.</div>
+              </div>
+              <button class="mini-btn" data-en="Register" data-tr="Kayıt Ol">Register</button>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 'register',
+        name: { en: 'Register and Join', tr: 'Kayıt ve Katılım' },
+        tag: { en: 'Public', tr: 'Genel' },
+        detailTitle: { en: 'Register and join a group', tr: 'Kayıt ol ve gruba katıl' },
+        detailText: { en: 'Register directly from an invite link or enter a group code.', tr: 'Davet linkinden direkt kayıt ol veya grup kodu gir.' },
+        purpose: { en: 'Handles public signup, invite context, group code entry and direct membership creation.', tr: 'Genel kayıt, davet bağlamı, grup kodu girişi ve direkt üyelik oluşturmayı yönetir.' },
+        actions: { en: 'Register, accept invite, join with code, set password.', tr: 'Kayıt ol, daveti kabul et, kodla katıl, şifre belirle.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="header-row"><div><div class="muted" data-en="Join group" data-tr="Gruba katıl">Join group</div><h2 data-en="X Group invitation" data-tr="X Grubu daveti">X Group invitation</h2></div><div class="avatar">⚽</div></div>
+          <div class="card">
+            <div class="badge blue" data-en="Invite valid" data-tr="Davet geçerli">Invite valid</div>
+            <div class="caption" style="margin-top:8px" data-en="You were invited by Group Admin. After registration you will be added automatically." data-tr="Group Admin tarafından davet edildin. Kayıttan sonra otomatik olarak gruba ekleneceksin.">You were invited by Group Admin. After registration you will be added automatically.</div>
+          </div>
+          <div class="card stack">
+            <div class="field"><label data-en="First name" data-tr="Ad">First name</label><div class="input">Ahmet</div></div>
+            <div class="field"><label data-en="Last name" data-tr="Soyad">Last name</label><div class="input">Yılmaz</div></div>
+            <div class="field"><label data-en="Email" data-tr="E-posta">Email</label><div class="input">ahmet@example.com</div></div>
+            <div class="field"><label data-en="Password" data-tr="Şifre">Password</label><div class="input">Create password</div></div>
+            <button class="action primary" data-en="Create account and join" data-tr="Hesap oluştur ve katıl">Create account and join</button>
+          </div>
+          <div class="card">
+            <strong data-en="Have a group code instead" data-tr="Sadece grup kodun mu var">Have a group code instead</strong>
+            <div class="segment"><span class="active" data-en="Use code" data-tr="Kod kullan">Use code</span><span data-en="Ask admin" data-tr="Admin'e sor">Ask admin</span></div>
+            <div class="input" style="margin-top:12px">HALISAHA7</div>
+          </div>
+        `
+      },
+      {
+        id: 'home',
+        name: { en: 'User Home', tr: 'Kullanıcı Ana Sayfa' },
+        tag: { en: 'User', tr: 'Kullanıcı' },
+        detailTitle: { en: 'User Home', tr: 'Kullanıcı Ana Sayfa' },
+        detailText: { en: 'Next match, balance, notifications and shortcuts.', tr: 'Sıradaki maç, bakiye, bildirimler ve kısayollar.' },
+        purpose: { en: 'Main daily entry point. Shows upcoming match, balance, current tasks and quick actions.', tr: 'Ana günlük giriş noktasıdır. Yaklaşan maçı, bakiyeyi, güncel görevleri ve hızlı işlemleri gösterir.' },
+        actions: { en: 'Open match, review wallet, submit vote, see notifications.', tr: 'Maçı aç, cüzdanı incele, oy ver, bildirimleri gör.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="header-row">
+            <div>
+              <div class="muted" data-en="Good evening" data-tr="İyi akşamlar">Good evening</div>
+              <h2>Mehmet</h2>
+            </div>
+            <div class="avatar">MS</div>
+          </div>
+          <div class="hero">
+            <div class="muted" data-en="Next match" data-tr="Sıradaki maç">Next match</div>
+            <h2 style="margin-top:6px">Wednesday 18:00, G1 Arena</h2>
+            <div class="caption" data-en="6v6, Red vs Blue. Poll and attendance are open." data-tr="6'ya 6, Kırmızı vs Mavi. Anket ve katılım açık.">6v6, Red vs Blue. Poll and attendance are open.</div>
+            <div class="action-row">
+              <button class="action primary" data-en="Open match" data-tr="Maçı aç">Open match</button>
+              <button class="action" data-en="I'm coming" data-tr="Geliyorum">I'm coming</button>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="metric"><div class="muted" data-en="Balance" data-tr="Bakiye">Balance</div><div class="num">£8</div></div>
+            <div class="metric"><div class="muted" data-en="Win rate" data-tr="Kazanma oranı">Win rate</div><div class="num">64%</div></div>
+            <div class="metric"><div class="muted" data-en="Avg rating" data-tr="Ort. puan">Avg rating</div><div class="num">4.2</div></div>
+            <div class="metric"><div class="muted" data-en="Star count" data-tr="Yıldız sayısı">Star count</div><div class="num">11</div></div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <div class="header-row" style="margin-bottom:10px"><strong data-en="Live tasks" data-tr="Canlı görevler">Live tasks</strong><button class="mini-btn" data-en="See all" data-tr="Tümünü gör">See all</button></div>
+            <div class="list">
+              <div class="item"><div><strong data-en="Vote on winner poll" data-tr="Kazanan anketine oy ver">Vote on winner poll</strong><div class="caption" data-en="Red vs Blue, closes in 40 min" data-tr="Kırmızı vs Mavi, 40 dk sonra kapanır">Red vs Blue, closes in 40 min</div></div><span class="badge purple" data-en="New" data-tr="Yeni">New</span></div>
+              <div class="item"><div><strong data-en="Balance updated" data-tr="Bakiye güncellendi">Balance updated</strong><div class="caption" data-en="Payment from Serdar posted yesterday" data-tr="Serdar ödemesi dün işlendi">Payment from Serdar posted yesterday</div></div><span class="badge green">+£20</span></div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 'match',
+        name: { en: 'Match Detail', tr: 'Maç Detayı' },
+        tag: { en: 'User', tr: 'Kullanıcı' },
+        detailTitle: { en: 'Match detail', tr: 'Maç detayı' },
+        detailText: { en: 'Attendance, teams, pre-match poll and lineup overview.', tr: 'Katılım, takımlar, maç öncesi anket ve kadro görünümü.' },
+        purpose: { en: 'Shows all match level information before kickoff, including venue, format, teams and poll.', tr: 'Başlama öncesi saha, format, takımlar ve anket dahil tüm maç bilgilerini gösterir.' },
+        actions: { en: 'Confirm attendance, view teams, vote on winner poll.', tr: 'Katılımı onayla, takımları gör, kazanan anketine oy ver.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="header-row"><button class="icon-btn">←</button><div><div class="muted" data-en="Wednesday match" data-tr="Çarşamba maçı">Wednesday match</div><h2>18:00 • G1 Arena</h2></div><button class="icon-btn">⋯</button></div>
+          <div class="card">
+            <div class="grid-2">
+              <div><div class="muted" data-en="Format" data-tr="Format">Format</div><strong>6v6</strong></div>
+              <div><div class="muted" data-en="Fee" data-tr="Ücret">Fee</div><strong>£4</strong></div>
+              <div><div class="muted" data-en="Attendance" data-tr="Katılım">Attendance</div><strong>12 / 14</strong></div>
+              <div><div class="muted" data-en="Status" data-tr="Durum">Status</div><span class="badge green" data-en="Confirmed" data-tr="Onaylandı">Confirmed</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="header-row" style="margin-bottom:10px"><strong data-en="Who will win" data-tr="Kim kazanır">Who will win</strong><span class="badge blue" data-en="Everyone can vote" data-tr="Herkes oy verebilir">Everyone can vote</span></div>
+            <div class="segment"><span class="active" data-en="Red team" data-tr="Kırmızı takım">Red team</span><span data-en="Blue team" data-tr="Mavi takım">Blue team</span></div>
+          </div>
+          <div class="grid-2">
+            <div class="card" style="background: rgba(239,68,68,0.12)">
+              <strong data-en="Red team" data-tr="Kırmızı takım">Red team</strong>
+              <div class="list" style="margin-top:10px">
+                <div class="item"><span>Mehmet</span><span class="badge amber" data-en="MID" data-tr="OS">MID</span></div>
+                <div class="item"><span>Serdar</span><span class="badge amber" data-en="DEF" data-tr="DEF">DEF</span></div>
+                <div class="item"><span>Levent</span><span class="badge amber" data-en="FWD" data-tr="FOR">FWD</span></div>
+              </div>
+            </div>
+            <div class="card" style="background: rgba(59,130,246,0.12)">
+              <strong data-en="Blue team" data-tr="Mavi takım">Blue team</strong>
+              <div class="list" style="margin-top:10px">
+                <div class="item"><span>Ahmet</span><span class="badge blue" data-en="MID" data-tr="OS">MID</span></div>
+                <div class="item"><span>Tarkan</span><span class="badge blue" data-en="GK" data-tr="KL">GK</span></div>
+                <div class="item"><span>Anıl</span><span class="badge blue" data-en="DEF" data-tr="DEF">DEF</span></div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 'rating',
+        name: { en: 'Post-match Rating', tr: 'Maç Sonu Puanlama' },
+        tag: { en: 'User', tr: 'Kullanıcı' },
+        detailTitle: { en: 'Post-match rating', tr: 'Maç sonu puanlama' },
+        detailText: { en: 'Opened only after the admin enters score and closes the match.', tr: 'Sadece admin skoru girip maçı kapattıktan sonra açılır.' },
+        purpose: { en: 'Collects star vote and teammate ratings from players who actually played. Ratings stay private and editable only for 1 minute.', tr: 'Gerçekten oynayan oyunculardan maçın yıldızı ve takım arkadaşı puanlarını toplar. Puanlar gizli kalır ve sadece 1 dakika düzenlenebilir.' },
+        actions: { en: 'Select match star, rate teammates 1 to 5, submit, edit for 1 minute.', tr: 'Maçın yıldızını seç, takım arkadaşlarını 1 ile 5 arasında puanla, gönder, 1 dakika içinde düzenle.' },
+        html: `
+          <div class="statusbar"><span>21:06</span><span>5G • 92%</span></div>
+          <div class="hero">
+            <div class="muted" data-en="Match closed" data-tr="Maç kapandı">Match closed</div>
+            <h2 style="margin-top:6px">Red 7, Blue 5</h2>
+            <div class="caption" data-en="Your fee has been posted. Rating window is open for players who played." data-tr="Ücretin işlendi. Oynayan oyuncular için puanlama açıldı.">Your fee has been posted. Rating window is open for players who played.</div>
+            <div class="chips">
+              <div class="chip" data-en="Edit for 1 minute" data-tr="1 dakika düzenleme">Edit for 1 minute</div>
+              <div class="chip" data-en="Private votes" data-tr="Gizli oylar">Private votes</div>
+            </div>
+          </div>
+          <div class="card">
+            <strong data-en="Choose match star" data-tr="Maçın yıldızını seç">Choose match star</strong>
+            <div class="tabs" style="margin-top:12px">
+              <button class="small-pill active">Levent</button>
+              <button class="small-pill">Ahmet</button>
+              <button class="small-pill">Tarkan</button>
+              <button class="small-pill">Mehmet</button>
+            </div>
+          </div>
+          <div class="card">
+            <strong data-en="Rate your teammates" data-tr="Takım arkadaşlarını puanla">Rate your teammates</strong>
+            <div class="list" style="margin-top:10px">
+              <div class="item"><div><strong>Serdar</strong><div class="caption" data-en="Private, only average will show later" data-tr="Gizli, sonra sadece ortalama görünür">Private, only average will show later</div></div><div class="tabs"><button class="small-pill">1</button><button class="small-pill">2</button><button class="small-pill">3</button><button class="small-pill active">4</button><button class="small-pill">5</button></div></div>
+              <div class="item"><div><strong>Levent</strong></div><div class="tabs"><button class="small-pill">1</button><button class="small-pill">2</button><button class="small-pill">3</button><button class="small-pill">4</button><button class="small-pill active">5</button></div></div>
+            </div>
+            <div class="action-row">
+              <button class="action primary" data-en="Submit ratings" data-tr="Puanları gönder">Submit ratings</button>
+              <button class="action" data-en="Save later" data-tr="Sonra kaydet">Save later</button>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 'wallet',
+        name: { en: 'Wallet and Balance', tr: 'Cüzdan ve Bakiye' },
+        tag: { en: 'User', tr: 'Kullanıcı' },
+        detailTitle: { en: 'Wallet and balance', tr: 'Cüzdan ve bakiye' },
+        detailText: { en: 'Users see balance, payments and match fee history.', tr: 'Kullanıcı bakiye, ödeme ve maç ücreti geçmişini görür.' },
+        purpose: { en: 'Shows finance history without exposing admin-only controls. Supports manual payment posting and automatic match fee records.', tr: 'Admin kontrollerini göstermeden finans geçmişini sunar. Manuel ödeme kaydı ve otomatik maç ücreti işlemlerini destekler.' },
+        actions: { en: 'Review balance, browse transaction history, understand credit or debt.', tr: 'Bakiyeyi incele, işlem geçmişine bak, kredi veya borcu anla.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="header-row"><div><div class="muted" data-en="Wallet" data-tr="Cüzdan">Wallet</div><h2 data-en="Your balance" data-tr="Bakiyen">Your balance</h2></div><div class="avatar">£</div></div>
+          <div class="hero">
+            <div class="muted" data-en="Available now" data-tr="Şu an kullanılabilir">Available now</div>
+            <h2 style="margin-top:6px">£8</h2>
+            <div class="caption" data-en="Positive balance will be used automatically for next match fees." data-tr="Pozitif bakiye sonraki maç ücretlerinde otomatik kullanılır.">Positive balance will be used automatically for next match fees.</div>
+          </div>
+          <div class="grid-3">
+            <div class="metric"><div class="muted" data-en="Paid this month" data-tr="Bu ay ödenen">Paid this month</div><div class="num">£20</div></div>
+            <div class="metric"><div class="muted" data-en="Fees posted" data-tr="İşlenen ücret">Fees posted</div><div class="num">£12</div></div>
+            <div class="metric"><div class="muted" data-en="Pending" data-tr="Bekleyen">Pending</div><div class="num">£0</div></div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <strong data-en="Transaction history" data-tr="İşlem geçmişi">Transaction history</strong>
+            <div class="list" style="margin-top:12px">
+              <div class="item"><div><strong data-en="Manual payment" data-tr="Manuel ödeme">Manual payment</strong><div class="caption">Serdar posted payment</div></div><span class="badge green">+£20</span></div>
+              <div class="item"><div><strong data-en="Match fee" data-tr="Maç ücreti">Match fee</strong><div class="caption">Wed 18:00, G1 Arena</div></div><span class="badge red">-£4</span></div>
+              <div class="item"><div><strong data-en="Match fee" data-tr="Maç ücreti">Match fee</strong><div class="caption">Sun 19:00, Arena B</div></div><span class="badge red">-£4</span></div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 'stats',
+        name: { en: 'Leaderboard and Stats', tr: 'Liderlik ve İstatistik' },
+        tag: { en: 'User', tr: 'Kullanıcı' },
+        detailTitle: { en: 'Leaderboard and stats', tr: 'Liderlik ve istatistik' },
+        detailText: { en: 'Public summaries only, no raw rating disclosure.', tr: 'Sadece özet veriler, ham puan ifşası yok.' },
+        purpose: { en: 'Surfaces motivating insights without exposing who rated whom. Ideal for top lists, win rates and chemistry.', tr: 'Kimin kime puan verdiğini açmadan motive edici içgörüler sunar. Top listeler, kazanma oranları ve uyum için uygundur.' },
+        actions: { en: 'Browse rankings, compare chemistry pairs, review trends.', tr: 'Sıralamalara bak, uyumlu ikilileri karşılaştır, trendleri incele.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="header-row"><div><div class="muted" data-en="Insights" data-tr="İçgörüler">Insights</div><h2 data-en="Top players and form" data-tr="En iyi oyuncular ve form">Top players and form</h2></div><div class="avatar">🏆</div></div>
+          <div class="tabs" style="margin-bottom:12px">
+            <button class="small-pill active" data-en="Average rating" data-tr="Ort. puan">Average rating</button>
+            <button class="small-pill" data-en="Stars" data-tr="Yıldızlar">Stars</button>
+            <button class="small-pill" data-en="Win rate" data-tr="Kazanma oranı">Win rate</button>
+            <button class="small-pill" data-en="Chemistry" data-tr="Uyum">Chemistry</button>
+          </div>
+          <div class="card leaders">
+            <strong data-en="Top 5 by average rating" data-tr="Ort. puana göre ilk 5">Top 5 by average rating</strong>
+            <div class="list" style="margin-top:12px">
+              <div class="item"><div><strong>1. Tarkan</strong><div class="caption">4.7 average</div></div><span class="badge green">18 stars</span></div>
+              <div class="item"><div><strong>2. Levent</strong><div class="caption">4.5 average</div></div><span class="badge green">11 stars</span></div>
+              <div class="item"><div><strong>3. Mehmet</strong><div class="caption">4.2 average</div></div><span class="badge blue">64% win</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <strong data-en="Strongest pairs" data-tr="En güçlü ikililer">Strongest pairs</strong>
+            <div class="list" style="margin-top:12px">
+              <div class="item"><div><strong>Mehmet + Levent</strong><div class="caption" data-en="Played 8 matches together" data-tr="Birlikte 8 maç oynadı">Played 8 matches together</div></div><span class="badge purple">75% win</span></div>
+              <div class="item"><div><strong>Tarkan + Anıl</strong><div class="caption" data-en="Played 12 matches together" data-tr="Birlikte 12 maç oynadı">Played 12 matches together</div></div><span class="badge purple">67% win</span></div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 'profile',
+        name: { en: 'Profile and Positions', tr: 'Profil ve Pozisyonlar' },
+        tag: { en: 'User', tr: 'Kullanıcı' },
+        detailTitle: { en: 'Profile and positions', tr: 'Profil ve pozisyonlar' },
+        detailText: { en: 'Users can define multiple playing positions and see their own stats.', tr: 'Kullanıcılar birden fazla pozisyon tanımlayabilir ve kendi istatistiklerini görebilir.' },
+        purpose: { en: 'Stores player profile data for later auto team balancing, role selection and performance analysis.', tr: 'Daha sonra otomatik takım dengeleme, rol seçimi ve performans analizi için oyuncu profil verisini tutar.' },
+        actions: { en: 'Edit profile, select multiple positions, review personal history.', tr: 'Profili düzenle, birden fazla pozisyon seç, kişisel geçmişi incele.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="card" style="text-align:center;padding-top:22px">
+            <div class="avatar" style="margin:0 auto 12px;width:64px;height:64px;border-radius:20px">MS</div>
+            <h2>Mehmet Sabirli</h2>
+            <div class="caption" data-en="Midfielder, secondary forward" data-tr="Orta saha, ikinci pozisyon forvet">Midfielder, secondary forward</div>
+            <div class="chips" style="justify-content:center">
+              <div class="chip">MID</div>
+              <div class="chip">FWD</div>
+            </div>
+          </div>
+          <div class="card">
+            <strong data-en="Preferred positions" data-tr="Tercih edilen pozisyonlar">Preferred positions</strong>
+            <div class="tabs" style="margin-top:12px">
+              <button class="small-pill">Goalkeeper</button>
+              <button class="small-pill">Defender</button>
+              <button class="small-pill active">Midfield</button>
+              <button class="small-pill active">Forward</button>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="metric"><div class="muted" data-en="Total matches" data-tr="Toplam maç">Total matches</div><div class="num">50</div></div>
+            <div class="metric"><div class="muted" data-en="Career points" data-tr="Kariyer puanı">Career points</div><div class="num">108</div></div>
+            <div class="metric"><div class="muted" data-en="Wins" data-tr="Galibiyet">Wins</div><div class="num">32</div></div>
+            <div class="metric"><div class="muted" data-en="Draws" data-tr="Beraberlik">Draws</div><div class="num">4</div></div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <strong data-en="Last 5 matches form" data-tr="Son 5 maç formu">Last 5 matches form</strong>
+            <div class="progress"><span style="width:78%"></span></div>
+            <div class="caption" data-en="W, W, L, W, D. Avg 4.3" data-tr="G, G, M, G, B. Ort. 4.3">W, W, L, W, D. Avg 4.3</div>
+          </div>
+        `
+      },
+      {
+        id: 'admin-home',
+        name: { en: 'Admin Dashboard', tr: 'Admin Paneli' },
+        tag: { en: 'Admin', tr: 'Admin' },
+        detailTitle: { en: 'Group admin dashboard', tr: 'Grup admin paneli' },
+        detailText: { en: 'Operational overview for matches, members, payments and pending tasks.', tr: 'Maçlar, üyeler, ödemeler ve bekleyen işler için operasyon özeti.' },
+        purpose: { en: 'Central place for group admin to run the entire group. Finance is visible here, unlike assistant admin flows.', tr: 'Grup admininin tüm grubu yönettiği merkezdir. Finans burada görünür, assistant admin ekranlarında görünmez.' },
+        actions: { en: 'Create match, post payment, open invites, review pending ratings.', tr: 'Maç oluştur, ödeme işle, davet aç, bekleyen puanlamaları incele.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="header-row"><div><div class="muted" data-en="Group admin" data-tr="Grup admin">Group admin</div><h2>X Group</h2></div><div class="avatar">ON</div></div>
+          <div class="grid-2">
+            <div class="metric"><div class="muted" data-en="Active members" data-tr="Aktif üyeler">Active members</div><div class="num">34</div></div>
+            <div class="metric"><div class="muted" data-en="Upcoming matches" data-tr="Yaklaşan maç">Upcoming matches</div><div class="num">2</div></div>
+            <div class="metric"><div class="muted" data-en="Pending payments" data-tr="Bekleyen ödeme">Pending payments</div><div class="num">£56</div></div>
+            <div class="metric"><div class="muted" data-en="Unread tasks" data-tr="Bekleyen iş">Unread tasks</div><div class="num">7</div></div>
+          </div>
+          <div class="action-row" style="margin-top:12px">
+            <button class="action primary" data-en="Create match" data-tr="Maç oluştur">Create match</button>
+            <button class="action" data-en="Post payment" data-tr="Ödeme işle">Post payment</button>
+            <button class="action" data-en="Invite members" data-tr="Üye davet et">Invite members</button>
+            <button class="action" data-en="Open reports" data-tr="Raporları aç">Open reports</button>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <strong data-en="Needs attention" data-tr="İlgi bekliyor">Needs attention</strong>
+            <div class="list" style="margin-top:12px">
+              <div class="item"><div><strong data-en="Tonight's score not submitted" data-tr="Bu akşamın skoru girilmedi">Tonight's score not submitted</strong><div class="caption">Wed 18:00, G1 Arena</div></div><button class="mini-btn" data-en="Finish" data-tr="Bitir">Finish</button></div>
+              <div class="item"><div><strong data-en="3 guests eligible for upgrade" data-tr="3 misafir yükseltmeye uygun">3 guests eligible for upgrade</strong><div class="caption" data-en="Played 3 matches in a row" data-tr="Arka arkaya 3 maç oynadı">Played 3 matches in a row</div></div><button class="mini-btn" data-en="Review" data-tr="İncele">Review</button></div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 'admin-match',
+        name: { en: 'Admin Match Builder', tr: 'Admin Maç Oluşturma' },
+        tag: { en: 'Admin', tr: 'Admin' },
+        detailTitle: { en: 'Admin match builder', tr: 'Admin maç oluşturma' },
+        detailText: { en: 'Set venue, date, fee, players, reserves and teams.', tr: 'Saha, tarih, ücret, oyuncular, yedekler ve takımları ayarla.' },
+        purpose: { en: 'The operational workbench for building one match. Allows roster, reserves, fee snapshot and team split.', tr: 'Tek maç oluşturma çalışma alanıdır. Kadro, yedek, ücret anlık kopyası ve takım bölmeyi sağlar.' },
+        actions: { en: 'Select venue, set fee, assign players, promote reserve, publish teams.', tr: 'Saha seç, ücret belirle, oyuncu ata, yedeği yükselt, takımları yayınla.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="header-row"><button class="icon-btn">←</button><div><div class="muted" data-en="Create match" data-tr="Maç oluştur">Create match</div><h2 data-en="Wednesday 18:00" data-tr="Çarşamba 18:00">Wednesday 18:00</h2></div><button class="icon-btn">💾</button></div>
+          <div class="card stack">
+            <div class="field"><label data-en="Venue" data-tr="Saha">Venue</label><div class="input">G1 Arena</div></div>
+            <div class="grid-2">
+              <div class="field"><label data-en="Format" data-tr="Format">Format</label><div class="input">6v6</div></div>
+              <div class="field"><label data-en="Fee" data-tr="Ücret">Fee</label><div class="input">£4</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="header-row" style="margin-bottom:10px"><strong data-en="Main squad" data-tr="Ana kadro">Main squad</strong><button class="mini-btn" data-en="Auto fill" data-tr="Otomatik doldur">Auto fill</button></div>
+            <div class="list">
+              <div class="item"><span>Mehmet</span><span class="badge green" data-en="Played" data-tr="Oynadı">Played</span></div>
+              <div class="item"><span>Levent</span><span class="badge green" data-en="Played" data-tr="Oynadı">Played</span></div>
+              <div class="item"><span>Tarkan</span><span class="badge green" data-en="Played" data-tr="Oynadı">Played</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="header-row" style="margin-bottom:10px"><strong data-en="Reserves" data-tr="Yedekler">Reserves</strong><button class="mini-btn" data-en="Promote" data-tr="Yükselt">Promote</button></div>
+            <div class="list">
+              <div class="item"><span>Guest Ahmet</span><span class="badge amber" data-en="Reserve 1" data-tr="Yedek 1">Reserve 1</span></div>
+              <div class="item"><span>Serkan</span><span class="badge amber" data-en="Reserve 2" data-tr="Yedek 2">Reserve 2</span></div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 'admin-payments',
+        name: { en: 'Admin Payments', tr: 'Admin Ödemeler' },
+        tag: { en: 'Admin', tr: 'Admin' },
+        detailTitle: { en: 'Payments and balances', tr: 'Ödemeler ve bakiyeler' },
+        detailText: { en: 'Manual payment posting and group finance visibility.', tr: 'Manuel ödeme işleme ve grup finans görünürlüğü.' },
+        purpose: { en: 'Lets the admin record incoming money, inspect balances and keep the group cash flow under control.', tr: 'Adminin gelen parayı kaydetmesini, bakiyeleri incelemesini ve grup nakit akışını yönetmesini sağlar.' },
+        actions: { en: 'Search member, post payment, add adjustment, inspect balances.', tr: 'Üye ara, ödeme işle, düzeltme ekle, bakiyeleri incele.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="header-row"><div><div class="muted" data-en="Finance" data-tr="Finans">Finance</div><h2 data-en="Member balances" data-tr="Üye bakiyeleri">Member balances</h2></div><div class="avatar">💳</div></div>
+          <div class="card stack">
+            <div class="field"><label data-en="Member" data-tr="Üye">Member</label><div class="input">Serdar</div></div>
+            <div class="grid-2">
+              <div class="field"><label data-en="Amount" data-tr="Tutar">Amount</label><div class="input">£20</div></div>
+              <div class="field"><label data-en="Type" data-tr="Tür">Type</label><div class="input">Payment</div></div>
+            </div>
+            <button class="action primary" data-en="Post transaction" data-tr="İşlemi kaydet">Post transaction</button>
+          </div>
+          <div class="card">
+            <strong data-en="Current balances" data-tr="Güncel bakiyeler">Current balances</strong>
+            <div class="list" style="margin-top:12px">
+              <div class="item"><div><strong>Serdar</strong><div class="caption">Available balance</div></div><span class="badge green">+£8</span></div>
+              <div class="item"><div><strong>Ahmet</strong><div class="caption">Fee due after match</div></div><span class="badge red">-£4</span></div>
+              <div class="item"><div><strong>Levent</strong><div class="caption">Exactly settled</div></div><span class="badge blue">£0</span></div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 'invite',
+        name: { en: 'Invite Members', tr: 'Üye Davet Et' },
+        tag: { en: 'Admin', tr: 'Admin' },
+        detailTitle: { en: 'Invite members', tr: 'Üye davet et' },
+        detailText: { en: 'Share invite link or group code. Also manage guest upgrade.', tr: 'Davet linki veya grup kodu paylaş. Ayrıca misafir yükseltmeyi yönet.' },
+        purpose: { en: 'Makes growth easy by letting group admins invite people with links and codes, while controlling access.', tr: 'Grup adminlerinin link ve kod ile insanları davet etmesini sağlayarak büyümeyi kolaylaştırır, erişimi kontrol altında tutar.' },
+        actions: { en: 'Copy link, regenerate code, add guest manually, upgrade guest.', tr: 'Linki kopyala, kodu yenile, misafiri manuel ekle, misafiri yükselt.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="header-row"><div><div class="muted" data-en="Growth" data-tr="Büyüme">Growth</div><h2 data-en="Invite members" data-tr="Üye davet et">Invite members</h2></div><div class="avatar">➕</div></div>
+          <div class="card">
+            <strong data-en="Group code" data-tr="Grup kodu">Group code</strong>
+            <div class="input" style="margin-top:12px">HALISAHA7</div>
+            <div class="action-row">
+              <button class="action primary" data-en="Copy code" data-tr="Kodu kopyala">Copy code</button>
+              <button class="action" data-en="Regenerate" data-tr="Yenile">Regenerate</button>
+            </div>
+          </div>
+          <div class="card">
+            <strong data-en="Invite link" data-tr="Davet linki">Invite link</strong>
+            <div class="input" style="margin-top:12px">app.example.com/invite/xgrp9m3</div>
+            <div class="action-row">
+              <button class="action primary" data-en="Copy link" data-tr="Linki kopyala">Copy link</button>
+              <button class="action" data-en="Disable link" data-tr="Linki kapat">Disable link</button>
+            </div>
+          </div>
+          <div class="card">
+            <strong data-en="Guest players eligible for upgrade" data-tr="Yükseltmeye uygun misafirler">Guest players eligible for upgrade</strong>
+            <div class="list" style="margin-top:12px">
+              <div class="item"><div><strong>Guest Ahmet</strong><div class="caption" data-en="Played 3 matches in a row" data-tr="Arka arkaya 3 maç oynadı">Played 3 matches in a row</div></div><button class="mini-btn" data-en="Add email" data-tr="E-posta ekle">Add email</button></div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 'assistant',
+        name: { en: 'Assistant Admin', tr: 'Admin Yardımcısı' },
+        tag: { en: 'Assistant', tr: 'Yardımcı' },
+        detailTitle: { en: 'Assistant admin operational flow', tr: 'Admin yardımcısı operasyon akışı' },
+        detailText: { en: 'Match ops only, finance hidden.', tr: 'Sadece maç operasyonu, finans gizli.' },
+        purpose: { en: 'Lets assistant admin handle lineups, teams and polls without seeing member balances or transactions.', tr: 'Admin yardımcısının üye bakiyelerini veya işlemleri görmeden kadro, takımlar ve anketleri yönetmesini sağlar.' },
+        actions: { en: 'Set teams, manage attendance, publish poll, no finance access.', tr: 'Takımları kur, katılımı yönet, anketi yayınla, finans erişimi yok.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="header-row"><div><div class="muted" data-en="Assistant admin" data-tr="Admin yardımcısı">Assistant admin</div><h2 data-en="Tonight's operations" data-tr="Bu akşamın operasyonu">Tonight's operations</h2></div><div class="avatar">AA</div></div>
+          <div class="card">
+            <div class="item"><div><strong data-en="Match setup" data-tr="Maç kurulumu">Match setup</strong><div class="caption">Wed 18:00, G1 Arena</div></div><span class="badge blue" data-en="Open" data-tr="Açık">Open</span></div>
+            <div class="action-row">
+              <button class="action primary" data-en="Split teams" data-tr="Takımları böl">Split teams</button>
+              <button class="action" data-en="Publish poll" data-tr="Anket yayınla">Publish poll</button>
+            </div>
+          </div>
+          <div class="card">
+            <strong data-en="Attendance board" data-tr="Katılım panosu">Attendance board</strong>
+            <div class="list" style="margin-top:12px">
+              <div class="item"><span>Mehmet</span><span class="badge green" data-en="Coming" data-tr="Geliyor">Coming</span></div>
+              <div class="item"><span>Serdar</span><span class="badge red" data-en="Declined" data-tr="Gelmiyor">Declined</span></div>
+              <div class="item"><span>Guest Ahmet</span><span class="badge amber" data-en="Reserve" data-tr="Yedek">Reserve</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <strong data-en="No finance area here" data-tr="Burada finans alanı yok">No finance area here</strong>
+            <div class="caption" data-en="Assistant admin cannot see balances, member debt or payment history." data-tr="Admin yardımcısı bakiyeleri, borçları veya ödeme geçmişini göremez.">Assistant admin cannot see balances, member debt or payment history.</div>
+          </div>
+        `
+      },
+      {
+        id: 'owner',
+        name: { en: 'Owner Console', tr: 'Owner Konsolu' },
+        tag: { en: 'Owner', tr: 'Owner' },
+        detailTitle: { en: 'Owner console', tr: 'Owner konsolu' },
+        detailText: { en: 'Top-level administration, plans, settings and feature toggles.', tr: 'Üst seviye yönetim, paketler, ayarlar ve özellik anahtarları.' },
+        purpose: { en: 'Used by the system owner to manage tenants, assign admins, configure subscription packages and enable or disable features.', tr: 'Sistem sahibinin tenantları yönetmesi, admin ataması, paketleri düzenlemesi ve özellikleri açıp kapatması için kullanılır.' },
+        actions: { en: 'View groups, assign group admin, open package settings, change feature flags.', tr: 'Grupları gör, grup admini ata, paket ayarlarını aç, özellik bayraklarını değiştir.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="header-row"><div><div class="muted" data-en="Owner" data-tr="Owner">Owner</div><h2 data-en="System overview" data-tr="Sistem görünümü">System overview</h2></div><div class="avatar">ON</div></div>
+          <div class="grid-2">
+            <div class="metric"><div class="muted" data-en="Groups" data-tr="Gruplar">Groups</div><div class="num">18</div></div>
+            <div class="metric"><div class="muted" data-en="Users" data-tr="Kullanıcılar">Users</div><div class="num">742</div></div>
+            <div class="metric"><div class="muted" data-en="Admins" data-tr="Adminler">Admins</div><div class="num">21</div></div>
+            <div class="metric"><div class="muted" data-en="Plans" data-tr="Paketler">Plans</div><div class="num">3</div></div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <strong data-en="Groups" data-tr="Gruplar">Groups</strong>
+            <div class="list" style="margin-top:12px">
+              <div class="item"><div><strong>X Group</strong><div class="caption">GBP, 34 members, Admin Onur</div></div><button class="mini-btn" data-en="Manage" data-tr="Yönet">Manage</button></div>
+              <div class="item"><div><strong>Y Group</strong><div class="caption">GBP, 22 members, Admin Serdar</div></div><button class="mini-btn" data-en="Manage" data-tr="Yönet">Manage</button></div>
+            </div>
+          </div>
+          <div class="card">
+            <strong data-en="Feature toggles" data-tr="Özellik anahtarları">Feature toggles</strong>
+            <div class="toggle-row"><div><strong data-en="Push notifications" data-tr="Anlık bildirimler">Push notifications</strong></div><div class="toggle"></div></div>
+            <div class="toggle-row"><div><strong data-en="Bilingual UI" data-tr="İki dilli arayüz">Bilingual UI</strong></div><div class="toggle"></div></div>
+            <div class="toggle-row" style="border-bottom:0"><div><strong data-en="Stats and leaderboards" data-tr="İstatistik ve liderlik">Stats and leaderboards</strong></div><div class="toggle"></div></div>
+          </div>
+        `
+      },
+      {
+        id: 'archived',
+        name: { en: 'Archived Users', tr: 'Arşivlenmiş Kullanıcılar' },
+        tag: { en: 'Admin', tr: 'Admin' },
+        detailTitle: { en: 'Archived users', tr: 'Arşivlenmiş kullanıcılar' },
+        detailText: { en: 'Soft deleted users live here. They are hidden from normal screens.', tr: 'Soft delete uygulanan kullanıcılar burada yaşar. Normal ekranlardan gizlidir.' },
+        purpose: { en: 'Supports safe deactivation, optional restore and independent statistics visibility control.', tr: 'Güvenli pasifleştirme, isteğe bağlı geri alma ve bağımsız istatistik görünürlüğü kontrolünü destekler.' },
+        actions: { en: 'Review archived people, restore them, choose whether to include them in stats again.', tr: 'Arşivlenen kişileri incele, geri al, istatistiklere tekrar dahil edilip edilmeyeceğini seç.' },
+        html: `
+          <div class="statusbar"><span>9:41</span><span>5G • 100%</span></div>
+          <div class="header-row"><div><div class="muted" data-en="Archive" data-tr="Arşiv">Archive</div><h2 data-en="Archived users" data-tr="Arşivlenmiş kullanıcılar">Archived users</h2></div><div class="avatar">🗂</div></div>
+          <div class="card">
+            <div class="item"><div><strong>Ali Kaya</strong><div class="caption" data-en="Hidden from lists and rankings" data-tr="Listelerden ve sıralamalardan gizli">Hidden from lists and rankings</div></div><button class="mini-btn" data-en="Restore" data-tr="Geri al">Restore</button></div>
+            <div class="item"><div><strong>Guest Murat</strong><div class="caption" data-en="Archived 14 days ago" data-tr="14 gün önce arşivlendi">Archived 14 days ago</div></div><button class="mini-btn" data-en="Restore" data-tr="Geri al">Restore</button></div>
+          </div>
+          <div class="card">
+            <strong data-en="Restore options" data-tr="Geri alma seçenekleri">Restore options</strong>
+            <div class="toggle-row"><div><strong data-en="Re-include in rankings" data-tr="Sıralamalara tekrar dahil et">Re-include in rankings</strong><div class="caption" data-en="Admin can decide this separately" data-tr="Admin buna ayrı karar verebilir">Admin can decide this separately</div></div><div class="toggle"></div></div>
+          </div>
+        `
+      }
+    ];
+
+    const screenList = document.getElementById('screenList');
+    const phoneScreen = document.getElementById('phoneScreen');
+    const detailTitle = document.getElementById('detailTitle');
+    const detailText = document.getElementById('detailText');
+    const detailPurpose = document.getElementById('detailPurpose');
+    const detailActions = document.getElementById('detailActions');
+    const langButtons = document.querySelectorAll('.lang-toggle button');
+    let currentLang = 'en';
+    let currentScreen = 'home';
+
+    function t(obj) {
+      return obj?.[currentLang] ?? '';
+    }
+
+    function renderScreenList() {
+      screenList.innerHTML = screens.map(s => `
+        <button class="screen-pill ${s.id === currentScreen ? 'active' : ''}" data-screen="${s.id}">
+          <div>
+            <div>${t(s.name)}</div>
+            <span>${t(s.tag)}</span>
+          </div>
+          <div>›</div>
+        </button>
+      `).join('');
+      screenList.querySelectorAll('.screen-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentScreen = btn.dataset.screen;
+          renderAll();
+        });
+      });
+    }
+
+    function applyI18n(root = document) {
+      root.querySelectorAll('[data-en]').forEach(el => {
+        const text = el.dataset[currentLang];
+        if (text != null) el.textContent = text;
+      });
+    }
+
+    function renderPhone() {
+      const screen = screens.find(s => s.id === currentScreen) || screens[0];
+      phoneScreen.innerHTML = screen.html;
+      applyI18n(phoneScreen);
+      detailTitle.textContent = t(screen.detailTitle);
+      detailText.textContent = t(screen.detailText);
+      detailPurpose.textContent = t(screen.purpose);
+      detailActions.textContent = t(screen.actions);
+    }
+
+    function renderAll() {
+      renderScreenList();
+      renderPhone();
+      applyI18n(document.body);
+      langButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.lang === currentLang));
+    }
+
+    langButtons.forEach(btn => btn.addEventListener('click', () => {
+      currentLang = btn.dataset.lang;
+      renderAll();
+    }));
+
+    renderAll();
+  </script>
+</body>
+</html>

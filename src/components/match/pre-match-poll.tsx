@@ -1,0 +1,87 @@
+"use client";
+
+import { useTransition } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { castPollVoteAction } from "@/server/actions/matches";
+import { useToast } from "@/components/ui/toast";
+
+export function PreMatchPoll({
+  matchId,
+  poll,
+  options,
+  votes,
+  status,
+}: {
+  matchId: string;
+  poll: { id: string };
+  options: Array<{ id: string; label: string; team_id: string; sort_order: number }>;
+  votes: Array<{ option_id: string; count: number }>;
+  status: string;
+}) {
+  const { push } = useToast();
+  const [pending, start] = useTransition();
+  const total = votes.reduce((s, v) => s + v.count, 0) || 1;
+
+  function vote(optionId: string) {
+    start(async () => {
+      const fd = new FormData();
+      fd.set("matchId", matchId);
+      fd.set("optionId", optionId);
+      const res = await castPollVoteAction(fd);
+      if (res?.error) push({ title: res.error, tone: "danger" });
+      else push({ title: "Vote saved", tone: "success" });
+    });
+  }
+
+  return (
+    <Card data-testid="pre-match-poll">
+      <header className="mb-3 flex items-center justify-between">
+        <h2 className="text-base font-semibold">Winner prediction</h2>
+        <span className="text-[11px] uppercase text-muted-foreground">
+          {status === "open" ? "open" : "closed"}
+        </span>
+      </header>
+      <div className="space-y-3">
+        {options
+          .sort((a, b) => a.sort_order - b.sort_order)
+          .map((opt) => {
+            const count = votes.find((v) => v.option_id === opt.id)?.count ?? 0;
+            const pct = Math.round((count / total) * 100);
+            return (
+              <div
+                key={opt.id}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+                data-testid={`poll-option-${opt.label.replace(/\s+/g, "-").toLowerCase()}`}
+              >
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold">{opt.label}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {count} · {pct}%
+                  </span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/[0.05]">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-blue-500"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                {status === "open" && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="mt-3 w-full"
+                    disabled={pending}
+                    onClick={() => vote(opt.id)}
+                    data-testid={`poll-vote-${opt.label.replace(/\s+/g, "-").toLowerCase()}`}
+                  >
+                    Vote
+                  </Button>
+                )}
+              </div>
+            );
+          })}
+      </div>
+    </Card>
+  );
+}

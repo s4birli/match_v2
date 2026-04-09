@@ -1,0 +1,21 @@
+import { AppShell } from "@/components/layout/app-shell";
+import { Card } from "@/components/ui/card";
+import { requireRole } from "@/server/auth/session";
+import { listVenues } from "@/server/db/queries";
+import { CreateMatchForm } from "./create-match-form";
+
+export default async function NewMatchPage() {
+  const { session, membership } = await requireRole(["admin", "owner", "assistant_admin"]);
+  const venues = await listVenues(membership.tenant_id);
+  return (
+    <AppShell session={session} activePath="/admin/matches">
+      <header>
+        <h1 className="text-2xl font-bold">Create match</h1>
+        <p className="text-sm text-muted-foreground">{membership.tenant.name}</p>
+      </header>
+      <Card>
+        <CreateMatchForm venues={venues} />
+      </Card>
+    </AppShell>
+  );
+}

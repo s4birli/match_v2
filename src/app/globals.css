@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222 47% 8%;
+    --foreground: 213 31% 95%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 213 31% 95%;
+
+    --popover: 222 47% 10%;
+    --popover-foreground: 213 31% 95%;
+
+    --primary: 158 64% 52%;
+    --primary-foreground: 222 47% 8%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 213 31% 95%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 263 70% 60%;
+    --accent-foreground: 213 31% 95%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 213 31% 95%;
+
+    --success: 158 64% 52%;
+    --success-foreground: 222 47% 8%;
+
+    --warning: 38 92% 55%;
+    --warning-foreground: 222 47% 8%;
+
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 158 64% 52%;
+
+    --radius: 1rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  body {
+    background-image:
+      radial-gradient(1200px 600px at 10% -10%, rgba(124, 58, 237, 0.18), transparent 50%),
+      radial-gradient(1000px 700px at 100% 10%, rgba(16, 185, 129, 0.14), transparent 45%),
+      linear-gradient(180deg, #08101d 0%, #0d1729 45%, #09111f 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.35);
+    color: hsl(var(--foreground));
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 999px;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply rounded-3xl border border-white/10 bg-white/[0.04] shadow-[0_18px_45px_rgba(0,0,0,0.35)] backdrop-blur-xl;
+  }
+  .glass-strong {
+    @apply rounded-3xl border border-white/10 bg-slate-950/70 shadow-[0_18px_45px_rgba(0,0,0,0.45)] backdrop-blur-xl;
+  }
+  .hero-card {
+    @apply rounded-3xl border border-white/10 p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)];
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.24), rgba(124, 58, 237, 0.26));
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-foreground;
+  }
+  .chip-success {
+    @apply chip border-emerald-400/20 bg-emerald-400/10 text-emerald-200;
+  }
+  .chip-warning {
+    @apply chip border-amber-400/20 bg-amber-400/10 text-amber-200;
+  }
+  .chip-danger {
+    @apply chip border-red-400/20 bg-red-400/10 text-red-200;
+  }
+  .chip-info {
+    @apply chip border-blue-400/20 bg-blue-400/10 text-blue-200;
+  }
+  .stat-card {
+    @apply rounded-2xl border border-white/10 bg-white/[0.04] p-4;
+  }
+  .section-title {
+    @apply mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+}
