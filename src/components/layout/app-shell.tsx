@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { initials } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { GroupSwitcher } from "@/components/layout/group-switcher";
+import { LanguageToggle } from "@/components/layout/language-toggle";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { NAV_ICON_MAP, type NavIconName } from "@/components/layout/nav-icons";
 import { logoutAction } from "@/server/actions/auth";
@@ -33,35 +34,30 @@ function buildNavForRole(role: Role | undefined, t: { nav: Record<string, string
     };
   }
 
-  // GROUP ADMIN: dedicated admin workspace + a "Player view" section,
-  // because the admin is also a regular player and may want to check their
-  // own next match / wallet / personal stats.
+  // GROUP ADMIN: single flat nav, ordered by usage frequency. Admin is
+  // also a player so personal "wallet" lives in the same nav as admin
+  // tooling. Mobile bottom nav can show every item via auto-cols-fr.
   if (role === "admin") {
     return {
       primary: [
+        // Most used (daily) ──────────────
         { href: "/admin/dashboard", label: t.nav.dashboard, iconName: "home" },
         { href: "/admin/matches", label: t.nav.matches, iconName: "calendar" },
         { href: "/admin/members", label: t.nav.members, iconName: "users" },
-        { href: "/admin/venues", label: t.nav.venues, iconName: "pin" },
         { href: "/admin/payments", label: t.nav.payments, iconName: "receipt" },
+        { href: "/wallet", label: t.nav.wallet, iconName: "wallet" },
         { href: "/admin/stats", label: t.nav.stats, iconName: "trophy" },
+        // Less used ─────────────────────
+        { href: "/admin/venues", label: t.nav.venues, iconName: "pin" },
         { href: "/admin/invites", label: t.nav.invites, iconName: "ticket" },
         { href: "/admin/settings", label: t.nav.settings, iconName: "settings" },
+        { href: "/profile", label: t.nav.profile, iconName: "profile" },
       ],
-      secondary: {
-        title: "Player view",
-        items: [
-          { href: "/matches", label: "My matches", iconName: "calendar" },
-          { href: "/wallet", label: "My wallet", iconName: "wallet" },
-          { href: "/stats", label: "My stats", iconName: "trophy" },
-          { href: "/profile", label: t.nav.profile, iconName: "profile" },
-        ],
-      },
+      secondary: null,
     };
   }
 
-  // ASSISTANT ADMIN: match-ops admin + same player view section.
-  // No finance (payments/settings), no member mgmt, no invites.
+  // ASSISTANT ADMIN: match-ops admin (no finance, no members, no invites).
   if (role === "assistant_admin") {
     return {
       primary: [
@@ -69,16 +65,10 @@ function buildNavForRole(role: Role | undefined, t: { nav: Record<string, string
         { href: "/admin/matches", label: t.nav.matches, iconName: "calendar" },
         { href: "/admin/venues", label: t.nav.venues, iconName: "pin" },
         { href: "/admin/stats", label: t.nav.stats, iconName: "trophy" },
+        { href: "/wallet", label: t.nav.wallet, iconName: "wallet" },
+        { href: "/profile", label: t.nav.profile, iconName: "profile" },
       ],
-      secondary: {
-        title: "Player view",
-        items: [
-          { href: "/matches", label: "My matches", iconName: "calendar" },
-          { href: "/wallet", label: "My wallet", iconName: "wallet" },
-          { href: "/stats", label: "My stats", iconName: "trophy" },
-          { href: "/profile", label: t.nav.profile, iconName: "profile" },
-        ],
-      },
+      secondary: null,
     };
   }
 
@@ -117,7 +107,7 @@ export async function AppShell({
   children: React.ReactNode;
   activePath?: string;
 }) {
-  const { t } = await getServerDictionary();
+  const { t, locale } = await getServerDictionary();
   // System owner is a special "no group" mode handled distinctly from membership roles.
   const role: Role | undefined = session.isSystemOwner ? "owner" : session.activeMembership?.role;
   const nav = buildNavForRole(role, t);
@@ -196,12 +186,12 @@ export async function AppShell({
                 href="/notifications"
                 data-testid="nav-notifications"
                 className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-foreground transition-colors hover:bg-white/[0.08]"
-                aria-label="Notifications"
+                aria-label={t.nav.notifications}
               >
                 <Bell size={16} />
               </Link>
             )}
-            {/* Language lives on /profile when logged in — top bar stays focused. */}
+            <LanguageToggle current={locale} />
             <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-1.5">
               <Avatar className="h-8 w-8">
                 <AvatarFallback>{initials(session.person.display_name)}</AvatarFallback>
@@ -217,7 +207,7 @@ export async function AppShell({
                   type="submit"
                   data-testid="logout-button"
                   className="flex h-7 w-7 items-center justify-center rounded-xl text-muted-foreground hover:bg-white/[0.08] hover:text-foreground"
-                  aria-label="Sign out"
+                  aria-label={t.common.logout}
                 >
                   <LogOut size={14} />
                 </button>

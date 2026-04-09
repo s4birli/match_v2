@@ -262,6 +262,15 @@ export async function registerAction(prevState: unknown, formData: FormData) {
 export async function logoutAction() {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
+  // Clear the locale cookie so the next user on this device starts from
+  // their own account.preferred_language (or browser header).
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete("locale");
+    cookieStore.delete(ACTIVE_TENANT_COOKIE_NAME);
+  } catch {
+    // ignore
+  }
   redirect("/login");
 }
 
@@ -379,10 +388,18 @@ async function syncActiveTenantCookie(): Promise<string | null> {
   const admin = createSupabaseServiceClient();
   const { data: account } = await admin
     .from("accounts")
-    .select("id, is_system_owner")
+    .select("id, is_system_owner, preferred_language")
     .eq("auth_user_id", user.id)
     .maybeSingle();
   if (!account) return null;
+
+  // Always overwrite the locale cookie from the account on a fresh login.
+  // The browser may have a stale cookie from a previous user on the same
+  // device — we want every login to honour THIS user's saved preference.
+  const cookieStore = await cookies();
+  if (account.preferred_language === "tr" || account.preferred_language === "en") {
+    cookieStore.set("locale", account.preferred_language, { path: "/" });
+  }
 
   // System owners do NOT belong to any group, so they get no tenant cookie.
   if (account.is_system_owner) return "system_owner";
@@ -411,7 +428,6 @@ async function syncActiveTenantCookie(): Promise<string | null> {
     (a, b) => (order[a.role] ?? 99) - (order[b.role] ?? 99),
   );
   const top = sorted[0];
-  const cookieStore = await cookies();
   cookieStore.set(ACTIVE_TENANT_COOKIE_NAME, top.tenant_id, { path: "/" });
   return top.role;
 }

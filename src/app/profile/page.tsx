@@ -5,13 +5,12 @@ import { requireMembership } from "@/server/auth/session";
 import { listPositionPreferences } from "@/server/db/queries";
 import { initials } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
-import { LanguageToggle } from "@/components/layout/language-toggle";
 import { ProfileForm } from "./profile-form";
 import { PushEnableButton } from "./push-enable";
 
 export default async function ProfilePage() {
   const { session, membership } = await requireMembership();
-  const { t, locale } = await getServerDictionary();
+  const { t } = await getServerDictionary();
   const positions = await listPositionPreferences(membership.id);
   const positionCodes = positions.map((p) => p.position_code);
 
@@ -37,12 +36,6 @@ export default async function ProfilePage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-base font-semibold">{t.profile.languageTitle}</h2>
-        <p className="mb-3 text-xs text-muted-foreground">{t.profile.languageHint}</p>
-        <LanguageToggle current={locale} />
-      </Card>
-
-      <Card>
         <h2 className="mb-3 text-base font-semibold">{t.profile.notificationsTitle}</h2>
         <p className="mb-3 text-xs text-muted-foreground">{t.profile.notificationsHint}</p>
         <PushEnableButton labels={{
@@ -55,6 +48,17 @@ export default async function ProfilePage() {
       <ProfileForm
         initialDisplayName={session.person.display_name}
         initialPositions={positionCodes}
+        labels={{
+          displayName: t.profile.displayName,
+          positionsTitle: t.profile.positionsTitle,
+          positionGoalkeeper: t.profile.positions.goalkeeper,
+          positionDefender: t.profile.positions.defender,
+          positionMidfield: t.profile.positions.midfield,
+          positionForward: t.profile.positions.forward,
+          saving: t.common.loading,
+          saveChanges: t.profile.saveChanges,
+          saved: t.profile.saved,
+        }}
       />
     </AppShell>
   );

@@ -152,13 +152,20 @@ export async function listAllLedgerForOwner(
   }>
 > {
   const cap = Math.min(Math.max(limit, 1), 200);
-  const { data } = await db()
+  // ledger_transactions has TWO FKs into memberships (membership_id and
+  // recorded_by_membership_id). PostgREST refuses ambiguous joins — pin
+  // the relationship to the explicit FK name.
+  const { data, error } = await db()
     .from("ledger_transactions")
     .select(
-      "id, tenant_id, transaction_type, direction, amount, currency_code, description, recorded_at, tenant:tenants(name), membership:memberships(person:persons(display_name))",
+      "id, tenant_id, transaction_type, direction, amount, currency_code, description, recorded_at, tenant:tenants(name), membership:memberships!ledger_transactions_membership_id_fkey(person:persons(display_name))",
     )
     .order("recorded_at", { ascending: false })
     .limit(cap);
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.warn("[listAllLedgerForOwner]", error.message);
+  }
 
   return (data ?? []).map((t) => {
     const tenant = t.tenant as { name?: string } | null;

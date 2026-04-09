@@ -8,28 +8,42 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import { updateProfileAction } from "@/server/actions/admin";
 
-const POSITIONS = [
-  { code: "goalkeeper", label: "Goalkeeper" },
-  { code: "defender", label: "Defender" },
-  { code: "midfield", label: "Midfield" },
-  { code: "forward", label: "Forward" },
-] as const;
+const POSITION_CODES = ["goalkeeper", "defender", "midfield", "forward"] as const;
 
 export function ProfileForm({
   initialDisplayName,
   initialPositions,
+  labels,
 }: {
   initialDisplayName: string;
   initialPositions: string[];
+  labels: {
+    displayName: string;
+    positionsTitle: string;
+    positionGoalkeeper: string;
+    positionDefender: string;
+    positionMidfield: string;
+    positionForward: string;
+    saving: string;
+    saveChanges: string;
+    saved: string;
+  };
 }) {
   const { push } = useToast();
   const [pending, start] = useTransition();
+
+  const positionLabels: Record<(typeof POSITION_CODES)[number], string> = {
+    goalkeeper: labels.positionGoalkeeper,
+    defender: labels.positionDefender,
+    midfield: labels.positionMidfield,
+    forward: labels.positionForward,
+  };
 
   function action(formData: FormData) {
     start(async () => {
       const res = await updateProfileAction(formData);
       if (res?.error) push({ title: res.error, tone: "danger" });
-      else push({ title: "Profile saved", tone: "success" });
+      else push({ title: labels.saved, tone: "success" });
     });
   }
 
@@ -37,7 +51,7 @@ export function ProfileForm({
     <Card>
       <form action={action} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="displayName">Display name</Label>
+          <Label htmlFor="displayName">{labels.displayName}</Label>
           <Input
             id="displayName"
             name="displayName"
@@ -47,27 +61,27 @@ export function ProfileForm({
           />
         </div>
         <div className="space-y-2">
-          <Label>Positions</Label>
+          <Label>{labels.positionsTitle}</Label>
           <div className="grid grid-cols-2 gap-2">
-            {POSITIONS.map((p) => (
+            {POSITION_CODES.map((code) => (
               <label
-                key={p.code}
+                key={code}
                 className="flex cursor-pointer items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm hover:bg-white/[0.08]"
               >
                 <input
                   type="checkbox"
-                  name={`position-${p.code}`}
-                  defaultChecked={initialPositions.includes(p.code)}
+                  name={`position-${code}`}
+                  defaultChecked={initialPositions.includes(code)}
                   className="h-4 w-4 accent-emerald-500"
-                  data-testid={`position-${p.code}`}
+                  data-testid={`position-${code}`}
                 />
-                {p.label}
+                {positionLabels[code]}
               </label>
             ))}
           </div>
         </div>
         <Button type="submit" disabled={pending} data-testid="profile-save">
-          {pending ? "Saving…" : "Save changes"}
+          {pending ? labels.saving : labels.saveChanges}
         </Button>
       </form>
     </Card>
