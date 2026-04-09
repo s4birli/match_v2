@@ -13,6 +13,8 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3737",
     headless: true,
+    locale: "en-US",
+    extraHTTPHeaders: { "Accept-Language": "en-US,en;q=0.9" },
     trace: "retain-on-failure",
     video: "off",
     screenshot: "only-on-failure",

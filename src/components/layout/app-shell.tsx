@@ -4,7 +4,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { initials } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { GroupSwitcher } from "@/components/layout/group-switcher";
-import { LanguageToggle } from "@/components/layout/language-toggle";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { NAV_ICON_MAP, type NavIconName } from "@/components/layout/nav-icons";
 import { logoutAction } from "@/server/actions/auth";
@@ -101,7 +100,7 @@ export async function AppShell({
   children: React.ReactNode;
   activePath?: string;
 }) {
-  const { t, locale } = await getServerDictionary();
+  const { t } = await getServerDictionary();
   // System owner is a special "no group" mode handled distinctly from membership roles.
   const role: Role | undefined = session.isSystemOwner ? "owner" : session.activeMembership?.role;
   const nav = buildNavForRole(role, t);
@@ -185,7 +184,7 @@ export async function AppShell({
                 <Bell size={16} />
               </Link>
             )}
-            <LanguageToggle current={locale} />
+            {/* Language lives on /profile when logged in — top bar stays focused. */}
             <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-1.5">
               <Avatar className="h-8 w-8">
                 <AvatarFallback>{initials(session.person.display_name)}</AvatarFallback>

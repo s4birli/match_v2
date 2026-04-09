@@ -6,7 +6,13 @@ import { listVenues } from "@/server/db/queries";
 import { CreateVenueForm } from "./create-venue-form";
 
 export default async function AdminVenuesPage() {
-  const { session, membership } = await requireRole(["admin", "owner"]);
+  // Assistant admins can SEE venues (they need them to create matches),
+  // and per CLAUDE.md they can also create venues for match operations.
+  const { session, membership } = await requireRole([
+    "admin",
+    "owner",
+    "assistant_admin",
+  ]);
   const venues = await listVenues(membership.tenant_id);
   return (
     <AppShell session={session} activePath="/admin/venues">

@@ -38,7 +38,7 @@ const venueSchema = z.object({
 });
 
 export async function createVenueAction(formData: FormData) {
-  const { membership } = await requireRole(["admin", "owner"]);
+  const { membership } = await requireRole(["admin", "owner", "assistant_admin"]);
   const parsed = venueSchema.safeParse({
     name: formData.get("name"),
     addressLine: formData.get("addressLine") || undefined,
