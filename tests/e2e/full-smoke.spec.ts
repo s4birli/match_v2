@@ -21,7 +21,7 @@ const ADMIN_ROUTES = [
 
 test.describe("Full smoke (user)", () => {
   test("every user-facing screen renders", async ({ page }) => {
-    await login(page, "levent@example.com");
+    await login(page, "user.demo@example.com");
     for (const route of ROUTES) {
       await page.goto(route.path);
       await page.waitForLoadState("domcontentloaded");
@@ -34,7 +34,7 @@ test.describe("Full smoke (user)", () => {
 
 test.describe("Full smoke (admin)", () => {
   test("every admin screen renders", async ({ page }) => {
-    await login(page, "admin.north@example.com");
+    await login(page, "admin.demo@example.com");
     for (const route of ADMIN_ROUTES) {
       await page.goto(route.path);
       await page.waitForLoadState("domcontentloaded");

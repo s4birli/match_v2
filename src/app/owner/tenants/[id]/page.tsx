@@ -143,55 +143,77 @@ export default async function OwnerTenantDetail({
         </div>
       </Card>
 
-      {/* Invite links */}
+      {/* Invite links — exactly one per role (user / admin). Existing rows can be REFRESHED. */}
       <Card>
         <header className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold">{t.owner.inviteLinksTitle}</h2>
         </header>
-        <div className="mb-3 flex flex-wrap gap-2">
-          <CreateInviteButton
-            tenantId={tenant.id}
-            role="user"
-            label={t.owner.createUserInvite}
-            testid="create-invite-user"
-          />
-          <CreateInviteButton
-            tenantId={tenant.id}
-            role="admin"
-            label={t.owner.createAdminInvite}
-            testid="create-invite-admin"
-          />
-        </div>
-        {invites.length === 0 ? (
-          <EmptyState icon={<Ticket size={20} />} title={t.owner.noInviteLinks} />
-        ) : (
-          <ul className="space-y-2">
-            {invites.map((inv) => {
-              const url = `${APP_URL}/invite/${inv.token}`;
-              return (
-                <li
-                  key={inv.id}
-                  data-testid={`invite-row-${inv.id}`}
-                  className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
-                >
-                  <code className="text-[11px]">{inv.token}</code>
-                  <Badge variant={inv.default_role === "admin" ? "accent" : "default"}>
-                    {inv.default_role}
+        <p className="mb-3 text-xs text-muted-foreground">
+          One link per role. Use Refresh to rotate the token (deactivates the old one).
+        </p>
+        <ul className="space-y-3">
+          {(["user", "admin"] as const).map((roleKey) => {
+            const existing = invites.find((i) => i.default_role === roleKey);
+            const url = existing ? `${APP_URL}/invite/${existing.token}` : null;
+            const labelCreate =
+              roleKey === "user" ? t.owner.createUserInvite : t.owner.createAdminInvite;
+            const refreshLabel = roleKey === "user" ? "Refresh user link" : "Refresh admin link";
+            return (
+              <li
+                key={roleKey}
+                data-testid={`invite-row-${roleKey}`}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={roleKey === "admin" ? "accent" : "default"}>
+                    {roleKey}
                   </Badge>
-                  <span className="text-[11px] text-muted-foreground">
-                    {inv.used_count} {t.owner.used}
-                  </span>
+                  {existing ? (
+                    <>
+                      <code className="text-[11px]">{existing.token}</code>
+                      <span className="text-[11px] text-muted-foreground">
+                        {existing.used_count} {t.owner.used}
+                      </span>
+                      {!existing.is_active && (
+                        <Badge variant="warning">{t.owner.deactivate}d</Badge>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground">
+                      {t.owner.noInviteLinks}
+                    </span>
+                  )}
                   <div className="ml-auto flex gap-2">
-                    <CopyButton text={url} label={t.owner.copyLink} okLabel={t.owner.copied} />
-                    {inv.is_active && (
-                      <DeactivateInviteButton inviteId={inv.id} label={t.owner.deactivate} />
+                    {url && (
+                      <CopyButton
+                        text={url}
+                        label={t.owner.copyLink}
+                        okLabel={t.owner.copied}
+                      />
+                    )}
+                    <CreateInviteButton
+                      tenantId={tenant.id}
+                      role={roleKey}
+                      label={existing ? refreshLabel : labelCreate}
+                      testid={`create-invite-${roleKey}`}
+                    />
+                    {existing && existing.is_active && (
+                      <DeactivateInviteButton
+                        inviteId={existing.id}
+                        label={t.owner.deactivate}
+                      />
                     )}
                   </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                </div>
+                {url && (
+                  <code className="mt-2 block break-all rounded-lg bg-black/20 px-3 py-2 text-[11px]">
+                    {url}
+                  </code>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       </Card>
 
       {/* Feature flags */}

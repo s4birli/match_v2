@@ -36,7 +36,7 @@ test.describe("Monkey", () => {
       }
     });
 
-    await login(page, "levent@example.com");
+    await login(page, "user.demo@example.com");
 
     for (const path of SAFE_PAGES) {
       await page.goto(path);

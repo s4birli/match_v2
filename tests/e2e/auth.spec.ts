@@ -2,9 +2,9 @@ import { test, expect } from "@playwright/test";
 import { login } from "./helpers";
 
 test.describe("Auth", () => {
-  test("login as levent, see dashboard, then log out", async ({ page }) => {
+  test("login as demo user, see dashboard, then log out", async ({ page }) => {
     test.setTimeout(90_000);
-    await login(page, "levent@example.com", "Test1234!");
+    await login(page, "user.demo@example.com", "Test1234!");
 
     // Should land on /dashboard (default post-login)
     await expect(page).toHaveURL(/\/dashboard/);
@@ -12,8 +12,8 @@ test.describe("Auth", () => {
     // "Hello" greeting appears on dashboard (from dictionaries.ts en: "Hello")
     const body = page.locator("body");
     await expect(body).toContainText(/Hello/i);
-    // Display name for levent should be present
-    await expect(body).toContainText(/Levent/i);
+    // Display name for demo user should be present
+    await expect(body).toContainText(/Demo User/i);
 
     // Log out via logout-button
     await page.getByTestId("logout-button").click();

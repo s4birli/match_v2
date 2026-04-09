@@ -16,7 +16,7 @@ import { login, expectNoAppError } from "./helpers";
  */
 test.describe("Post-match (admin closes a match)", () => {
   test("creates → assigns → closes", async ({ page }) => {
-    await login(page, "admin.north@example.com");
+    await login(page, "admin.demo@example.com");
 
     // 1. create match
     await page.goto("/admin/matches/new");

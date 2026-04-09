@@ -17,7 +17,7 @@ export function LoginForm({ next, labels }: { next?: string; labels: { email: st
       <input type="hidden" name="next" value={next ?? ""} />
       <div className="space-y-2">
         <Label htmlFor="email">{labels.email}</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" required data-testid="email-input" defaultValue="levent@example.com" />
+        <Input id="email" name="email" type="email" autoComplete="email" required data-testid="email-input" defaultValue="user.demo@example.com" />
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">{labels.password}</Label>

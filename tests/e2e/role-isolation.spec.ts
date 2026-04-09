@@ -42,7 +42,7 @@ test.describe("Role isolation", () => {
   });
 
   test("assistant_admin does NOT see finance / members / venues / invites", async ({ page }) => {
-    await login(page, "assistant.north@example.com");
+    await login(page, "assistant.demo@example.com");
     // Assistant is allowed at /admin/matches
     const walletLinks = await page.locator('a[href="/wallet"]').count();
     const memberLinks = await page.locator('a[href="/admin/members"]').count();

@@ -98,23 +98,18 @@ async function computeUniqueInviteLinkToken(
 }
 
 /**
- * `tenant_invites.created_by_membership_id` is NOT NULL + FK to memberships.id.
- * When the owner creates an invite for a brand-new tenant that has no members
- * yet, we must satisfy that FK. We refuse to alter the schema, so instead:
+ * `tenant_invites.created_by_membership_id` is now NULLABLE (see migration
+ * 20260409020000_owner_no_membership.sql) so we never need to attach the
+ * system owner to any tenant. Per CLAUDE.md product rule:
+ *   "system owner hiç bir gruba dahil olamaz"
  *
- *   1. Prefer any existing membership of the tenant (admin first, then any).
- *   2. Fall back to creating a *placeholder archived* membership for the
- *      system owner's person row in that tenant. It is marked as archived
- *      immediately so it does not affect role logic, stats, or visible lists.
- *      This is a one-time bootstrap — audit-logged as
- *      `bootstrap_invite_membership`.
+ * If a real active admin membership exists we credit them; otherwise the
+ * column stays NULL.
  */
 async function resolveCreatorMembershipIdForTenant(
   admin: ReturnType<typeof createSupabaseServiceClient>,
   tenantId: string,
-  systemOwnerAccountId: string,
 ): Promise<string | null> {
-  // 1) Prefer an active admin membership of this tenant.
   const { data: adminMembership } = await admin
     .from("memberships")
     .select("id")
@@ -125,7 +120,6 @@ async function resolveCreatorMembershipIdForTenant(
     .maybeSingle();
   if (adminMembership?.id) return adminMembership.id as string;
 
-  // 2) Otherwise any existing (non-archived) membership.
   const { data: anyActive } = await admin
     .from("memberships")
     .select("id")
@@ -133,66 +127,7 @@ async function resolveCreatorMembershipIdForTenant(
     .neq("status", "archived")
     .limit(1)
     .maybeSingle();
-  if (anyActive?.id) return anyActive.id as string;
-
-  // 3) Otherwise any membership at all (even archived), to satisfy FK only.
-  const { data: anyMembership } = await admin
-    .from("memberships")
-    .select("id")
-    .eq("tenant_id", tenantId)
-    .limit(1)
-    .maybeSingle();
-  if (anyMembership?.id) return anyMembership.id as string;
-
-  // 4) Bootstrap path: create a placeholder archived membership in this tenant
-  //    linked to the system owner's own person row. This keeps the FK valid
-  //    without adding a real active member to the tenant.
-  const { data: ownerPerson } = await admin
-    .from("persons")
-    .select("id")
-    .eq("primary_account_id", systemOwnerAccountId)
-    .maybeSingle();
-
-  if (!ownerPerson?.id) return null;
-
-  // Guard against a unique (tenant_id, person_id) collision.
-  const { data: existing } = await admin
-    .from("memberships")
-    .select("id")
-    .eq("tenant_id", tenantId)
-    .eq("person_id", ownerPerson.id)
-    .maybeSingle();
-  if (existing?.id) return existing.id as string;
-
-  const nowIso = new Date().toISOString();
-  const { data: placeholder, error } = await admin
-    .from("memberships")
-    .insert({
-      tenant_id: tenantId,
-      person_id: ownerPerson.id,
-      role: "user",
-      status: "archived",
-      stats_visibility: "excluded",
-      is_guest_membership: false,
-      joined_at: nowIso,
-      archived_at: nowIso,
-      archived_reason: "System owner bootstrap placeholder",
-    })
-    .select("id")
-    .single();
-
-  if (error || !placeholder) return null;
-
-  await admin.from("audit_logs").insert({
-    tenant_id: tenantId,
-    actor_account_id: systemOwnerAccountId,
-    entity_type: "membership",
-    entity_id: placeholder.id,
-    action_type: "bootstrap_invite_membership",
-    after_json: { reason: "Satisfy tenant_invites.created_by_membership_id FK" },
-  });
-
-  return placeholder.id as string;
+  return (anyActive?.id as string | undefined) ?? null;
 }
 
 function revalidateTenantPaths(tenantId?: string) {
@@ -270,22 +205,9 @@ export async function createTenantAction(
   });
 
   // Immediately create an initial admin-default invite link for the UI to show.
-  const creatorMembershipId = await resolveCreatorMembershipIdForTenant(
-    admin,
-    tenant.id,
-    session.account.id,
-  );
-  if (!creatorMembershipId) {
-    // Rare bootstrap failure: return tenant info but empty token.
-    revalidateTenantPaths(tenant.id);
-    return {
-      ok: true,
-      tenantId: tenant.id,
-      slug,
-      inviteCode,
-      inviteToken: "",
-    };
-  }
+  // System owner CANNOT belong to any group, so created_by_membership_id stays NULL
+  // unless an admin already exists for this brand-new tenant (which it never does).
+  const creatorMembershipId = await resolveCreatorMembershipIdForTenant(admin, tenant.id);
 
   const inviteToken = await computeUniqueInviteLinkToken(admin);
   const { error: inviteErr } = await admin.from("tenant_invites").insert({
@@ -479,7 +401,12 @@ export async function regenerateTenantInviteCodeAction(
 }
 
 // ---------------------------------------------------------------------------
-// 6. Create a new tenant_invites token row
+// 6. Create OR regenerate the (single) invite link of a given role
+//
+// Product rule: each tenant gets at most ONE active invite link per role
+// (one for users, one for admins). Calling this action when a row already
+// exists *regenerates* its token instead of inserting a duplicate. Any
+// previously-active rows of the same role are deactivated first.
 // ---------------------------------------------------------------------------
 
 const createInviteLinkSchema = z.object({
@@ -489,7 +416,7 @@ const createInviteLinkSchema = z.object({
 
 export async function createInviteLinkAction(
   formData: FormData,
-): Promise<{ ok: true; token: string } | { error: string }> {
+): Promise<{ ok: true; token: string; replaced: boolean } | { error: string }> {
   const { session } = await requireRole(["owner"]);
   const parsed = createInviteLinkSchema.safeParse({
     tenantId: formData.get("tenantId"),
@@ -500,38 +427,61 @@ export async function createInviteLinkAction(
   }
 
   const admin = createSupabaseServiceClient();
+  // System owner has no membership; this resolves to a real admin if one
+  // exists, else NULL (the column is nullable per migration 20260409020000).
   const creatorMembershipId = await resolveCreatorMembershipIdForTenant(
     admin,
     parsed.data.tenantId,
-    session.account.id,
   );
-  if (!creatorMembershipId) {
-    return {
-      error: "Tenant has no members yet — assign at least one admin first.",
-    };
-  }
 
   const token = await computeUniqueInviteLinkToken(admin);
-  const { error } = await admin.from("tenant_invites").insert({
-    tenant_id: parsed.data.tenantId,
-    token,
-    created_by_membership_id: creatorMembershipId,
-    default_role: parsed.data.role,
-    is_active: true,
-  });
-  if (error) return { error: error.message };
+
+  // Look for an existing invite of the same role.
+  const { data: existing } = await admin
+    .from("tenant_invites")
+    .select("id")
+    .eq("tenant_id", parsed.data.tenantId)
+    .eq("default_role", parsed.data.role)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let replaced = false;
+  if (existing?.id) {
+    // Refresh — regenerate the token of the existing row instead of creating a duplicate.
+    const { error: updErr } = await admin
+      .from("tenant_invites")
+      .update({
+        token,
+        is_active: true,
+        used_count: 0,
+        created_by_membership_id: creatorMembershipId,
+      })
+      .eq("id", existing.id);
+    if (updErr) return { error: updErr.message };
+    replaced = true;
+  } else {
+    const { error: insErr } = await admin.from("tenant_invites").insert({
+      tenant_id: parsed.data.tenantId,
+      token,
+      created_by_membership_id: creatorMembershipId,
+      default_role: parsed.data.role,
+      is_active: true,
+    });
+    if (insErr) return { error: insErr.message };
+  }
 
   await admin.from("audit_logs").insert({
     tenant_id: parsed.data.tenantId,
     actor_account_id: session.account.id,
     entity_type: "tenant_invite",
     entity_id: parsed.data.tenantId,
-    action_type: "create_invite_link",
+    action_type: replaced ? "regenerate_invite_link" : "create_invite_link",
     after_json: { default_role: parsed.data.role, token },
   });
 
   revalidateTenantPaths(parsed.data.tenantId);
-  return { ok: true, token };
+  return { ok: true, token, replaced };
 }
 
 // ---------------------------------------------------------------------------
@@ -733,13 +683,7 @@ export async function inviteNewUserToTenantAction(
   const creatorMembershipId = await resolveCreatorMembershipIdForTenant(
     admin,
     parsed.data.tenantId,
-    session.account.id,
   );
-  if (!creatorMembershipId) {
-    return {
-      error: "Tenant has no members yet — assign at least one admin first.",
-    };
-  }
 
   const token = await computeUniqueInviteLinkToken(admin);
   const { data: invite, error } = await admin

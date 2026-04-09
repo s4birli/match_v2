@@ -7,7 +7,7 @@ import { Page, expect } from "@playwright/test";
  */
 export async function login(
   page: Page,
-  email = "levent@example.com",
+  email = "user.demo@example.com",
   password = "Test1234!",
 ) {
   // Next.js dev (turbopack) compiles on-demand, so the first request to a route

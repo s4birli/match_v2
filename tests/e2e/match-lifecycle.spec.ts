@@ -6,7 +6,7 @@ test.describe("Match lifecycle (admin)", () => {
     page,
   }) => {
     test.setTimeout(60_000);
-    await login(page, "admin.north@example.com", "Test1234!");
+    await login(page, "admin.demo@example.com", "Test1234!");
 
     // Go to create match page
     await page.goto("/admin/matches/new", { waitUntil: "domcontentloaded" });
