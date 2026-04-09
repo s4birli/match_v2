@@ -499,14 +499,23 @@ async function main() {
   }
 
   // ---- Some payments to relieve a few players from debt ----
+  // Dedupe by description so re-running the seed doesn't pile up duplicate
+  // credit rows on every run.
   const paymentTargets = aMembers.slice(0, 3);
   for (const m of paymentTargets) {
+    const { rows: existing } = await client.query<{ id: string }>(
+      `SELECT id FROM ledger_transactions
+        WHERE tenant_id = $1 AND membership_id = $2
+          AND description = 'Stress seed payment'
+        LIMIT 1`,
+      [TENANT_A_ID, m],
+    );
+    if (existing[0]) continue;
     await client.query(
       `INSERT INTO ledger_transactions
          (tenant_id, membership_id, transaction_type, direction, amount, currency_code,
           description, recorded_by_membership_id)
-       VALUES ($1, $2, 'payment', 'credit', '40.00', 'GBP', 'Stress seed payment', $3)
-       ON CONFLICT DO NOTHING`,
+       VALUES ($1, $2, 'payment', 'credit', '40.00', 'GBP', 'Stress seed payment', $3)`,
       [TENANT_A_ID, m, adminAmembership],
     );
   }

@@ -152,48 +152,62 @@ _(none)_
 _(none)_
 
 ### minor
-
-1. **Demo user `preferred_language` column is mutated by the i18n test
-   suite.** The test now resets it on `afterEach`, but if a test crash
-   somehow leaves it as `tr`, the next manual login from a fresh dev
-   session will see Turkish. Mitigation: `helpers.login()` re-stamps
-   the cookie to "en" + reloads, and i18n.spec has an `afterEach` that
-   restores en. Risk is low.
-
-2. **`scripts/seed-stress.ts` is not idempotent on every column.**
-   Re-running it after a manual schema change might race when the
-   `tenants` upsert has new defaults. Re-running on a clean DB is
-   safe.
-
-3. **The stress monkey test only clicks 5 buttons per page.** It's a
-   sanity check, not a fuzzer. A deeper random fuzzer would need to
-   exclude destructive flows (archive/remove) which the current
-   filter handles by string-match — fragile against locale change.
+_(All previously-listed minor items have been addressed in the polish
+commit; see "Resolved" below.)_
 
 ### polish
+_(All previously-listed polish items have been addressed; see
+"Resolved" below.)_
 
-4. **Dashboard stat blocks might wrap awkwardly at exactly 768px.**
-   The grid uses `sm:grid-cols-3 lg:grid-cols-5`, so between sm and
-   lg the 5-stat layout becomes a 3-column grid with the last 2 on a
-   second row. Acceptable for now; could refine with a custom md
-   breakpoint later.
+---
 
-5. **Admin nav has 10 items.** Mobile bottom nav uses
-   `auto-cols-fr` which keeps them all visible but each item is
-   ~36px wide on iPhone SE. Tap targets are still > 32px Apple HIG
-   minimum but tight. Consider grouping rarely-used items behind a
-   "More" sheet later.
+## ✔ Resolved (polish commit)
 
-6. **The post-match.spec.ts test was relying on left-over state**
-   (matched a previously-completed match's "Final score" string in
-   body). Fixed by backdating the test's `startsAt` like the
-   match-lifecycle test does. Good catch from the test sweep.
+1. **Demo user `preferred_language` reset** — `tests/global-setup.ts`
+   now runs `UPDATE accounts SET preferred_language='en' WHERE email
+   LIKE '%demo%'` once before every Playwright run. Combined with the
+   existing `helpers.login()` cookie re-stamp + the `i18n.spec`
+   `afterEach`, there are now three layers of defense against TR
+   bleed-through.
 
-7. **Helper text strings still in English for some admin sub-cards**
-   (e.g. "Pull a registered account from another group into this
-   group" → now `t.admin.addExistingPlayerHint`, but a few smaller
-   captions like "Pitches and locations" → `t.admin.venuesDesc` still
-   need style polish in Turkish — currently translated literally).
+2. **`seed-stress.ts` idempotency on the payment-back batch** — the
+   final ledger insert loop now does an explicit existence check
+   keyed on `(tenant_id, membership_id, description='Stress seed
+   payment')` before inserting, so re-running the seed never piles up
+   duplicate credit rows.
+
+3. **Stress monkey test depth** — was 5 buttons per page, now clicks
+   *every* visible button on every admin surface. Destructive flows
+   are filtered both by `data-testid` regex AND by EN+TR text match
+   (so the filter still holds when the UI is in Turkish).
+
+4. **Dashboard stat blocks responsive grid** — was
+   `sm:grid-cols-3 lg:grid-cols-5` which left an awkward wrap between
+   md and lg. Now `grid-cols-2 sm:grid-cols-3 md:grid-cols-5` so
+   phone shows 2-up, tablet 3-up, md+ 5-up. Same fix applied to
+   `/admin/members/[id]`.
+
+5. **Admin "More" sheet for the 10-item bottom nav** —
+   `MobileBottomNav` now shows the first 4 primary items + a `More`
+   button that opens an animated bottom sheet listing the rest.
+   Each cell is now ~70px wide on iPhone SE (well above the Apple
+   HIG 44px target) and items in the sheet still surface "active"
+   styling when their route is selected.
+
+6. **TR helper text polish** — fixed the literal-translated captions:
+   - `manageMembersDesc` → "Misafir ekle, üyeleri arşivle veya geri yükle"
+   - `venuesDesc` → "Halı saha ve konumlar"
+   - `paymentsDesc` → "Nakit ödemeleri elle gir"
+   - `ofInvitedPlayed` → "davet edilenlerin gerçekten oynadığı oran"
+
+7. **Bulk JSON user importer** — new `scripts/import-users.ts` reads a
+   JSON file (flat array OR `{ tenants: [...] }` grouped) and inserts
+   accounts + persons + memberships, idempotent on (email, tenant).
+   The same email across multiple tenants reuses the SAME persons
+   row, validating the multi-group rule from CLAUDE.md. Verified by
+   running the example file twice — second run reports "0 new
+   membership(s), 3 already-existed". Optional `positions` array on
+   each record sets the player's position prefs.
 
 ---
 

@@ -133,11 +133,16 @@ test.describe("Stress scenarios — Stress FC A & B", () => {
       await page.goto(path, { waitUntil: "domcontentloaded" });
       await page.waitForSelector("main", { timeout: 10_000 }).catch(() => {});
       await expect(page.locator("body")).not.toContainText(/Application error/);
-      // Click any safe-looking buttons (skip <a> tags, inputs, file uploads,
-      // and anything that opens a confirm dialog).
+      // Click EVERY safe-looking button on the page (not just the first 5).
+      // The destructive list is matched against locale-aware test ids when
+      // possible so the filter still holds in Turkish.
+      const DESTRUCTIVE_TESTID_RE =
+        /^(archive-|restore-|remove-|deactivate-|regenerate-|logout-|close-|delete-|submit-|payment-submit|fund-submit|guest-create|tenant-submit|venue-submit|match-submit|convert-submit|reminder-)/;
       const buttons = await page.locator("button:visible").all();
-      for (const btn of buttons.slice(0, 5)) {
+      for (const btn of buttons) {
         try {
+          const testid = (await btn.getAttribute("data-testid")) ?? "";
+          if (DESTRUCTIVE_TESTID_RE.test(testid)) continue;
           const text = (await btn.innerText().catch(() => "")).toLowerCase();
           if (
             text.includes("archive") ||
@@ -145,19 +150,24 @@ test.describe("Stress scenarios — Stress FC A & B", () => {
             text.includes("remove") ||
             text.includes("regenerate") ||
             text.includes("logout") ||
-            text.includes("kapat") ||
+            text.includes("submit") ||
             text.includes("close") ||
-            text.includes("submit")
+            // TR equivalents
+            text.includes("arşivle") ||
+            text.includes("sil") ||
+            text.includes("çıkış") ||
+            text.includes("yenile") ||
+            text.includes("kapat") ||
+            text.includes("gönder") ||
+            text.includes("kaydet")
           ) {
             continue;
           }
           await btn.click({ timeout: 2000 }).catch(() => {});
-          // Don't race the next page.content() against an in-flight nav.
           await page
             .waitForLoadState("domcontentloaded", { timeout: 3000 })
             .catch(() => {});
-          await page.waitForTimeout(150);
-          // Re-fetch the body via locator which is race-safe.
+          await page.waitForTimeout(80);
           await expect(page.locator("body")).not.toContainText(/Application error/);
         } catch {
           /* best effort */

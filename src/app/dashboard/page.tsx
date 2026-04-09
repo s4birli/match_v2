@@ -84,7 +84,7 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         <StatBlock label={t.dashboard.played} value={stats?.total_matches_played ?? 0} icon={<Users size={16} />} />
         <StatBlock label={t.dashboard.winRate} value={`${stats?.win_rate ?? 0}%`} icon={<Trophy size={16} />} accent />
         <StatBlock

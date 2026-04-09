@@ -1,0 +1,21 @@
+[
+  {
+    "email": "ali.kaya@example.com",
+    "displayName": "Ali Kaya",
+    "tenantSlug": "stress-fc-a",
+    "role": "user",
+    "positions": ["midfield", "forward"]
+  },
+  {
+    "email": "ali.kaya@example.com",
+    "displayName": "Ali Kaya",
+    "tenantSlug": "stress-fc-b",
+    "role": "user"
+  },
+  {
+    "displayName": "Misafir Mehmet",
+    "tenantSlug": "stress-fc-a",
+    "role": "guest",
+    "isGuest": true
+  }
+]
