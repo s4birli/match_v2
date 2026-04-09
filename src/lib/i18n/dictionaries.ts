@@ -34,6 +34,8 @@ const dictionaries = {
       loss: "Loss",
       open: "Open",
       closed: "Closed",
+      upcoming: "Upcoming",
+      past: "Past",
       copy: "Copy",
       created: "Created",
       status: "Status",
@@ -144,6 +146,14 @@ const dictionaries = {
       description: "Description",
       paymentRecorded: "Payment recorded",
       noTransactions: "No transactions yet.",
+      derivedFrom: "Derived from ledger",
+      transactionType: {
+        payment: "Payment",
+        match_fee: "Match fee",
+        adjustment: "Adjustment",
+        bonus: "Bonus",
+        penalty: "Penalty",
+      },
     },
     admin: {
       createMatch: "Create match",
@@ -159,6 +169,41 @@ const dictionaries = {
       includeInStats: "Include in stats",
       excludeFromStats: "Exclude from stats",
       groupSettings: "Group settings",
+    },
+    notifications: {
+      pageTitle: "Notifications",
+      empty: "You're all caught up.",
+      types: {
+        match_starting_soon: {
+          title: "Match starts in 1 hour",
+          body: "Your group's next match is about to start.",
+        },
+        pre_match_poll_open: {
+          title: "Winner prediction poll is open",
+          body: "Cast your vote before kickoff.",
+        },
+        post_match_rating_open: {
+          title: "Rate your teammates",
+          body: "The match is over — rate your teammates and pick the player of the match. You have 1 minute.",
+        },
+        wallet_updated: {
+          title: "Wallet updated",
+          body: "Your balance just changed.",
+        },
+      },
+    },
+    profile: {
+      languageTitle: "Language",
+      languageHint: "Saved on your account — applies on every device next time you sign in.",
+      notificationsTitle: "Notifications",
+      notificationsHint:
+        "Enable push so we can ping your phone 1 hour before kickoff and when ratings open after a match.",
+      enablePush: "Enable push notifications",
+      disablePush: "Disable push notifications",
+      pushUnsupported: "This browser does not support web push notifications.",
+      positionsTitle: "Positions",
+      displayName: "Display name",
+      saveChanges: "Save changes",
     },
     owner: {
       systemOverview: "System overview",
@@ -286,6 +331,8 @@ const dictionaries = {
       loss: "Mağlubiyet",
       open: "Açık",
       closed: "Kapalı",
+      upcoming: "Yaklaşan",
+      past: "Geçmiş",
       copy: "Kopyala",
       created: "Oluşturuldu",
       status: "Durum",
@@ -396,6 +443,14 @@ const dictionaries = {
       description: "Açıklama",
       paymentRecorded: "Ödeme kaydedildi",
       noTransactions: "Henüz işlem yok.",
+      derivedFrom: "Defter kaydından türetildi",
+      transactionType: {
+        payment: "Ödeme",
+        match_fee: "Maç ücreti",
+        adjustment: "Düzeltme",
+        bonus: "Bonus",
+        penalty: "Ceza",
+      },
     },
     admin: {
       createMatch: "Maç oluştur",
@@ -411,6 +466,41 @@ const dictionaries = {
       includeInStats: "İstatistiğe dahil et",
       excludeFromStats: "İstatistik dışı bırak",
       groupSettings: "Grup ayarları",
+    },
+    notifications: {
+      pageTitle: "Bildirimler",
+      empty: "Hepsi okundu.",
+      types: {
+        match_starting_soon: {
+          title: "Maç 1 saat içinde başlıyor",
+          body: "Grubunun sıradaki maçı başlamak üzere.",
+        },
+        pre_match_poll_open: {
+          title: "Galibiyet tahmini anketi açıldı",
+          body: "Maç başlamadan oyunu kullan.",
+        },
+        post_match_rating_open: {
+          title: "Takım arkadaşlarını puanla",
+          body: "Maç bitti — takım arkadaşlarını puanla ve maçın oyuncusunu seç. 1 dakikan var.",
+        },
+        wallet_updated: {
+          title: "Cüzdan güncellendi",
+          body: "Bakiyen az önce değişti.",
+        },
+      },
+    },
+    profile: {
+      languageTitle: "Dil",
+      languageHint: "Hesabına kaydedilir — bir sonraki girişinde her cihazda geçerli olur.",
+      notificationsTitle: "Bildirimler",
+      notificationsHint:
+        "Push bildirimlerini aç ki maçtan 1 saat önce ve maç bitince puanlama açılınca telefonuna haber gelsin.",
+      enablePush: "Push bildirimlerini aç",
+      disablePush: "Push bildirimlerini kapat",
+      pushUnsupported: "Bu tarayıcı web push bildirimlerini desteklemiyor.",
+      positionsTitle: "Pozisyonlar",
+      displayName: "Görünen ad",
+      saveChanges: "Değişiklikleri kaydet",
     },
     owner: {
       systemOverview: "Sistem görünümü",

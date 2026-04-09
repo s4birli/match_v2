@@ -33,7 +33,7 @@ export default async function WalletPage() {
           {formatCurrency(balance, currency, locale === "tr" ? "tr-TR" : "en-GB")}
         </p>
         <p className="mt-2 text-xs text-foreground/70">
-          Derived from {ledger.length} ledger entr{ledger.length === 1 ? "y" : "ies"}.
+          {t.wallet.derivedFrom} · {ledger.length}
         </p>
       </section>
 
@@ -79,7 +79,9 @@ export default async function WalletPage() {
                       {credit ? "+" : "-"}
                       {formatCurrency(tx.amount, tx.currency_code, locale === "tr" ? "tr-TR" : "en-GB")}
                     </p>
-                    <Badge variant={credit ? "success" : "danger"}>{tx.transaction_type}</Badge>
+                    <Badge variant={credit ? "success" : "danger"}>
+                      {(t.wallet.transactionType as Record<string, string>)[tx.transaction_type] ?? tx.transaction_type}
+                    </Badge>
                   </div>
                 </li>
               );

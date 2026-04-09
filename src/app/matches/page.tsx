@@ -38,8 +38,12 @@ export default async function MatchesPage() {
 
       <Tabs defaultValue="upcoming">
         <TabsList>
-          <TabsTrigger value="upcoming">Upcoming · {upcoming.length}</TabsTrigger>
-          <TabsTrigger value="past">Past · {past.length}</TabsTrigger>
+          <TabsTrigger value="upcoming">
+            {t.common.upcoming} · {upcoming.length}
+          </TabsTrigger>
+          <TabsTrigger value="past">
+            {t.common.past} · {past.length}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="upcoming">
           <MatchList matches={upcoming} locale={locale} t={t} empty={t.dashboard.noUpcoming} />

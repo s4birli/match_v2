@@ -37,20 +37,19 @@ export default async function ProfilePage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-base font-semibold">Language</h2>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Saved on your account — applies on every device next time you sign in.
-        </p>
+        <h2 className="mb-3 text-base font-semibold">{t.profile.languageTitle}</h2>
+        <p className="mb-3 text-xs text-muted-foreground">{t.profile.languageHint}</p>
         <LanguageToggle current={locale} />
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-base font-semibold">Notifications</h2>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Enable push so we can ping your phone 1 hour before kickoff and
-          when ratings open after a match.
-        </p>
-        <PushEnableButton />
+        <h2 className="mb-3 text-base font-semibold">{t.profile.notificationsTitle}</h2>
+        <p className="mb-3 text-xs text-muted-foreground">{t.profile.notificationsHint}</p>
+        <PushEnableButton labels={{
+          enable: t.profile.enablePush,
+          disable: t.profile.disablePush,
+          unsupported: t.profile.pushUnsupported,
+        }} />
       </Card>
 
       <ProfileForm

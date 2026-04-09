@@ -175,20 +175,30 @@ export default async function DashboardPage() {
         <Card>
           <h2 className="mb-3 text-base font-semibold">{t.nav.notifications}</h2>
           <ul className="space-y-2">
-            {notifs.map((n) => (
-              <li
-                key={n.id}
-                className="flex items-start justify-between rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 text-sm"
-              >
-                <div>
-                  <p className="font-semibold">{n.title}</p>
-                  <p className="text-xs text-muted-foreground">{n.body}</p>
-                </div>
-                <span className="text-[10px] text-muted-foreground">
-                  {relativeFromNow(n.created_at, locale)}
-                </span>
-              </li>
-            ))}
+            {notifs.map((n) => {
+              const types = t.notifications.types as Record<
+                string,
+                { title: string; body: string }
+              >;
+              const localized = types[n.notification_type] ?? {
+                title: n.title,
+                body: n.body,
+              };
+              return (
+                <li
+                  key={n.id}
+                  className="flex items-start justify-between rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 text-sm"
+                >
+                  <div>
+                    <p className="font-semibold">{localized.title}</p>
+                    <p className="text-xs text-muted-foreground">{localized.body}</p>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">
+                    {relativeFromNow(n.created_at, locale)}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </Card>
       )}

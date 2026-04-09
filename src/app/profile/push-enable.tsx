@@ -14,7 +14,15 @@ import { useToast } from "@/components/ui/toast";
  * (local dev without keys) the button still works but the subscription
  * is recorded only — push delivery is a no-op until keys are set.
  */
-export function PushEnableButton() {
+export function PushEnableButton({
+  labels = {
+    enable: "Enable push notifications",
+    disable: "Disable push notifications",
+    unsupported: "This browser does not support web push notifications.",
+  },
+}: {
+  labels?: { enable: string; disable: string; unsupported: string };
+} = {}) {
   const { push: toast } = useToast();
   const [supported, setSupported] = useState<boolean | null>(null);
   const [enabled, setEnabled] = useState<boolean>(false);
@@ -96,11 +104,7 @@ export function PushEnableButton() {
 
   if (supported === null) return null;
   if (!supported) {
-    return (
-      <p className="text-xs text-muted-foreground">
-        This browser does not support web push notifications.
-      </p>
-    );
+    return <p className="text-xs text-muted-foreground">{labels.unsupported}</p>;
   }
 
   return enabled ? (
@@ -111,7 +115,7 @@ export function PushEnableButton() {
       disabled={pending}
       data-testid="push-disable"
     >
-      <BellOff size={14} /> Disable push notifications
+      <BellOff size={14} /> {labels.disable}
     </Button>
   ) : (
     <Button
@@ -120,7 +124,7 @@ export function PushEnableButton() {
       disabled={pending}
       data-testid="push-enable"
     >
-      <Bell size={14} /> Enable push notifications
+      <Bell size={14} /> {labels.enable}
     </Button>
   );
 }
