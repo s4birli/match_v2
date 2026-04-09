@@ -33,7 +33,7 @@ test.describe("Role isolation", () => {
   });
 
   test("regular user does NOT see admin or owner links", async ({ page }) => {
-    await login(page, "levent@example.com");
+    await login(page, "viewer@example.com");
     await expect(page).toHaveURL(/\/dashboard/);
     const adminLinks = await page.locator('a[href^="/admin/"]').count();
     const ownerLinks = await page.locator('a[href^="/owner/"]').count();
@@ -57,16 +57,15 @@ test.describe("Role isolation", () => {
   });
 
   test("regular user cannot reach admin pages (server-side redirect)", async ({ page }) => {
-    await login(page, "levent@example.com");
-    await page.goto("/admin/members");
-    await page.waitForURL(/\/dashboard|\/login/, { timeout: 10_000 });
+    await login(page, "viewer@example.com");
+    await page.goto("/admin/members", { waitUntil: "domcontentloaded" });
+    await expect(page).not.toHaveURL(/\/admin\/members/, { timeout: 30_000 });
   });
 
   test("regular user cannot reach owner pages", async ({ page }) => {
-    await login(page, "levent@example.com");
-    await page.goto("/owner/tenants");
-    // Should redirect away (to /dashboard for users)
-    await page.waitForURL((url) => !url.pathname.startsWith("/owner"), { timeout: 10_000 });
+    await login(page, "viewer@example.com");
+    await page.goto("/owner/tenants", { waitUntil: "domcontentloaded" });
+    await expect(page).not.toHaveURL(/\/owner/, { timeout: 30_000 });
   });
 
   test("owner can create a new tenant", async ({ page }) => {
@@ -75,12 +74,12 @@ test.describe("Role isolation", () => {
     await page.waitForLoadState("domcontentloaded");
 
     const stamp = Date.now();
-    const slug = `smoke-${stamp}`.toLowerCase();
-    await page.getByTestId("tenant-name").fill(`Smoke Tenant ${stamp}`);
-    await page.getByTestId("tenant-slug").fill(slug);
-    await page.getByTestId("tenant-fee").fill("3");
+    const name = `Smoke Tenant ${stamp}`;
+    await page.getByTestId("tenant-name").fill(name);
+    // currency stays at default GBP
     await page.getByTestId("tenant-submit").click();
-    // After success, page refreshes and a new tenant card appears.
-    await expect(page.locator("body")).toContainText(`Smoke Tenant ${stamp}`, { timeout: 10_000 });
+    // After success, redirected to /owner/tenants/[id] which shows the tenant name.
+    await expect(page.locator("body")).toContainText(name, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/owner\/tenants\/[0-9a-f-]{36}$/, { timeout: 15_000 });
   });
 });

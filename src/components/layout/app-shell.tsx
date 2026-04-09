@@ -41,6 +41,8 @@ function buildNavForRole(role: Role | undefined, t: { nav: Record<string, string
       primary: [
         { href: "/owner/dashboard", label: t.nav.dashboard, icon: Crown },
         { href: "/owner/tenants", label: t.nav.tenants, icon: Building2 },
+        { href: "/owner/ledger", label: t.nav.ledger, icon: Wallet },
+        { href: "/owner/archived", label: t.nav.archived, icon: Layers3 },
       ],
       secondary: null,
     };

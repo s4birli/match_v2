@@ -6,7 +6,9 @@ test.describe("Privacy", () => {
     await login(page);
 
     await page.goto("/stats", { waitUntil: "domcontentloaded" });
-    await page.locator("body").waitFor();
+    // Wait until the streamed page replaces loading.tsx
+    await page.waitForSelector("main", { timeout: 30_000 });
+    await page.waitForLoadState("networkidle");
 
     const bodyText = (await page.locator("body").innerText()).toLowerCase();
 

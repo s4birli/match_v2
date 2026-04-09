@@ -4,10 +4,12 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { requireRole } from "@/server/auth/session";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { getServerDictionary } from "@/lib/i18n/server";
 import { CreateTenantForm } from "./create-tenant-form";
 
 export default async function OwnerTenantsPage() {
   const { session } = await requireRole(["owner"]);
+  const { t } = await getServerDictionary();
   const admin = createSupabaseServiceClient();
   const { data: tenants } = await admin
     .from("tenants")
@@ -17,49 +19,79 @@ export default async function OwnerTenantsPage() {
   return (
     <AppShell session={session} activePath="/owner/tenants">
       <header>
-        <h1 className="text-2xl font-bold">Tenants</h1>
-        <p className="text-sm text-muted-foreground">Create and manage groups in the system</p>
+        <h1 className="text-2xl font-bold">{t.owner.tenantsTitle}</h1>
+        <p className="text-sm text-muted-foreground">{t.owner.tenantsSubtitle}</p>
       </header>
 
       <Card>
-        <h2 className="mb-3 text-base font-semibold">+ Create tenant</h2>
-        <CreateTenantForm />
+        <h2 className="mb-3 text-base font-semibold">+ {t.owner.createTenant}</h2>
+        <CreateTenantForm
+          labels={{
+            name: t.owner.fieldName,
+            namePlaceholder: t.owner.fieldNamePlaceholder,
+            currency: t.owner.fieldCurrency,
+            submit: t.owner.createTenant,
+            submitting: t.owner.submitting,
+            success: t.owner.createdSuccess,
+            hint: t.owner.createTenantHint,
+          }}
+        />
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-base font-semibold">All tenants ({(tenants ?? []).length})</h2>
+        <h2 className="mb-3 text-base font-semibold">
+          {t.owner.allTenants} ({(tenants ?? []).length})
+        </h2>
         {(tenants ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">No tenants yet — create the first one above.</p>
+          <p className="text-sm text-muted-foreground">{t.owner.noTenantsYet}</p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
-            {(tenants ?? []).map((t) => (
-              <li key={t.id}>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <header className="flex items-start justify-between">
-                    <div>
-                      <p className="text-base font-bold">{t.name}</p>
-                      <p className="text-xs text-muted-foreground">/{t.slug}</p>
+            {(tenants ?? []).map((tn) => {
+              const status = tn.is_archived
+                ? "archived"
+                : tn.is_active
+                  ? "active"
+                  : "inactive";
+              return (
+                <li key={tn.id}>
+                  <Link
+                    href={`/owner/tenants/${tn.id}`}
+                    className="block"
+                    data-testid={`tenant-${tn.id}`}
+                  >
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.06]">
+                      <header className="flex items-start justify-between">
+                        <div>
+                          <p className="text-base font-bold">{tn.name}</p>
+                          <p className="text-xs text-muted-foreground">/{tn.slug}</p>
+                        </div>
+                        <Badge
+                          variant={
+                            status === "active"
+                              ? "success"
+                              : status === "archived"
+                                ? "danger"
+                                : "warning"
+                          }
+                        >
+                          {status === "active"
+                            ? t.owner.active
+                            : status === "archived"
+                              ? t.owner.statusArchived
+                              : t.owner.inactive}
+                        </Badge>
+                      </header>
+                      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{tn.currency_code}</span>
+                        <code className="rounded-lg bg-white/[0.04] px-2 py-1">
+                          {tn.invite_code}
+                        </code>
+                      </div>
                     </div>
-                    <Badge variant={t.is_active ? "success" : "warning"}>
-                      {t.is_active ? "active" : "inactive"}
-                    </Badge>
-                  </header>
-                  <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{t.currency_code} · fee {t.default_match_fee}</span>
-                    <code className="rounded-lg bg-white/[0.04] px-2 py-1">{t.invite_code}</code>
-                  </div>
-                  <div className="mt-3">
-                    <Link
-                      href={`/owner/tenants/${t.id}`}
-                      className="text-xs text-emerald-300 hover:underline"
-                      data-testid={`tenant-${t.id}`}
-                    >
-                      Open →
-                    </Link>
-                  </div>
-                </div>
-              </li>
-            ))}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </Card>

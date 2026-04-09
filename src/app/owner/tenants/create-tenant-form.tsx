@@ -8,7 +8,19 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import { createTenantAction } from "@/server/actions/owner";
 
-export function CreateTenantForm() {
+export function CreateTenantForm({
+  labels,
+}: {
+  labels: {
+    name: string;
+    namePlaceholder: string;
+    currency: string;
+    submit: string;
+    submitting: string;
+    success: string;
+    hint: string;
+  };
+}) {
   const { push } = useToast();
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -16,10 +28,15 @@ export function CreateTenantForm() {
   function action(fd: FormData) {
     start(async () => {
       const res = await createTenantAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
-      else {
-        push({ title: "Tenant created", tone: "success" });
-        router.refresh();
+      if ("error" in res) {
+        push({ title: res.error, tone: "danger" });
+      } else {
+        push({
+          title: labels.success,
+          description: `Code: ${res.inviteCode}`,
+          tone: "success",
+        });
+        router.push(`/owner/tenants/${res.tenantId}`);
       }
     });
   }
@@ -27,26 +44,17 @@ export function CreateTenantForm() {
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2">
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" name="name" required placeholder="Riverside FC" data-testid="tenant-name" />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="slug">Slug</Label>
+        <Label htmlFor="name">{labels.name}</Label>
         <Input
-          id="slug"
-          name="slug"
+          id="name"
+          name="name"
           required
-          pattern="[a-z0-9-]+"
-          placeholder="riverside-fc"
-          data-testid="tenant-slug"
+          placeholder={labels.namePlaceholder}
+          data-testid="tenant-name"
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="inviteCode">Invite code (optional)</Label>
-        <Input id="inviteCode" name="inviteCode" placeholder="Auto-generated if empty" data-testid="tenant-invite" />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="currencyCode">Currency</Label>
+      <div className="space-y-2 sm:col-span-2">
+        <Label htmlFor="currencyCode">{labels.currency}</Label>
         <select
           id="currencyCode"
           name="currencyCode"
@@ -61,22 +69,10 @@ export function CreateTenantForm() {
           <option value="MYR">MYR — Malaysian Ringgit</option>
         </select>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="defaultMatchFee">Default match fee</Label>
-        <Input
-          id="defaultMatchFee"
-          name="defaultMatchFee"
-          type="number"
-          min="0"
-          step="0.01"
-          defaultValue="5"
-          required
-          data-testid="tenant-fee"
-        />
-      </div>
+      <p className="text-xs text-muted-foreground sm:col-span-2">{labels.hint}</p>
       <div className="sm:col-span-2">
         <Button type="submit" disabled={pending} size="lg" data-testid="tenant-submit">
-          {pending ? "Creating…" : "+ Create tenant"}
+          {pending ? labels.submitting : `+ ${labels.submit}`}
         </Button>
       </div>
     </form>
