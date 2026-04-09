@@ -4,19 +4,21 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { createInviteLinkAction, regenerateInviteCodeAction } from "@/server/actions/admin";
 
 export function InviteActions() {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
 
   function newLink() {
     start(async () => {
       const res = await createInviteLinkAction();
-      if (res?.error) push({ title: res.error, tone: "danger" });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: `Created /invite/${res.token}`, tone: "success" });
+        push({ title: t.toasts.inviteCreated, tone: "success" });
         router.refresh();
       }
     });
@@ -25,9 +27,9 @@ export function InviteActions() {
   function regenerate() {
     start(async () => {
       const res = await regenerateInviteCodeAction();
-      if (res?.error) push({ title: res.error, tone: "danger" });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: `New code: ${res.code}`, tone: "success" });
+        push({ title: t.toasts.codeRegenerated, tone: "success" });
         router.refresh();
       }
     });

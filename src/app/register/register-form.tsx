@@ -5,9 +5,10 @@ import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { registerAction } from "@/server/actions/auth";
 
-type RegisterState = { error?: string };
+type RegisterState = { error?: string; errorParams?: Record<string, string | number> };
 const initialState: RegisterState = {};
 
 export function RegisterForm({
@@ -20,6 +21,7 @@ export function RegisterForm({
   labels: { name: string; email: string; password: string; inviteCode: string; submit: string; pending: string };
 }) {
   const [state, formAction] = useActionState<RegisterState, FormData>(registerAction, initialState);
+  const { t } = useI18n();
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="inviteToken" value={inviteToken ?? ""} />
@@ -43,7 +45,9 @@ export function RegisterForm({
         </div>
       )}
       {state?.error ? (
-        <p data-testid="register-error" className="text-xs text-red-300">{state.error}</p>
+        <p data-testid="register-error" className="text-xs text-red-300">
+          {translateError(t, state.error, state.errorParams)}
+        </p>
       ) : null}
       <Submit submit={labels.submit} pending={labels.pending} />
     </form>

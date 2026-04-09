@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { createFundCollectionAction } from "@/server/actions/admin";
 
 export function CreateFundForm({
@@ -16,6 +17,7 @@ export function CreateFundForm({
   currencyCode: string;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -38,7 +40,7 @@ export function CreateFundForm({
 
   function action(fd: FormData) {
     if (picked.size === 0) {
-      push({ title: "Pick at least one member.", tone: "danger" });
+      push({ title: translateError(t, "pickAtLeastOneMember"), tone: "danger" });
       return;
     }
     fd.delete("membershipIds");
@@ -46,12 +48,9 @@ export function CreateFundForm({
     start(async () => {
       const res = await createFundCollectionAction(fd);
       if (res?.error) {
-        push({ title: res.error, tone: "danger" });
+        push({ title: translateError(t, res.error), tone: "danger" });
       } else {
-        push({
-          title: `Charged ${res?.charged ?? 0} members`,
-          tone: "success",
-        });
+        push({ title: t.toasts.fundCreated, tone: "success" });
         setPicked(new Set());
         router.refresh();
       }

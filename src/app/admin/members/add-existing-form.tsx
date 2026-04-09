@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { addExistingPlayerToTenantAction } from "@/server/actions/admin";
 
 /**
@@ -18,15 +19,16 @@ export function AddExistingPlayerForm({
   accounts: Array<{ id: string; email: string; display_name: string }>;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
 
   function action(fd: FormData) {
     start(async () => {
       const res = await addExistingPlayerToTenantAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: "Member added", tone: "success" });
+        push({ title: t.toasts.memberAdded, tone: "success" });
         router.refresh();
       }
     });

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { createTenantAction } from "@/server/actions/owner";
 
 export function CreateTenantForm({
@@ -22,6 +23,7 @@ export function CreateTenantForm({
   };
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
 
@@ -29,7 +31,7 @@ export function CreateTenantForm({
     start(async () => {
       const res = await createTenantAction(fd);
       if ("error" in res) {
-        push({ title: res.error, tone: "danger" });
+        push({ title: translateError(t, res.error), tone: "danger" });
       } else {
         push({
           title: labels.success,

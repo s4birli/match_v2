@@ -5,10 +5,12 @@ import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { sendPaymentReminderAction } from "@/server/actions/admin";
 
 export function ReminderButton({ membershipId }: { membershipId: string }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
 
@@ -17,9 +19,9 @@ export function ReminderButton({ membershipId }: { membershipId: string }) {
       const fd = new FormData();
       fd.set("membershipId", membershipId);
       const res = await sendPaymentReminderAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: "Reminder sent", tone: "success" });
+        push({ title: t.toasts.reminderSent, tone: "success" });
         router.refresh();
       }
     });

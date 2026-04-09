@@ -19,14 +19,14 @@ export async function updateTenantDefaultsAction(formData: FormData) {
     tenantId: formData.get("tenantId"),
     defaultMatchFee: formData.get("defaultMatchFee"),
   });
-  if (!parsed.success) return { error: "Invalid input." };
-  if (parsed.data.tenantId !== membership.tenant_id) return { error: "Forbidden" };
+  if (!parsed.success) return { error: "invalidInput" };
+  if (parsed.data.tenantId !== membership.tenant_id) return { error: "forbidden" };
   const admin = createSupabaseServiceClient();
   const { error } = await admin
     .from("tenants")
     .update({ default_match_fee: parsed.data.defaultMatchFee.toString() })
     .eq("id", membership.tenant_id);
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
   revalidatePath("/admin/settings");
   revalidatePath("/admin/matches/new");
   revalidatePath("/admin/dashboard");
@@ -45,14 +45,14 @@ export async function createVenueAction(formData: FormData) {
     name: formData.get("name"),
     addressLine: formData.get("addressLine") || undefined,
   });
-  if (!parsed.success) return { error: "Invalid venue input." };
+  if (!parsed.success) return { error: "invalidVenueInput" };
   const admin = createSupabaseServiceClient();
   const { error } = await admin.from("venues").insert({
     tenant_id: membership.tenant_id,
     name: parsed.data.name,
     address_line: parsed.data.addressLine || null,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
   revalidatePath("/admin/venues");
   return { ok: true };
 }
@@ -93,7 +93,7 @@ export async function startGuestConversionAction(
     membershipId: formData.get("membershipId"),
     email: formData.get("email"),
   });
-  if (!parsed.success) return { error: "Invalid input" };
+  if (!parsed.success) return { error: "invalidInput" };
   const admin = createSupabaseServiceClient();
 
   const { data: target } = await admin
@@ -101,10 +101,10 @@ export async function startGuestConversionAction(
     .select("id, tenant_id, person_id, is_guest_membership, role")
     .eq("id", parsed.data.membershipId)
     .maybeSingle();
-  if (!target) return { error: "Membership not found" };
-  if (target.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
+  if (!target) return { error: "membershipNotFound" };
+  if (target.tenant_id !== membership.tenant_id) return { error: "forbidden" };
   if (!target.is_guest_membership && target.role !== "guest") {
-    return { error: "This member is already a registered user." };
+    return { error: "alreadyRegistered" };
   }
 
   // Refuse if a real account already uses this email anywhere.
@@ -114,7 +114,7 @@ export async function startGuestConversionAction(
     .eq("email", parsed.data.email)
     .maybeSingle();
   if (clash) {
-    return { error: "An account with this email already exists." };
+    return { error: "emailAlreadyExists" };
   }
 
   // Stamp the email on the existing person row so the registration flow can
@@ -153,7 +153,7 @@ export async function startGuestConversionAction(
     .select("id, token")
     .single();
   if (inviteErr || !invite) {
-    return { error: inviteErr?.message ?? "Failed to create invite." };
+    return { error: "generic" };
   }
 
   // Persist the claim mapping in audit_logs so registerAction can look it up.
@@ -181,7 +181,7 @@ export async function startGuestConversionAction(
 export async function createGuestMemberAction(formData: FormData) {
   const { membership } = await requireRole(["admin", "owner"]);
   const displayName = String(formData.get("displayName") ?? "").trim();
-  if (!displayName) return { error: "Name is required." };
+  if (!displayName) return { error: "nameRequired" };
   const admin = createSupabaseServiceClient();
 
   const { data: person, error: pErr } = await admin
@@ -194,7 +194,7 @@ export async function createGuestMemberAction(formData: FormData) {
     })
     .select()
     .single();
-  if (pErr) return { error: pErr.message };
+  if (pErr) return { error: "generic" };
 
   await admin.from("memberships").insert({
     tenant_id: membership.tenant_id,
@@ -216,14 +216,14 @@ export async function archiveMembershipAction(formData: FormData) {
   const id = String(formData.get("membershipId") ?? "");
   const reason = String(formData.get("reason") ?? "Removed by admin");
   const excludeFromStats = formData.get("excludeFromStats") === "on";
-  if (!id) return { error: "Missing membership." };
+  if (!id) return { error: "missingMembership" };
   const admin = createSupabaseServiceClient();
   const { data: m } = await admin
     .from("memberships")
     .select("tenant_id, role")
     .eq("id", id)
     .maybeSingle();
-  if (!m || m.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
+  if (!m || m.tenant_id !== membership.tenant_id) return { error: "forbidden" };
   await admin
     .from("memberships")
     .update({
@@ -250,14 +250,14 @@ export async function restoreMembershipAction(formData: FormData) {
   const { session, membership } = await requireRole(["admin", "owner"]);
   const id = String(formData.get("membershipId") ?? "");
   const includeInStats = formData.get("includeInStats") === "on";
-  if (!id) return { error: "Missing membership." };
+  if (!id) return { error: "missingMembership" };
   const admin = createSupabaseServiceClient();
   const { data: m } = await admin
     .from("memberships")
     .select("tenant_id")
     .eq("id", id)
     .maybeSingle();
-  if (!m || m.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
+  if (!m || m.tenant_id !== membership.tenant_id) return { error: "forbidden" };
   await admin
     .from("memberships")
     .update({
@@ -293,14 +293,14 @@ export async function recordPaymentAction(formData: FormData) {
     amount: formData.get("amount"),
     description: formData.get("description") || undefined,
   });
-  if (!parsed.success) return { error: "Invalid payment input." };
+  if (!parsed.success) return { error: "invalidPaymentInput" };
   const admin = createSupabaseServiceClient();
   const { data: target } = await admin
     .from("memberships")
     .select("tenant_id")
     .eq("id", parsed.data.membershipId)
     .maybeSingle();
-  if (!target || target.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
+  if (!target || target.tenant_id !== membership.tenant_id) return { error: "forbidden" };
 
   const { data: tenant } = await admin
     .from("tenants")
@@ -375,7 +375,7 @@ export async function createFundCollectionAction(formData: FormData) {
     membershipIds: ids,
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: "invalidInput" };
   }
   const admin = createSupabaseServiceClient();
   const { data: tenant } = await admin
@@ -392,7 +392,7 @@ export async function createFundCollectionAction(formData: FormData) {
     .eq("tenant_id", membership.tenant_id)
     .neq("status", "archived");
   const validIds = (validMemberships ?? []).map((m: { id: string }) => m.id);
-  if (validIds.length === 0) return { error: "No valid members selected." };
+  if (validIds.length === 0) return { error: "noValidMembers" };
 
   const { data: fund, error: fundErr } = await admin
     .from("tenant_fund_collections")
@@ -406,7 +406,7 @@ export async function createFundCollectionAction(formData: FormData) {
     })
     .select("id")
     .single();
-  if (fundErr || !fund) return { error: fundErr?.message ?? "Failed to create fund." };
+  if (fundErr || !fund) return { error: "generic" };
 
   const now = new Date().toISOString();
   const ledgerRows = validIds.map((mid) => ({
@@ -425,7 +425,7 @@ export async function createFundCollectionAction(formData: FormData) {
   const { error: ledgerErr } = await admin
     .from("ledger_transactions")
     .insert(ledgerRows);
-  if (ledgerErr) return { error: ledgerErr.message };
+  if (ledgerErr) return { error: "generic" };
 
   await notifyMany(
     validIds.map((mid) => ({ tenantId: membership.tenant_id, membershipId: mid })),
@@ -464,14 +464,14 @@ export async function sendPaymentReminderAction(formData: FormData) {
   const parsed = reminderSchema.safeParse({
     membershipId: formData.get("membershipId"),
   });
-  if (!parsed.success) return { error: "Invalid input" };
+  if (!parsed.success) return { error: "invalidInput" };
   const admin = createSupabaseServiceClient();
   const { data: target } = await admin
     .from("memberships")
     .select("tenant_id")
     .eq("id", parsed.data.membershipId)
     .maybeSingle();
-  if (!target || target.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
+  if (!target || target.tenant_id !== membership.tenant_id) return { error: "forbidden" };
 
   // Compute current balance to include in the reminder body.
   const { data: txs } = await admin
@@ -486,7 +486,7 @@ export async function sendPaymentReminderAction(formData: FormData) {
     balance += t.direction === "credit" ? amt : -amt;
     currency = t.currency_code ?? currency;
   }
-  if (balance >= 0) return { error: "This member is not in debt." };
+  if (balance >= 0) return { error: "notInDebt" };
 
   await notify({
     tenantId: membership.tenant_id,
@@ -519,7 +519,7 @@ export async function addExistingPlayerToTenantAction(formData: FormData) {
   const parsed = addExistingSchema.safeParse({
     accountId: formData.get("accountId"),
   });
-  if (!parsed.success) return { error: "Invalid input" };
+  if (!parsed.success) return { error: "invalidInput" };
   const admin = createSupabaseServiceClient();
   const { data: account } = await admin
     .from("accounts")
@@ -527,14 +527,14 @@ export async function addExistingPlayerToTenantAction(formData: FormData) {
     .eq("id", parsed.data.accountId)
     .maybeSingle();
   if (!account || account.is_system_owner) {
-    return { error: "Account not eligible." };
+    return { error: "accountNotEligible" };
   }
   const { data: person } = await admin
     .from("persons")
     .select("id")
     .eq("primary_account_id", account.id)
     .maybeSingle();
-  if (!person) return { error: "Person not found." };
+  if (!person) return { error: "personNotFound" };
 
   // Refuse duplicate membership.
   const { data: existing } = await admin
@@ -551,7 +551,7 @@ export async function addExistingPlayerToTenantAction(formData: FormData) {
         .update({ status: "active", restored_at: new Date().toISOString() })
         .eq("id", existing.id);
     } else {
-      return { error: "Already a member of this tenant." };
+      return { error: "alreadyMemberOfTenant" };
     }
   } else {
     await admin.from("memberships").insert({
@@ -596,7 +596,7 @@ export async function createInviteLinkAction() {
     })
     .select()
     .single();
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
   revalidatePath("/admin/invites");
   return { ok: true, token: data.token };
 }
@@ -609,7 +609,7 @@ export async function regenerateInviteCodeAction() {
     .from("tenants")
     .update({ invite_code: code, invite_code_active: true })
     .eq("id", membership.tenant_id);
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
   revalidatePath("/admin/invites");
   return { ok: true, code };
 }
@@ -625,7 +625,7 @@ function randomCode() {
 export async function updateProfileAction(formData: FormData) {
   const { membership, session } = await requireRole(["user", "admin", "assistant_admin", "owner"]);
   const displayName = String(formData.get("displayName") ?? "").trim();
-  if (!displayName) return { error: "Display name required." };
+  if (!displayName) return { error: "displayNameRequired" };
   const admin = createSupabaseServiceClient();
   await admin
     .from("persons")

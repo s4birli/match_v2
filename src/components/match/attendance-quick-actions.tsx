@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { setMyAttendanceAction } from "@/server/actions/matches";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 
 /**
  * Per product rule: the admin decides who plays. A regular user can only:
@@ -21,6 +22,7 @@ export function AttendanceQuickActions({
   currentStatus?: string | null;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const [pending, start] = useTransition();
 
   function set(status: "declined" | "reserve") {
@@ -29,12 +31,8 @@ export function AttendanceQuickActions({
       fd.set("matchId", matchId);
       fd.set("status", status);
       const res = await setMyAttendanceAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
-      else
-        push({
-          title: status === "reserve" ? "Pulled to reserve" : "You're out",
-          tone: "success",
-        });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
+      else push({ title: t.toasts.attendanceSaved, tone: "success" });
     });
   }
 

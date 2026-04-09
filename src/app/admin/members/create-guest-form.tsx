@@ -6,19 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { createGuestMemberAction } from "@/server/actions/admin";
 
 export function CreateGuestForm() {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
 
   function action(fd: FormData) {
     start(async () => {
       const res = await createGuestMemberAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: "Guest created", tone: "success" });
+        push({ title: t.toasts.guestCreated, tone: "success" });
         router.refresh();
       }
     });

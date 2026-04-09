@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { initials } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { castMotmVoteAction, submitTeammateRatingsAction } from "@/server/actions/matches";
 
 export function PostMatchVoting({
@@ -28,6 +29,7 @@ export function PostMatchVoting({
   myRatingAvg: number | null;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const [pending, start] = useTransition();
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [motm, setMotm] = useState<string | null>(null);
@@ -49,8 +51,8 @@ export function PostMatchVoting({
         fd.set(`rating-${target}`, String(val));
       });
       const res = await submitTeammateRatingsAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
-      else push({ title: "Ratings submitted", tone: "success" });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
+      else push({ title: t.toasts.ratingsSubmitted, tone: "success" });
     });
   }
 
@@ -61,8 +63,8 @@ export function PostMatchVoting({
       fd.set("matchId", matchId);
       fd.set("targetMembershipId", motm);
       const res = await castMotmVoteAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
-      else push({ title: "MOTM vote sent", tone: "success" });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
+      else push({ title: t.toasts.motmVoteSent, tone: "success" });
     });
   }
 

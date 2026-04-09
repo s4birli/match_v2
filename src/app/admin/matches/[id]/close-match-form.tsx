@@ -5,17 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { closeMatchAction } from "@/server/actions/matches";
 
 export function CloseMatchForm({ matchId }: { matchId: string }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const [pending, start] = useTransition();
 
   function action(fd: FormData) {
     start(async () => {
       const res = await closeMatchAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
-      else push({ title: "Match closed", tone: "success" });
+      if (res?.error) {
+        const params =
+          "errorParams" in res ? (res.errorParams as Record<string, string | number>) : undefined;
+        push({ title: translateError(t, res.error, params), tone: "danger" });
+      } else {
+        push({ title: t.toasts.matchClosed, tone: "success" });
+      }
     });
   }
 

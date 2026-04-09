@@ -168,7 +168,7 @@ export async function createTenantAction(
     currencyCode: formData.get("currencyCode"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return { error: "invalidInput" };
   }
 
   const admin = createSupabaseServiceClient();
@@ -191,7 +191,7 @@ export async function createTenantAction(
     .select("id")
     .single();
   if (tenantErr || !tenant) {
-    return { error: tenantErr?.message ?? "Failed to create tenant." };
+    return { error: "generic" };
   }
 
   // Audit the tenant creation.
@@ -266,7 +266,7 @@ export async function updateTenantAction(
     isActive: formData.get("isActive") || undefined,
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return { error: "invalidInput" };
   }
 
   const admin = createSupabaseServiceClient();
@@ -284,7 +284,7 @@ export async function updateTenantAction(
       is_active: parsed.data.isActive === "on",
     })
     .eq("id", parsed.data.tenantId);
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   await admin.from("audit_logs").insert({
     tenant_id: parsed.data.tenantId,
@@ -315,14 +315,14 @@ export async function archiveTenantAction(
 ): Promise<{ ok: true } | { error: string }> {
   const { session } = await requireRole(["owner"]);
   const parsed = tenantIdSchema.safeParse({ tenantId: formData.get("tenantId") });
-  if (!parsed.success) return { error: "Invalid input." };
+  if (!parsed.success) return { error: "invalidInput" };
 
   const admin = createSupabaseServiceClient();
   const { error } = await admin
     .from("tenants")
     .update({ is_active: false, is_archived: true })
     .eq("id", parsed.data.tenantId);
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   await admin.from("audit_logs").insert({
     tenant_id: parsed.data.tenantId,
@@ -346,14 +346,14 @@ export async function restoreTenantAction(
 ): Promise<{ ok: true } | { error: string }> {
   const { session } = await requireRole(["owner"]);
   const parsed = tenantIdSchema.safeParse({ tenantId: formData.get("tenantId") });
-  if (!parsed.success) return { error: "Invalid input." };
+  if (!parsed.success) return { error: "invalidInput" };
 
   const admin = createSupabaseServiceClient();
   const { error } = await admin
     .from("tenants")
     .update({ is_active: true, is_archived: false })
     .eq("id", parsed.data.tenantId);
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   await admin.from("audit_logs").insert({
     tenant_id: parsed.data.tenantId,
@@ -377,7 +377,7 @@ export async function regenerateTenantInviteCodeAction(
 ): Promise<{ ok: true; code: string } | { error: string }> {
   const { session } = await requireRole(["owner"]);
   const parsed = tenantIdSchema.safeParse({ tenantId: formData.get("tenantId") });
-  if (!parsed.success) return { error: "Invalid input." };
+  if (!parsed.success) return { error: "invalidInput" };
 
   const admin = createSupabaseServiceClient();
   const code = await computeUniqueInviteCode(admin);
@@ -385,7 +385,7 @@ export async function regenerateTenantInviteCodeAction(
     .from("tenants")
     .update({ invite_code: code, invite_code_active: true })
     .eq("id", parsed.data.tenantId);
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   await admin.from("audit_logs").insert({
     tenant_id: parsed.data.tenantId,
@@ -423,7 +423,7 @@ export async function createInviteLinkAction(
     role: (formData.get("role") as string) || "user",
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return { error: "invalidInput" };
   }
 
   const admin = createSupabaseServiceClient();
@@ -458,7 +458,7 @@ export async function createInviteLinkAction(
         created_by_membership_id: creatorMembershipId,
       })
       .eq("id", existing.id);
-    if (updErr) return { error: updErr.message };
+    if (updErr) return { error: "generic" };
     replaced = true;
   } else {
     const { error: insErr } = await admin.from("tenant_invites").insert({
@@ -468,7 +468,7 @@ export async function createInviteLinkAction(
       default_role: parsed.data.role,
       is_active: true,
     });
-    if (insErr) return { error: insErr.message };
+    if (insErr) return { error: "generic" };
   }
 
   await admin.from("audit_logs").insert({
@@ -497,7 +497,7 @@ export async function deactivateInviteLinkAction(
   const parsed = deactivateInviteSchema.safeParse({
     inviteId: formData.get("inviteId"),
   });
-  if (!parsed.success) return { error: "Invalid input." };
+  if (!parsed.success) return { error: "invalidInput" };
 
   const admin = createSupabaseServiceClient();
   const { data: invite } = await admin
@@ -505,13 +505,13 @@ export async function deactivateInviteLinkAction(
     .select("id, tenant_id")
     .eq("id", parsed.data.inviteId)
     .maybeSingle();
-  if (!invite) return { error: "Invite not found." };
+  if (!invite) return { error: "inviteNotFound" };
 
   const { error } = await admin
     .from("tenant_invites")
     .update({ is_active: false })
     .eq("id", parsed.data.inviteId);
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   await admin.from("audit_logs").insert({
     tenant_id: invite.tenant_id,
@@ -546,7 +546,7 @@ export async function assignExistingAccountAsRoleAction(
     role: formData.get("role"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return { error: "invalidInput" };
   }
 
   const admin = createSupabaseServiceClient();
@@ -556,9 +556,9 @@ export async function assignExistingAccountAsRoleAction(
     .select("id, email, is_system_owner")
     .eq("id", parsed.data.accountId)
     .maybeSingle();
-  if (!account) return { error: "Account not found." };
+  if (!account) return { error: "accountNotFound" };
   if (account.is_system_owner) {
-    return { error: "System owners cannot be assigned as group members." };
+    return { error: "ownerCannotBeMember" };
   }
 
   // Find or create the person linked to this account.
@@ -583,7 +583,7 @@ export async function assignExistingAccountAsRoleAction(
       .select("id, display_name")
       .single();
     if (personErr || !created) {
-      return { error: personErr?.message ?? "Failed to create person." };
+      return { error: "generic" };
     }
     person = created;
   }
@@ -607,7 +607,7 @@ export async function assignExistingAccountAsRoleAction(
         restored_at: new Date().toISOString(),
       })
       .eq("id", existing.id);
-    if (updateErr) return { error: updateErr.message };
+    if (updateErr) return { error: "generic" };
 
     await admin.from("audit_logs").insert({
       tenant_id: parsed.data.tenantId,
@@ -636,7 +636,7 @@ export async function assignExistingAccountAsRoleAction(
     .select("id")
     .single();
   if (membershipErr || !membership) {
-    return { error: membershipErr?.message ?? "Failed to create membership." };
+    return { error: "generic" };
   }
 
   await admin.from("audit_logs").insert({
@@ -675,7 +675,7 @@ export async function inviteNewUserToTenantAction(
     role: formData.get("role"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return { error: "invalidInput" };
   }
 
   const admin = createSupabaseServiceClient();
@@ -699,7 +699,7 @@ export async function inviteNewUserToTenantAction(
     .select("id")
     .single();
   if (error || !invite) {
-    return { error: error?.message ?? "Failed to create invite." };
+    return { error: "generic" };
   }
 
   await admin.from("audit_logs").insert({
@@ -733,7 +733,7 @@ export async function removeMembershipAction(
   const parsed = removeMembershipSchema.safeParse({
     membershipId: formData.get("membershipId"),
   });
-  if (!parsed.success) return { error: "Invalid input." };
+  if (!parsed.success) return { error: "invalidInput" };
 
   const admin = createSupabaseServiceClient();
   const { data: existing } = await admin
@@ -741,7 +741,7 @@ export async function removeMembershipAction(
     .select("id, tenant_id, status, role")
     .eq("id", parsed.data.membershipId)
     .maybeSingle();
-  if (!existing) return { error: "Membership not found." };
+  if (!existing) return { error: "membershipNotFound" };
 
   const { error } = await admin
     .from("memberships")
@@ -751,7 +751,7 @@ export async function removeMembershipAction(
       archived_reason: "Removed by system owner",
     })
     .eq("id", parsed.data.membershipId);
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   await admin.from("audit_logs").insert({
     tenant_id: existing.tenant_id as string,
@@ -787,7 +787,7 @@ export async function setTenantFeatureFlagAction(
     enabled: formData.get("enabled") || undefined,
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return { error: "invalidInput" };
   }
 
   const isEnabled = parsed.data.enabled === "on";
@@ -806,14 +806,14 @@ export async function setTenantFeatureFlagAction(
       .from("tenant_feature_flags")
       .update({ is_enabled: isEnabled, updated_at: new Date().toISOString() })
       .eq("id", existing.id);
-    if (error) return { error: error.message };
+    if (error) return { error: "generic" };
   } else {
     const { error } = await admin.from("tenant_feature_flags").insert({
       tenant_id: parsed.data.tenantId,
       feature_key: parsed.data.featureKey,
       is_enabled: isEnabled,
     });
-    if (error) return { error: error.message };
+    if (error) return { error: "generic" };
   }
 
   await admin.from("audit_logs").insert({

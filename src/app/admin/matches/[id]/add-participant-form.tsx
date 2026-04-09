@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { setMyAttendanceAction } from "@/server/actions/matches";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { addParticipantsAction } from "@/server/actions/admin-participants";
 
 export function AddParticipantForm({
@@ -15,6 +15,7 @@ export function AddParticipantForm({
   candidates: Array<{ id: string; displayName: string }>;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
 
@@ -24,9 +25,9 @@ export function AddParticipantForm({
       fd.set("matchId", matchId);
       fd.append("membershipIds", membershipId);
       const res = await addParticipantsAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: "Added", tone: "success" });
+        push({ title: t.toasts.participantAdded, tone: "success" });
         router.refresh();
       }
     });

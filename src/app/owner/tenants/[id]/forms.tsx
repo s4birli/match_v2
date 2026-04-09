@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import {
   archiveTenantAction,
   assignExistingAccountAsRoleAction,
@@ -39,12 +40,13 @@ export function TenantSettingsForm({
   };
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   function action(fd: FormData) {
     start(async () => {
       const res = await updateTenantAction(fd);
-      if ("error" in res) push({ title: res.error, tone: "danger" });
+      if ("error" in res) push({ title: translateError(t, res.error), tone: "danger" });
       else {
         push({ title: labels.saved, tone: "success" });
         router.refresh();
@@ -113,6 +115,7 @@ export function RegenerateCodeButton({
   label: string;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   function go() {
@@ -120,9 +123,9 @@ export function RegenerateCodeButton({
       const fd = new FormData();
       fd.set("tenantId", tenantId);
       const res = await regenerateTenantInviteCodeAction(fd);
-      if ("error" in res) push({ title: res.error, tone: "danger" });
+      if ("error" in res) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: `New code: ${res.code}`, tone: "success" });
+        push({ title: t.toasts.codeRegenerated, tone: "success" });
         router.refresh();
       }
     });
@@ -155,10 +158,11 @@ export function CopyButton({
   okLabel: string;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   function copy() {
     navigator.clipboard.writeText(text).then(
       () => push({ title: okLabel, tone: "success" }),
-      () => push({ title: "Copy failed", tone: "danger" }),
+      () => push({ title: t.toasts.copyFailed, tone: "danger" }),
     );
   }
   return (
@@ -190,6 +194,7 @@ export function CreateInviteButton({
   testid: string;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   function go() {
@@ -198,9 +203,9 @@ export function CreateInviteButton({
       fd.set("tenantId", tenantId);
       fd.set("role", role);
       const res = await createInviteLinkAction(fd);
-      if ("error" in res) push({ title: res.error, tone: "danger" });
+      if ("error" in res) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: `Created: ${res.token}`, tone: "success" });
+        push({ title: t.toasts.inviteCreated, tone: "success" });
         router.refresh();
       }
     });
@@ -230,6 +235,7 @@ export function DeactivateInviteButton({
   label: string;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   function go() {
@@ -237,9 +243,9 @@ export function DeactivateInviteButton({
       const fd = new FormData();
       fd.set("inviteId", inviteId);
       const res = await deactivateInviteLinkAction(fd);
-      if ("error" in res) push({ title: res.error, tone: "danger" });
+      if ("error" in res) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: "Deactivated", tone: "success" });
+        push({ title: t.toasts.inviteDeactivated, tone: "success" });
         router.refresh();
       }
     });
@@ -273,6 +279,7 @@ export function FeatureFlagToggle({
   savedLabel: string;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   const [checked, setChecked] = useState(initial);
@@ -288,7 +295,7 @@ export function FeatureFlagToggle({
       const res = await setTenantFeatureFlagAction(fd);
       if ("error" in res) {
         setChecked(!next);
-        push({ title: res.error, tone: "danger" });
+        push({ title: translateError(t, res.error), tone: "danger" });
       } else {
         push({ title: savedLabel, tone: "success" });
         router.refresh();
@@ -332,6 +339,7 @@ export function RemoveMemberButton({
   okLabel: string;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   function go() {
@@ -340,7 +348,7 @@ export function RemoveMemberButton({
       const fd = new FormData();
       fd.set("membershipId", membershipId);
       const res = await removeMembershipAction(fd);
-      if ("error" in res) push({ title: res.error, tone: "danger" });
+      if ("error" in res) push({ title: translateError(t, res.error), tone: "danger" });
       else {
         push({ title: okLabel, tone: "success" });
         router.refresh();
@@ -391,6 +399,7 @@ export function AssignAdminPanel({
   };
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
@@ -399,7 +408,7 @@ export function AssignAdminPanel({
     fd.set("tenantId", tenantId);
     start(async () => {
       const res = await assignExistingAccountAsRoleAction(fd);
-      if ("error" in res) push({ title: res.error, tone: "danger" });
+      if ("error" in res) push({ title: translateError(t, res.error), tone: "danger" });
       else {
         push({ title: labels.assigned, tone: "success" });
         router.refresh();
@@ -411,10 +420,10 @@ export function AssignAdminPanel({
     fd.set("tenantId", tenantId);
     start(async () => {
       const res = await inviteNewUserToTenantAction(fd);
-      if ("error" in res) push({ title: res.error, tone: "danger" });
+      if ("error" in res) push({ title: translateError(t, res.error), tone: "danger" });
       else {
         setGeneratedToken(res.token);
-        push({ title: "Invite link ready", tone: "success" });
+        push({ title: t.toasts.inviteLinkReady, tone: "success" });
         router.refresh();
       }
     });
@@ -423,7 +432,7 @@ export function AssignAdminPanel({
   function copy(text: string) {
     navigator.clipboard.writeText(text).then(
       () => push({ title: labels.copied, tone: "success" }),
-      () => push({ title: "Copy failed", tone: "danger" }),
+      () => push({ title: t.toasts.copyFailed, tone: "danger" }),
     );
   }
 
@@ -556,6 +565,7 @@ export function ArchiveTenantButton({
   restoreLabel: string;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   function go() {
@@ -566,9 +576,12 @@ export function ArchiveTenantButton({
       const res = isArchived
         ? await restoreTenantAction(fd)
         : await archiveTenantAction(fd);
-      if ("error" in res) push({ title: res.error, tone: "danger" });
+      if ("error" in res) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: isArchived ? "Restored" : "Archived", tone: "success" });
+        push({
+          title: isArchived ? t.toasts.tenantRestored : t.toasts.tenantArchived,
+          tone: "success",
+        });
         router.refresh();
       }
     });

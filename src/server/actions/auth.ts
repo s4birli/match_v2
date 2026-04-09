@@ -26,7 +26,7 @@ export async function loginAction(prevState: unknown, formData: FormData) {
     password: formData.get("password"),
   });
   if (!parsed.success) {
-    return { error: "Invalid input." };
+    return { error: "invalidInput" };
   }
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
@@ -49,7 +49,7 @@ export async function registerAction(prevState: unknown, formData: FormData) {
     inviteToken: formData.get("inviteToken") || null,
   });
   if (!parsed.success) {
-    return { error: "Please fill all fields correctly." };
+    return { error: "fillAllFields" };
   }
   const { email, password, displayName, inviteCode, inviteToken } = parsed.data;
 
@@ -61,7 +61,7 @@ export async function registerAction(prevState: unknown, formData: FormData) {
   });
   if (signUpError) return { error: signUpError.message };
   const authUserId = signUpData.user?.id;
-  if (!authUserId) return { error: "Sign-up failed." };
+  if (!authUserId) return { error: "signUpFailed" };
 
   // Create the account row first.
   const admin = createSupabaseServiceClient();
@@ -106,7 +106,8 @@ export async function registerAction(prevState: unknown, formData: FormData) {
       if (md?.claim_membership_id && md?.claim_person_id) {
         if (md.recipient_email && md.recipient_email !== email) {
           return {
-            error: `This invite is for ${md.recipient_email}. Please register with that email.`,
+            error: "inviteEmailMismatch",
+            errorParams: { email: md.recipient_email } as Record<string, string | number>,
           };
         }
 
@@ -286,7 +287,7 @@ export async function forgotPasswordAction(prevState: unknown, formData: FormDat
 
 export async function resetPasswordAction(prevState: unknown, formData: FormData) {
   const password = String(formData.get("password") ?? "");
-  if (password.length < 8) return { error: "Password too short." };
+  if (password.length < 8) return { error: "passwordTooShort" };
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { error: error.message };
@@ -295,13 +296,13 @@ export async function resetPasswordAction(prevState: unknown, formData: FormData
 
 export async function joinWithCodeAction(prevState: unknown, formData: FormData) {
   const code = String(formData.get("code") ?? "").trim();
-  if (!code) return { error: "Invite code is required." };
+  if (!code) return { error: "inviteCodeRequired" };
 
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Sign in first." };
+  if (!user) return { error: "signInFirst" };
 
   const admin = createSupabaseServiceClient();
   const { data: tenant } = await admin
@@ -310,20 +311,20 @@ export async function joinWithCodeAction(prevState: unknown, formData: FormData)
     .eq("invite_code", code)
     .eq("invite_code_active", true)
     .maybeSingle();
-  if (!tenant) return { error: "Invalid invite code." };
+  if (!tenant) return { error: "invalidInviteCode" };
 
   const { data: account } = await admin
     .from("accounts")
     .select("*")
     .eq("auth_user_id", user.id)
     .maybeSingle();
-  if (!account) return { error: "Account not found." };
+  if (!account) return { error: "accountNotFound" };
   const { data: person } = await admin
     .from("persons")
     .select("*")
     .eq("primary_account_id", account.id)
     .maybeSingle();
-  if (!person) return { error: "Profile not found." };
+  if (!person) return { error: "profileNotFound" };
 
   const { data: existing } = await admin
     .from("memberships")

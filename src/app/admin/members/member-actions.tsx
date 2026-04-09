@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import {
   archiveMembershipAction,
   restoreMembershipAction,
@@ -15,6 +16,7 @@ import {
 
 export function ArchiveMemberButton({ id }: { id: string }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   function archive() {
@@ -23,9 +25,9 @@ export function ArchiveMemberButton({ id }: { id: string }) {
       fd.set("membershipId", id);
       fd.set("excludeFromStats", "on");
       const res = await archiveMembershipAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: "Archived", tone: "success" });
+        push({ title: t.toasts.memberArchived, tone: "success" });
         router.refresh();
       }
     });
@@ -39,6 +41,7 @@ export function ArchiveMemberButton({ id }: { id: string }) {
 
 export function RestoreMemberButton({ id }: { id: string }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   function restore() {
@@ -47,9 +50,9 @@ export function RestoreMemberButton({ id }: { id: string }) {
       fd.set("membershipId", id);
       fd.set("includeInStats", "on");
       const res = await restoreMembershipAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: "Restored", tone: "success" });
+        push({ title: t.toasts.memberRestored, tone: "success" });
         router.refresh();
       }
     });
@@ -71,6 +74,7 @@ export function RestoreMemberButton({ id }: { id: string }) {
  */
 export function ConvertGuestButton({ id }: { id: string }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
@@ -85,11 +89,11 @@ export function ConvertGuestButton({ id }: { id: string }) {
       fd.set("email", email);
       const res = await startGuestConversionAction(fd);
       if ("error" in res) {
-        push({ title: res.error, tone: "danger" });
+        push({ title: translateError(t, res.error), tone: "danger" });
         return;
       }
       setGeneratedUrl(res.url);
-      push({ title: "Invite link ready", tone: "success" });
+      push({ title: t.toasts.inviteLinkReady, tone: "success" });
       router.refresh();
     });
   }
@@ -97,8 +101,8 @@ export function ConvertGuestButton({ id }: { id: string }) {
   function copy() {
     if (!generatedUrl) return;
     navigator.clipboard.writeText(generatedUrl).then(
-      () => push({ title: "Copied", tone: "success" }),
-      () => push({ title: "Copy failed", tone: "danger" }),
+      () => push({ title: t.toasts.copied, tone: "success" }),
+      () => push({ title: t.toasts.copyFailed, tone: "danger" }),
     );
   }
 

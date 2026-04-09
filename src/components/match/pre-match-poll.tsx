@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { castPollVoteAction } from "@/server/actions/matches";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 
 export function PreMatchPoll({
   matchId,
@@ -27,6 +28,7 @@ export function PreMatchPoll({
   lockReason?: string | null;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const [pending, start] = useTransition();
   const total = votes.reduce((s, v) => s + v.count, 0) || 1;
 
@@ -36,8 +38,14 @@ export function PreMatchPoll({
       fd.set("matchId", matchId);
       fd.set("optionId", optionId);
       const res = await castPollVoteAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
-      else push({ title: "Vote saved", tone: "success" });
+      if (res?.error) {
+        const errKey = res.error;
+        const params =
+          "errorParams" in res ? (res.errorParams as Record<string, string | number>) : undefined;
+        push({ title: translateError(t, errKey, params), tone: "danger" });
+      } else {
+        push({ title: t.toasts.voteSaved, tone: "success" });
+      }
     });
   }
 

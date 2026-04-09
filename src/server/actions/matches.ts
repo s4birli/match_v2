@@ -28,7 +28,7 @@ export async function setMyAttendanceAction(formData: FormData) {
     matchId: formData.get("matchId"),
     status: formData.get("status"),
   });
-  if (!parsed.success) return { error: "Invalid input" };
+  if (!parsed.success) return { error: "invalidInput" };
   const { membership } = await requireMembership();
   const admin = createSupabaseServiceClient();
 
@@ -40,9 +40,9 @@ export async function setMyAttendanceAction(formData: FormData) {
     .maybeSingle();
 
   if (!existing) {
-    return { error: "You're not on this match — only the admin can add players." };
+    return { error: "notOnMatch" };
   }
-  if (existing.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
+  if (existing.tenant_id !== membership.tenant_id) return { error: "forbidden" };
 
   await admin
     .from("match_participants")
@@ -69,7 +69,7 @@ export async function castPollVoteAction(formData: FormData) {
     matchId: formData.get("matchId"),
     optionId: formData.get("optionId"),
   });
-  if (!parsed.success) return { error: "Invalid input" };
+  if (!parsed.success) return { error: "invalidInput" };
   const { membership } = await requireMembership();
   const admin = createSupabaseServiceClient();
 
@@ -78,8 +78,8 @@ export async function castPollVoteAction(formData: FormData) {
     .select("id, tenant_id, status")
     .eq("match_id", parsed.data.matchId)
     .maybeSingle();
-  if (!poll || poll.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
-  if (poll.status === "closed") return { error: "Poll is closed." };
+  if (!poll || poll.tenant_id !== membership.tenant_id) return { error: "forbidden" };
+  if (poll.status === "closed") return { error: "pollClosed" };
 
   // Voting is gated until BOTH teams are fully filled — predicting a winner
   // before the rosters are set is meaningless.
@@ -88,9 +88,9 @@ export async function castPollVoteAction(formData: FormData) {
     .select("players_per_team, status")
     .eq("id", parsed.data.matchId)
     .maybeSingle();
-  if (!match) return { error: "Match not found" };
+  if (!match) return { error: "matchNotFound" };
   if (match.status === "completed" || match.status === "cancelled") {
-    return { error: "Match is no longer accepting predictions." };
+    return { error: "matchNotAcceptingPredictions" };
   }
   const { data: counts } = await admin
     .from("match_participants")
@@ -106,7 +106,8 @@ export async function castPollVoteAction(formData: FormData) {
   const teamsReady = perTeam.size >= 2 && [...perTeam.values()].every((c) => c >= required);
   if (!teamsReady) {
     return {
-      error: `Voting opens once both teams have ${required} players each.`,
+      error: "votingOpensWhenTeamsReady",
+      errorParams: { required } as Record<string, string | number>,
     };
   }
 
@@ -146,7 +147,7 @@ export async function castMotmVoteAction(formData: FormData) {
     matchId: formData.get("matchId"),
     targetMembershipId: formData.get("targetMembershipId"),
   });
-  if (!parsed.success) return { error: "Invalid input" };
+  if (!parsed.success) return { error: "invalidInput" };
   const { membership } = await requireMembership();
   const admin = createSupabaseServiceClient();
 
@@ -160,7 +161,7 @@ export async function castMotmVoteAction(formData: FormData) {
   if (matchTime?.score_entered_at) {
     const closedAtMs = new Date(matchTime.score_entered_at).getTime();
     if (Date.now() - closedAtMs > RATING_EDIT_WINDOW_MS) {
-      return { error: "Voting window has closed." };
+      return { error: "voteWindowClosed" };
     }
   }
 
@@ -172,10 +173,10 @@ export async function castMotmVoteAction(formData: FormData) {
     .eq("membership_id", membership.id)
     .maybeSingle();
   if (!voter || voter.attendance_status !== "played" || voter.tenant_id !== membership.tenant_id) {
-    return { error: "Only played participants can vote." };
+    return { error: "onlyPlayedCanVote" };
   }
   if (parsed.data.targetMembershipId === membership.id) {
-    return { error: "You cannot vote for yourself." };
+    return { error: "cannotVoteSelf" };
   }
   // Target must have played in the same match
   const { data: target } = await admin
@@ -185,7 +186,7 @@ export async function castMotmVoteAction(formData: FormData) {
     .eq("membership_id", parsed.data.targetMembershipId)
     .maybeSingle();
   if (!target || target.attendance_status !== "played") {
-    return { error: "Target must be a played participant." };
+    return { error: "targetMustBePlayed" };
   }
 
   const { data: existing } = await admin
@@ -197,10 +198,10 @@ export async function castMotmVoteAction(formData: FormData) {
 
   const now = new Date();
   if (existing) {
-    if (existing.locked_at) return { error: "Vote is locked." };
+    if (existing.locked_at) return { error: "voteLocked" };
     const submittedAt = new Date(existing.submitted_at).getTime();
     if (Date.now() - submittedAt > RATING_EDIT_WINDOW_MS) {
-      return { error: "Edit window has expired." };
+      return { error: "editWindowExpired" };
     }
     await admin
       .from("player_of_match_votes")
@@ -224,7 +225,7 @@ export async function castMotmVoteAction(formData: FormData) {
 // ---------- Teammate ratings ----------
 export async function submitTeammateRatingsAction(formData: FormData) {
   const matchId = String(formData.get("matchId") ?? "");
-  if (!matchId) return { error: "Missing match." };
+  if (!matchId) return { error: "missingMatch" };
 
   const ratingsRaw: Array<{ targetMembershipId: string; rating: number }> = [];
   for (const [key, value] of formData.entries()) {
@@ -248,7 +249,7 @@ export async function submitTeammateRatingsAction(formData: FormData) {
   if (matchTime?.score_entered_at) {
     const closedAtMs = new Date(matchTime.score_entered_at).getTime();
     if (Date.now() - closedAtMs > RATING_EDIT_WINDOW_MS) {
-      return { error: "Rating window has closed." };
+      return { error: "ratingWindowClosed" };
     }
   }
 
@@ -259,9 +260,9 @@ export async function submitTeammateRatingsAction(formData: FormData) {
     .eq("membership_id", membership.id)
     .maybeSingle();
   if (!voter || voter.attendance_status !== "played" || voter.tenant_id !== membership.tenant_id) {
-    return { error: "Only played participants can rate." };
+    return { error: "onlyPlayedCanRate" };
   }
-  if (!voter.team_id) return { error: "You must be on a team to rate." };
+  if (!voter.team_id) return { error: "mustBeOnTeam" };
 
   // Targets must be played teammates (same team) and not self
   const { data: teammates } = await admin
@@ -276,7 +277,7 @@ export async function submitTeammateRatingsAction(formData: FormData) {
   allowedSet.delete(membership.id);
 
   const filtered = ratingsRaw.filter((r) => allowedSet.has(r.targetMembershipId));
-  if (filtered.length === 0) return { error: "No valid teammates to rate." };
+  if (filtered.length === 0) return { error: "noValidTeammates" };
 
   const now = new Date();
   const editableUntil = new Date(now.getTime() + RATING_EDIT_WINDOW_MS).toISOString();
@@ -344,9 +345,7 @@ export async function createMatchAction(formData: FormData) {
     format: formData.get("format"),
   });
   if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "Invalid match input.",
-    };
+    return { error: "invalidMatchInput" };
   }
   const admin = createSupabaseServiceClient();
 
@@ -363,12 +362,12 @@ export async function createMatchAction(formData: FormData) {
     .eq("tenant_id", membership.tenant_id)
     .maybeSingle();
   if (!venue) {
-    return { error: "Venue not found — create one first." };
+    return { error: "venueNotFound" };
   }
 
   const startsAtDate = new Date(parsed.data.startsAt);
   if (Number.isNaN(startsAtDate.getTime())) {
-    return { error: "Invalid start date." };
+    return { error: "invalidStartDate" };
   }
   const endsAtDate = new Date(startsAtDate.getTime() + 60 * 60 * 1000);
   const playersPerTeam = parseInt(parsed.data.format[0], 10); // "6" from "6v6"
@@ -390,7 +389,7 @@ export async function createMatchAction(formData: FormData) {
     })
     .select()
     .single();
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   // Create teams
   await admin.from("match_teams").insert([
@@ -466,14 +465,14 @@ export async function assignParticipantToTeamAction(formData: FormData) {
   const matchId = String(formData.get("matchId") ?? "");
   const participantId = String(formData.get("participantId") ?? "");
   const teamId = String(formData.get("teamId") ?? "");
-  if (!matchId || !participantId) return { error: "Missing input." };
+  if (!matchId || !participantId) return { error: "missingInput" };
   const admin = createSupabaseServiceClient();
   const { data: p } = await admin
     .from("match_participants")
     .select("tenant_id")
     .eq("id", participantId)
     .maybeSingle();
-  if (!p || p.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
+  if (!p || p.tenant_id !== membership.tenant_id) return { error: "forbidden" };
   await admin
     .from("match_participants")
     .update({ team_id: teamId || null, joined_team_at: new Date().toISOString() })
@@ -497,15 +496,15 @@ export async function closeMatchAction(formData: FormData) {
     redScore: formData.get("redScore"),
     blueScore: formData.get("blueScore"),
   });
-  if (!parsed.success) return { error: "Invalid score." };
+  if (!parsed.success) return { error: "invalidScore" };
   const admin = createSupabaseServiceClient();
   const { data: match } = await admin
     .from("matches")
     .select("*, currency_code, match_fee, tenant_id")
     .eq("id", parsed.data.matchId)
     .maybeSingle();
-  if (!match || match.tenant_id !== membership.tenant_id) return { error: "Forbidden" };
-  if (match.status === "completed") return { error: "Match already closed." };
+  if (!match || match.tenant_id !== membership.tenant_id) return { error: "forbidden" };
+  if (match.status === "completed") return { error: "matchAlreadyClosed" };
 
   // A match is fixed at 1 hour. We refuse to close it before that hour
   // is up — admins shouldn't be able to settle the score (and charge
@@ -514,7 +513,8 @@ export async function closeMatchAction(formData: FormData) {
   if (Date.now() < startsAtMs + 60 * 60 * 1000) {
     const minutesLeft = Math.ceil((startsAtMs + 60 * 60 * 1000 - Date.now()) / 60000);
     return {
-      error: `Match isn't over yet — try again in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}.`,
+      error: "matchNotOverYet",
+      errorParams: { minutes: minutesLeft } as Record<string, string | number>,
     };
   }
 
@@ -523,10 +523,10 @@ export async function closeMatchAction(formData: FormData) {
     .select("*")
     .eq("match_id", parsed.data.matchId)
     .order("sort_order");
-  if (!teams || teams.length !== 2) return { error: "Teams not configured." };
+  if (!teams || teams.length !== 2) return { error: "teamsNotConfigured" };
   const red = teams.find((t: { team_key: string }) => t.team_key === "red");
   const blue = teams.find((t: { team_key: string }) => t.team_key === "blue");
-  if (!red || !blue) return { error: "Teams not configured." };
+  if (!red || !blue) return { error: "teamsNotConfigured" };
 
   const isDraw = parsed.data.redScore === parsed.data.blueScore;
   const winnerTeamId = isDraw

@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { initials } from "@/lib/utils";
 import { assignParticipantToTeamAction } from "@/server/actions/matches";
 
@@ -23,6 +24,7 @@ export function TeamAssignBoard({
   }>;
 }) {
   const { push } = useToast();
+  const { t: tr } = useI18n();
   const [pending, start] = useTransition();
 
   function assign(participantId: string, teamId: string | null) {
@@ -32,8 +34,8 @@ export function TeamAssignBoard({
       fd.set("participantId", participantId);
       fd.set("teamId", teamId ?? "");
       const res = await assignParticipantToTeamAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
-      else push({ title: "Updated", tone: "success" });
+      if (res?.error) push({ title: translateError(tr, res.error), tone: "danger" });
+      else push({ title: tr.toasts.teamsUpdated, tone: "success" });
     });
   }
 

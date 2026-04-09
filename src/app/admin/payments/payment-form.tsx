@@ -6,19 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { recordPaymentAction } from "@/server/actions/admin";
 
 export function PaymentForm({ members }: { members: Array<{ id: string; name: string }> }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
 
   function action(fd: FormData) {
     start(async () => {
       const res = await recordPaymentAction(fd);
-      if (res?.error) push({ title: res.error, tone: "danger" });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
       else {
-        push({ title: "Payment recorded", tone: "success" });
+        push({ title: t.toasts.paymentRecorded, tone: "success" });
         router.refresh();
       }
     });

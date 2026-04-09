@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { createMatchAction } from "@/server/actions/matches";
 import { formatCurrency } from "@/lib/utils";
 
@@ -22,6 +23,7 @@ export function CreateMatchForm({
   currencyCode: string;
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
 
@@ -29,9 +31,9 @@ export function CreateMatchForm({
     start(async () => {
       const res = await createMatchAction(fd);
       if (res?.error) {
-        push({ title: res.error, tone: "danger" });
+        push({ title: translateError(t, res.error), tone: "danger" });
       } else if (res?.matchId) {
-        push({ title: "Match created", tone: "success" });
+        push({ title: t.toasts.matchCreated, tone: "success" });
         router.push(`/admin/matches/${res.matchId}`);
       }
     });

@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { resetPasswordAction } from "@/server/actions/auth";
 
 type ResetState = { error?: string; success?: boolean };
@@ -18,6 +19,7 @@ export function ResetForm({
     resetPasswordAction,
     {} as ResetState,
   );
+  const { t } = useI18n();
   return (
     <form action={formAction} className="space-y-4">
       <div className="space-y-2">
@@ -30,7 +32,7 @@ export function ResetForm({
           minLength={8}
         />
       </div>
-      {state?.error ? <p className="text-xs text-red-300">{state.error}</p> : null}
+      {state?.error ? <p className="text-xs text-red-300">{translateError(t, state.error)}</p> : null}
       {state?.success ? (
         <p className="text-xs text-emerald-300">{labels.updated}</p>
       ) : null}

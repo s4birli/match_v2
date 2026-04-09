@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { loginAction } from "@/server/actions/auth";
 
 type LoginState = { error?: string };
@@ -12,6 +13,7 @@ const initialState: LoginState = {};
 
 export function LoginForm({ next, labels }: { next?: string; labels: { email: string; password: string; submit: string; pending: string } }) {
   const [state, formAction] = useActionState<LoginState, FormData>(loginAction, initialState);
+  const { t } = useI18n();
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="next" value={next ?? ""} />
@@ -24,7 +26,7 @@ export function LoginForm({ next, labels }: { next?: string; labels: { email: st
         <Input id="password" name="password" type="password" autoComplete="current-password" required data-testid="password-input" defaultValue="Test1234!" />
       </div>
       {state?.error ? (
-        <p data-testid="login-error" className="text-xs text-red-300">{state.error}</p>
+        <p data-testid="login-error" className="text-xs text-red-300">{translateError(t, state.error)}</p>
       ) : null}
       <Submit submit={labels.submit} pending={labels.pending} />
     </form>

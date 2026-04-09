@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
+import { useI18n, translateError } from "@/lib/i18n/client";
 import { updateProfileAction } from "@/server/actions/admin";
 
 const POSITION_CODES = ["goalkeeper", "defender", "midfield", "forward"] as const;
@@ -30,6 +31,7 @@ export function ProfileForm({
   };
 }) {
   const { push } = useToast();
+  const { t } = useI18n();
   const [pending, start] = useTransition();
 
   const positionLabels: Record<(typeof POSITION_CODES)[number], string> = {
@@ -42,8 +44,8 @@ export function ProfileForm({
   function action(formData: FormData) {
     start(async () => {
       const res = await updateProfileAction(formData);
-      if (res?.error) push({ title: res.error, tone: "danger" });
-      else push({ title: labels.saved, tone: "success" });
+      if (res?.error) push({ title: translateError(t, res.error), tone: "danger" });
+      else push({ title: t.toasts.profileSaved, tone: "success" });
     });
   }
 
