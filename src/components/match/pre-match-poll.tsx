@@ -50,12 +50,13 @@ export function PreMatchPoll({
   }
 
   const canVote = status === "open" && !locked;
-  const stateLabel = status === "closed" ? "closed" : locked ? "locked" : "open";
+  const stateLabel =
+    status === "closed" ? t.matchUi.pollClosed : locked ? t.matchUi.pollLocked : t.matchUi.pollOpen;
 
   return (
     <Card data-testid="pre-match-poll">
       <header className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-semibold">Winner prediction</h2>
+        <h2 className="text-base font-semibold">{t.matchUi.winnerPrediction}</h2>
         <span className="text-[11px] uppercase text-muted-foreground">{stateLabel}</span>
       </header>
 
@@ -66,9 +67,9 @@ export function PreMatchPoll({
         >
           <Lock size={16} className="mt-0.5 shrink-0" />
           <div>
-            <p className="text-sm font-semibold">Voting is locked</p>
+            <p className="text-sm font-semibold">{t.matchUi.votingLocked}</p>
             <p className="text-xs text-amber-200/80">
-              {lockReason ?? "Voting opens once both teams are full."}
+              {lockReason ?? t.matchUi.votingLockedHint}
             </p>
           </div>
         </div>
@@ -107,7 +108,7 @@ export function PreMatchPoll({
                     onClick={() => vote(opt.id)}
                     data-testid={`poll-vote-${opt.label.replace(/\s+/g, "-").toLowerCase()}`}
                   >
-                    Vote
+                    {t.matchUi.vote}
                   </Button>
                 )}
               </div>

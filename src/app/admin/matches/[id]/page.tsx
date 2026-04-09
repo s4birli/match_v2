@@ -11,6 +11,7 @@ import { formatDate } from "@/lib/utils";
 import { TeamAssignBoard } from "./team-assign-board";
 import { CloseMatchForm } from "./close-match-form";
 import { AddParticipantForm } from "./add-participant-form";
+import { getServerDictionary } from "@/lib/i18n/server";
 
 export default async function AdminMatchDetail({
   params,
@@ -19,6 +20,7 @@ export default async function AdminMatchDetail({
 }) {
   const { id } = await params;
   const { session, membership } = await requireRole(["admin", "owner", "assistant_admin"]);
+  const { t } = await getServerDictionary();
 
   const data = await getMatchFull(id);
   if (!data || data.match.tenant_id !== membership.tenant_id) notFound();
@@ -40,7 +42,7 @@ export default async function AdminMatchDetail({
       <header className="flex items-start justify-between gap-3">
         <div>
           <Link href="/admin/matches" className="text-xs text-muted-foreground hover:text-foreground">
-            ← Back
+            {t.admin.back}
           </Link>
           <h1 className="mt-2 text-2xl font-bold">
             {match.title ?? `${match.team_format_label} match`}
@@ -51,9 +53,9 @@ export default async function AdminMatchDetail({
       </header>
 
       <Card>
-        <h2 className="mb-3 text-base font-semibold">Add participants</h2>
+        <h2 className="mb-3 text-base font-semibold">{t.admin.addParticipants}</h2>
         {candidates.length === 0 ? (
-          <p className="text-xs text-muted-foreground">All members are already added.</p>
+          <p className="text-xs text-muted-foreground">{t.admin.allMembersAdded}</p>
         ) : (
           <AddParticipantForm matchId={match.id} candidates={candidates} />
         )}
@@ -83,7 +85,7 @@ export default async function AdminMatchDetail({
           const minutesLeft = Math.max(0, Math.ceil((endsAtMs - now) / 60000));
           return (
             <Card>
-              <h2 className="mb-3 text-base font-semibold">Close match</h2>
+              <h2 className="mb-3 text-base font-semibold">{t.admin.closeMatch}</h2>
               {finished ? (
                 <CloseMatchForm matchId={match.id} />
               ) : (
@@ -93,11 +95,9 @@ export default async function AdminMatchDetail({
                 >
                   <Lock size={16} className="mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold">Match isn&apos;t over yet</p>
+                    <p className="text-sm font-semibold">{t.admin.matchNotOverYetTitle}</p>
                     <p className="text-xs text-amber-200/80">
-                      The close-match form unlocks {minutesLeft} minute
-                      {minutesLeft === 1 ? "" : "s"} from now (matches always run
-                      for 1 hour from kickoff).
+                      {t.admin.matchNotOverYetHint.replace("{minutes}", String(minutesLeft))}
                     </p>
                   </div>
                 </div>
@@ -109,22 +109,22 @@ export default async function AdminMatchDetail({
 
       {match.status === "completed" && result && (
         <Card>
-          <h2 className="text-base font-semibold">Final score</h2>
+          <h2 className="text-base font-semibold">{t.admin.finalScore}</h2>
           <p className="mt-2 text-3xl font-black">
             <span className="text-red-300">{result.red_score}</span>
             <span className="mx-3 text-muted-foreground">—</span>
             <span className="text-blue-300">{result.blue_score}</span>
           </p>
           {result.is_draw ? (
-            <Badge variant="warning">Draw</Badge>
+            <Badge variant="warning">{t.admin.draw}</Badge>
           ) : (
-            <Badge variant="success">Winner saved</Badge>
+            <Badge variant="success">{t.admin.winnerSaved}</Badge>
           )}
         </Card>
       )}
 
       {participants.length === 0 && (
-        <EmptyState title="No participants yet." description="Add players to get started." />
+        <EmptyState title={t.admin.noParticipantsYet} description={t.admin.addPlayersToStart} />
       )}
     </AppShell>
   );

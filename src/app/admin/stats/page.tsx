@@ -171,30 +171,30 @@ export default async function AdminStatsPage() {
   return (
     <AppShell session={session} activePath="/admin/stats">
       <header>
-        <h1 className="text-2xl font-bold">Group analytics</h1>
+        <h1 className="text-2xl font-bold">{t.admin.groupAnalytics}</h1>
         <p className="text-sm text-muted-foreground">{membership.tenant.name}</p>
       </header>
 
       {/* Top metrics */}
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatBlock
-          label="Total matches"
+          label={t.admin.totalMatches}
           value={totalMatches ?? 0}
           icon={<CalendarDays size={18} />}
         />
         <StatBlock
-          label="Completed"
+          label={t.admin.completed}
           value={completedMatches ?? 0}
           icon={<Trophy size={18} />}
           accent
         />
         <StatBlock
-          label="Active members"
+          label={t.admin.activeMembers}
           value={totalMembers ?? 0}
           icon={<Users2 size={18} />}
         />
         <StatBlock
-          label="Last 30 days"
+          label={t.admin.last30Days}
           value={recent30}
           icon={<TrendingUp size={18} />}
         />
@@ -206,11 +206,11 @@ export default async function AdminStatsPage() {
           <Card>
             <header className="mb-3 flex items-center gap-2">
               <Wallet size={16} className="text-emerald-300" />
-              <h2 className="text-base font-semibold">Cash flow</h2>
+              <h2 className="text-base font-semibold">{t.admin.cashFlow}</h2>
             </header>
             <ul className="space-y-2 text-sm">
               <li className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-                <span className="text-muted-foreground">Fees charged</span>
+                <span className="text-muted-foreground">{t.admin.feesCharged}</span>
                 <span className="font-bold">
                   {formatCurrency(
                     feesCharged,
@@ -220,7 +220,7 @@ export default async function AdminStatsPage() {
                 </span>
               </li>
               <li className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-                <span className="text-muted-foreground">Payments received</span>
+                <span className="text-muted-foreground">{t.admin.paymentsReceived}</span>
                 <span className="font-bold text-emerald-300">
                   +
                   {formatCurrency(
@@ -231,11 +231,11 @@ export default async function AdminStatsPage() {
                 </span>
               </li>
               <li className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-                <span className="text-muted-foreground">Collection rate</span>
+                <span className="text-muted-foreground">{t.admin.collectionRate}</span>
                 <span className="font-bold">{collectionRate}%</span>
               </li>
               <li className="flex items-center justify-between rounded-xl border border-emerald-400/20 bg-emerald-400/5 px-3 py-2.5">
-                <span className="text-muted-foreground">Outstanding</span>
+                <span className="text-muted-foreground">{t.admin.outstanding}</span>
                 <span
                   className={`font-bold ${feesCharged - paymentsReceived > 0 ? "text-amber-300" : "text-emerald-300"}`}
                 >
@@ -252,10 +252,10 @@ export default async function AdminStatsPage() {
           <Card className="lg:col-span-2">
             <header className="mb-3 flex items-center gap-2">
               <Wallet size={16} className="text-amber-300" />
-              <h2 className="text-base font-semibold">Top owed</h2>
+              <h2 className="text-base font-semibold">{t.admin.topOwed}</h2>
             </header>
             {topOwed.length === 0 ? (
-              <EmptyState title="No outstanding balances 🎉" />
+              <EmptyState title={t.admin.noOutstanding} />
             ) : (
               <ul className="space-y-2">
                 {topOwed.map((row) => {
@@ -292,39 +292,37 @@ export default async function AdminStatsPage() {
         <Card>
           <header className="mb-3 flex items-center gap-2">
             <CheckCheck size={16} className="text-emerald-300" />
-            <h2 className="text-base font-semibold">Attendance reliability</h2>
+            <h2 className="text-base font-semibold">{t.admin.attendanceReliability}</h2>
           </header>
           <p className="text-3xl font-black text-emerald-300">{reliability}%</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            of invited slots actually played
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{t.admin.ofInvitedPlayed}</p>
           <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
             <li className="flex justify-between">
-              <span>played</span>
+              <span>{t.admin.attPlayed}</span>
               <span className="font-semibold text-foreground">
                 {attendanceCounts.played}
               </span>
             </li>
             <li className="flex justify-between">
-              <span>confirmed</span>
+              <span>{t.admin.attConfirmed}</span>
               <span className="font-semibold text-foreground">
                 {attendanceCounts.confirmed}
               </span>
             </li>
             <li className="flex justify-between">
-              <span>reserve</span>
+              <span>{t.admin.attReserve}</span>
               <span className="font-semibold text-foreground">
                 {attendanceCounts.reserve}
               </span>
             </li>
             <li className="flex justify-between">
-              <span>declined</span>
+              <span>{t.admin.attDeclined}</span>
               <span className="font-semibold text-foreground">
                 {attendanceCounts.declined}
               </span>
             </li>
             <li className="flex justify-between">
-              <span>no show</span>
+              <span>{t.admin.attNoShow}</span>
               <span className="font-semibold text-foreground">
                 {attendanceCounts.no_show}
               </span>
@@ -335,25 +333,25 @@ export default async function AdminStatsPage() {
         <Card>
           <header className="mb-3 flex items-center gap-2">
             <CalendarDays size={16} className="text-blue-300" />
-            <h2 className="text-base font-semibold">Match outcomes</h2>
+            <h2 className="text-base font-semibold">{t.admin.matchOutcomes}</h2>
           </header>
           <p className="text-3xl font-black">{totalMatches ?? 0}</p>
-          <p className="mt-1 text-xs text-muted-foreground">total matches</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t.admin.totalMatchesLabel}</p>
           <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
             <li className="flex justify-between">
-              <span>completed</span>
+              <span>{t.admin.stCompleted}</span>
               <span className="font-semibold text-emerald-300">
                 {completedMatches ?? 0}
               </span>
             </li>
             <li className="flex justify-between">
-              <span>cancelled</span>
+              <span>{t.admin.stCancelled}</span>
               <span className="font-semibold text-red-300">
                 {cancelledMatches ?? 0}
               </span>
             </li>
             <li className="flex justify-between">
-              <span>scheduled</span>
+              <span>{t.admin.stScheduled}</span>
               <span className="font-semibold text-blue-300">
                 {(totalMatches ?? 0) -
                   (completedMatches ?? 0) -
@@ -366,13 +364,13 @@ export default async function AdminStatsPage() {
         <Card>
           <header className="mb-3 flex items-center gap-2">
             <Users2 size={16} className="text-violet-300" />
-            <h2 className="text-base font-semibold">Membership</h2>
+            <h2 className="text-base font-semibold">{t.admin.membershipTitle}</h2>
           </header>
           <p className="text-3xl font-black">{totalMembers ?? 0}</p>
-          <p className="mt-1 text-xs text-muted-foreground">active members</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t.admin.activeMembersLabel}</p>
           <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
             <li className="flex justify-between">
-              <span>archived</span>
+              <span>{t.admin.archivedLabel}</span>
               <span className="font-semibold text-foreground">
                 {archivedMembers ?? 0}
               </span>
@@ -385,12 +383,12 @@ export default async function AdminStatsPage() {
       <Card>
         <header className="mb-3 flex items-center gap-2">
           <Sparkles size={16} className="text-violet-300" />
-          <h2 className="text-base font-semibold">Strong pairs</h2>
+          <h2 className="text-base font-semibold">{t.admin.strongPairs}</h2>
         </header>
         {pairChemistry.length === 0 ? (
           <EmptyState
-            title="Not enough match data yet"
-            description="Pairs are tracked once two players play together at least twice."
+            title={t.admin.noPairData}
+            description={t.admin.noPairDataHint}
           />
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2">
@@ -429,7 +427,7 @@ export default async function AdminStatsPage() {
       {/* Top rankings */}
       <section className="grid gap-4 lg:grid-cols-3">
         <Leaderboard
-          title="Top rated"
+          title={t.admin.topRated}
           icon={<Star size={16} />}
           rows={topRating}
           metric={(r) =>
@@ -438,20 +436,23 @@ export default async function AdminStatsPage() {
               : "—"
           }
           memberLookup={memberLookup}
+          emptyLabel={t.admin.noData}
         />
         <Leaderboard
-          title="Most MOTM"
+          title={t.admin.mostMotm}
           icon={<Trophy size={16} />}
           rows={topMotm}
           metric={(r) => `${r?.motm_count ?? 0}`}
           memberLookup={memberLookup}
+          emptyLabel={t.admin.noData}
         />
         <Leaderboard
-          title="Most active"
+          title={t.admin.mostActive}
           icon={<CalendarDays size={16} />}
           rows={topAttendance}
           metric={(r) => `${r?.total_matches_played ?? 0}`}
           memberLookup={memberLookup}
+          emptyLabel={t.admin.noData}
         />
       </section>
     </AppShell>
@@ -488,12 +489,14 @@ function Leaderboard({
   rows,
   metric,
   memberLookup,
+  emptyLabel,
 }: {
   title: string;
   icon: React.ReactNode;
   rows: LbRow[];
   metric: (r: LbRow) => string;
   memberLookup: Map<string, string>;
+  emptyLabel: string;
 }) {
   return (
     <Card>
@@ -502,7 +505,7 @@ function Leaderboard({
         <h2 className="text-base font-semibold">{title}</h2>
       </header>
       {rows.length === 0 ? (
-        <EmptyState title="No data yet." />
+        <EmptyState title={emptyLabel} />
       ) : (
         <ul className="space-y-2">
           {rows.map((r, i) => {

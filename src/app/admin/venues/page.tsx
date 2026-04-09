@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { requireRole } from "@/server/auth/session";
 import { listVenues } from "@/server/db/queries";
 import { CreateVenueForm } from "./create-venue-form";
+import { getServerDictionary } from "@/lib/i18n/server";
 
 export default async function AdminVenuesPage() {
   // Assistant admins can SEE venues (they need them to create matches),
@@ -13,21 +14,22 @@ export default async function AdminVenuesPage() {
     "owner",
     "assistant_admin",
   ]);
+  const { t } = await getServerDictionary();
   const venues = await listVenues(membership.tenant_id);
   return (
     <AppShell session={session} activePath="/admin/venues">
       <header>
-        <h1 className="text-2xl font-bold">Venues</h1>
+        <h1 className="text-2xl font-bold">{t.admin.venuesTitle}</h1>
         <p className="text-sm text-muted-foreground">{membership.tenant.name}</p>
       </header>
       <Card>
-        <h2 className="mb-3 text-base font-semibold">Add venue</h2>
+        <h2 className="mb-3 text-base font-semibold">{t.admin.addVenue}</h2>
         <CreateVenueForm />
       </Card>
       <Card>
-        <h2 className="mb-3 text-base font-semibold">All venues</h2>
+        <h2 className="mb-3 text-base font-semibold">{t.admin.allVenues}</h2>
         {venues.length === 0 ? (
-          <EmptyState title="No venues yet." />
+          <EmptyState title={t.admin.noVenues} />
         ) : (
           <ul className="space-y-2">
             {venues.map((v) => (

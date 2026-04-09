@@ -48,7 +48,7 @@ export function AttendanceQuickActions({
         onClick={() => set("reserve")}
         data-testid="attendance-reserve"
       >
-        {onReserve ? "On reserve" : "Pull to reserve"}
+        {onReserve ? t.matchUi.onReserve : t.matchUi.pullToReserve}
       </Button>
       <Button
         size="sm"
@@ -57,7 +57,7 @@ export function AttendanceQuickActions({
         onClick={() => set("declined")}
         data-testid="attendance-decline"
       >
-        {onDeclined ? "Declined" : "I can't play"}
+        {onDeclined ? t.matchUi.declined : t.matchUi.cantPlay}
       </Button>
     </div>
   );

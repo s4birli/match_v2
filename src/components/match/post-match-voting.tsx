@@ -72,15 +72,15 @@ export function PostMatchVoting({
     <div className="grid gap-4 lg:grid-cols-2">
       <Card data-testid="rate-teammates-card">
         <header className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold">Rate your teammates</h2>
+          <h2 className="text-base font-semibold">{t.matchUi.ratePlayersTitle}</h2>
           {myRatingAvg !== null && (
             <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-200">
-              Your avg: {myRatingAvg.toFixed(1)} / 5
+              {t.matchUi.yourAvg.replace("{avg}", myRatingAvg.toFixed(1))}
             </span>
           )}
         </header>
         {teammates.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No teammates to rate.</p>
+          <p className="text-xs text-muted-foreground">{t.matchUi.noTeammates}</p>
         ) : (
           <ul className="space-y-3">
             {teammates.map((p) => (
@@ -124,21 +124,21 @@ export function PostMatchVoting({
             onClick={submitRatings}
             data-testid="submit-ratings"
           >
-            Submit ratings
+            {t.matchUi.submitRatings}
           </Button>
         )}
         <p className="mt-2 text-[11px] text-muted-foreground">
-          Edit window: 1 minute. Raw scores stay private — even from admins.
+          {t.matchUi.ratingsPrivacyHint}
         </p>
       </Card>
 
       <Card data-testid="motm-card">
         <header className="mb-3 flex items-center gap-2">
           <Trophy size={16} className="text-amber-300" />
-          <h2 className="text-base font-semibold">Player of the match</h2>
+          <h2 className="text-base font-semibold">{t.matchUi.motmTitle}</h2>
         </header>
         {allPlayed.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No candidates.</p>
+          <p className="text-xs text-muted-foreground">{t.matchUi.noCandidates}</p>
         ) : (
           <ul className="space-y-2">
             {allPlayed.map((p) => (
@@ -171,7 +171,7 @@ export function PostMatchVoting({
             onClick={submitMotm}
             data-testid="submit-motm"
           >
-            Submit MOTM vote
+            {t.matchUi.submitMotm}
           </Button>
         )}
       </Card>

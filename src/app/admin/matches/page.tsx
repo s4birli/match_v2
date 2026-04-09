@@ -19,7 +19,7 @@ export default async function AdminMatchesPage() {
     <AppShell session={session} activePath="/admin/matches">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Manage matches</h1>
+          <h1 className="text-2xl font-bold">{t.admin.manageMatches}</h1>
           <p className="text-sm text-muted-foreground">{membership.tenant.name}</p>
         </div>
         <Button asChild>
@@ -30,7 +30,7 @@ export default async function AdminMatchesPage() {
       </header>
 
       {matches.length === 0 ? (
-        <EmptyState icon={<CalendarDays size={24} />} title="No matches yet." />
+        <EmptyState icon={<CalendarDays size={24} />} title={t.admin.noMatchesYet} />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {matches.map((m) => {
@@ -52,11 +52,11 @@ export default async function AdminMatchesPage() {
                 <div className="flex gap-2">
                   <Button asChild size="sm" variant="secondary">
                     <Link href={`/admin/matches/${m.id}`} data-testid={`admin-open-${m.id}`}>
-                      Open
+                      {t.admin.open}
                     </Link>
                   </Button>
                   <Button asChild size="sm" variant="ghost">
-                    <Link href={`/matches/${m.id}`}>View public</Link>
+                    <Link href={`/matches/${m.id}`}>{t.admin.viewPublic}</Link>
                   </Button>
                 </div>
               </Card>

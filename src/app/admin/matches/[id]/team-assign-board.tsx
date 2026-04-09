@@ -48,11 +48,11 @@ export function TeamAssignBoard({
       {/* Available — vertical card per player so the action buttons always fit */}
       <Card>
         <header className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold">Available</h2>
+          <h2 className="text-base font-semibold">{tr.admin.available}</h2>
           <span className="text-xs text-muted-foreground">{unassigned.length}</span>
         </header>
         {unassigned.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No unassigned players.</p>
+          <p className="text-xs text-muted-foreground">{tr.admin.noUnassigned}</p>
         ) : (
           <ul className="space-y-2.5">
             {unassigned.map((p) => (
@@ -79,7 +79,7 @@ export function TeamAssignBoard({
                       data-testid={`assign-red-${p.id}`}
                       className="flex items-center justify-center rounded-xl border border-red-400/30 bg-red-500/15 px-2 py-2 text-xs font-bold text-red-200 transition-colors hover:bg-red-500/25 disabled:opacity-50"
                     >
-                      → Red
+                      {tr.admin.toRed}
                     </button>
                   )}
                   {blue && (
@@ -90,7 +90,7 @@ export function TeamAssignBoard({
                       data-testid={`assign-blue-${p.id}`}
                       className="flex items-center justify-center rounded-xl border border-blue-400/30 bg-blue-500/15 px-2 py-2 text-xs font-bold text-blue-200 transition-colors hover:bg-blue-500/25 disabled:opacity-50"
                     >
-                      → Blue
+                      {tr.admin.toBlue}
                     </button>
                   )}
                 </div>
@@ -120,7 +120,7 @@ export function TeamAssignBoard({
               <span className="text-xs text-muted-foreground">{teamPlayers.length}</span>
             </header>
             {teamPlayers.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Empty — drop players here.</p>
+              <p className="text-xs text-muted-foreground">{tr.admin.emptyTeamHint}</p>
             ) : (
               <ul className="space-y-2">
                 {teamPlayers.map((p) => (
@@ -142,7 +142,7 @@ export function TeamAssignBoard({
                       data-testid={`unassign-${p.id}`}
                       className="rounded-xl border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-white/[0.08] hover:text-foreground disabled:opacity-50"
                     >
-                      Remove
+                      {tr.admin.removeBtn}
                     </button>
                   </li>
                 ))}

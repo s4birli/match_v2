@@ -29,6 +29,17 @@ export async function login(
   });
   // Wait for the streamed page to mount its <main> wrapper.
   await page.waitForSelector("main", { timeout: 20_000 });
+
+  // syncActiveTenantCookie overwrites the locale cookie with the account's
+  // preferred_language on every login (so a previous user's stale cookie
+  // doesn't bleed through in production). Tests want a deterministic English
+  // UI, so re-stamp the cookie back to "en" and reload to re-render the
+  // server components in the right locale.
+  await page.context().addCookies([
+    { name: "locale", value: "en", url: "http://localhost:3737" },
+  ]);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForSelector("main", { timeout: 20_000 });
 }
 
 export async function expectNoAppError(page: Page) {

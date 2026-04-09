@@ -18,12 +18,18 @@ test.describe("Post-match (admin closes a match)", () => {
   test("creates → assigns → closes", async ({ page }) => {
     await login(page, "admin.demo@example.com");
 
-    // 1. create match — defaults take care of everything (venue + tomorrow 18:00 + 6v6)
+    // 1. create match — defaults take care of venue + 6v6.
     await page.goto("/admin/matches/new");
     await page.waitForLoadState("domcontentloaded");
     await page.getByTestId("match-venue").waitFor({ state: "visible" });
     // Pick the 5v5 radio so we don't collide with the lifecycle test's 6v6 default.
     await page.getByTestId("match-format-5v5").click({ force: true });
+    // Backdate startsAt by 2h so the close-match form is unlocked (matches
+    // are 1h fixed; close gates on starts_at + 1h).
+    const past = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const local = `${past.getFullYear()}-${pad(past.getMonth() + 1)}-${pad(past.getDate())}T${pad(past.getHours())}:${pad(past.getMinutes())}`;
+    await page.getByTestId("match-starts-at").fill(local);
     await page.getByTestId("match-submit").click();
 
     // Should land on /admin/matches/<id>

@@ -79,7 +79,7 @@ export default async function AdminDashboardPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-emerald-200/80">
-              {membership.role === "assistant_admin" ? "Assistant" : "Admin"} ·{" "}
+              {membership.role === "assistant_admin" ? t.admin.assistantRole : t.admin.adminRole} ·{" "}
               {membership.tenant.name}
             </p>
             <h1 className="mt-1 text-2xl font-bold">{session.person.display_name}</h1>
@@ -122,14 +122,14 @@ export default async function AdminDashboardPage() {
         )}
         <StatLink
           href="/admin/stats"
-          label="Completed"
+          label={t.admin.completed}
           value={completedMatches ?? 0}
           icon={<Trophy size={18} />}
         />
         {isFullAdmin && (
           <StatLink
             href="/admin/payments"
-            label="Outstanding"
+            label={t.admin.outstanding}
             value={formatCurrency(
               outstanding,
               membership.tenant.currency_code,
@@ -148,21 +148,21 @@ export default async function AdminDashboardPage() {
             href="/admin/members"
             icon={<Users2 size={18} />}
             title={t.admin.manageMembers}
-            description="Add guests, archive, restore"
+            description={t.admin.manageMembersDesc}
           />
         )}
         <ActionCard
           href="/admin/venues"
           icon={<MapPin size={18} />}
-          title="Venues"
-          description="Pitches and locations"
+          title={t.nav.venues}
+          description={t.admin.venuesDesc}
         />
         {isFullAdmin && (
           <ActionCard
             href="/admin/payments"
             icon={<Receipt size={18} />}
             title={t.nav.payments}
-            description="Record cash payments"
+            description={t.admin.paymentsDesc}
           />
         )}
       </section>
@@ -171,9 +171,9 @@ export default async function AdminDashboardPage() {
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>
           <header className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold">Next match</h2>
+            <h2 className="text-base font-semibold">{t.admin.nextMatchTitle}</h2>
             <Link href="/admin/matches" className="text-xs text-emerald-300 hover:underline">
-              All →
+              {t.admin.seeAll}
             </Link>
           </header>
           {nextMatch ? (
@@ -206,11 +206,11 @@ export default async function AdminDashboardPage() {
           ) : (
             <EmptyState
               icon={<CalendarDays size={24} />}
-              title="No upcoming match"
-              description="Create one to get started."
+              title={t.admin.noUpcomingMatch}
+              description={t.admin.noUpcomingHint}
               action={
                 <Button asChild className="mt-2">
-                  <Link href="/admin/matches/new">+ Create match</Link>
+                  <Link href="/admin/matches/new">+ {t.admin.createMatch}</Link>
                 </Button>
               }
             />
@@ -219,13 +219,13 @@ export default async function AdminDashboardPage() {
 
         <Card>
           <header className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold">Recent results</h2>
+            <h2 className="text-base font-semibold">{t.admin.recentResults}</h2>
             <Link href="/admin/stats" className="text-xs text-emerald-300 hover:underline">
               {t.nav.stats} →
             </Link>
           </header>
           {recentPast.length === 0 ? (
-            <EmptyState icon={<Trophy size={24} />} title="No completed matches yet." />
+            <EmptyState icon={<Trophy size={24} />} title={t.admin.noCompletedMatches} />
           ) : (
             <ul className="space-y-2">
               {recentPast.map((m) => (
@@ -253,8 +253,8 @@ export default async function AdminDashboardPage() {
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <ShieldCheck size={14} />
         <span>
-          Signed in as <strong>{membership.role.replace("_", " ")}</strong>. Switch
-          accounts to play as a regular user.
+          {t.admin.signedInAs} <strong>{membership.role.replace("_", " ")}</strong>.{" "}
+          {t.admin.switchAccountsHint}
         </span>
       </div>
     </AppShell>

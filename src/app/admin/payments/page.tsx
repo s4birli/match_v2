@@ -15,9 +15,11 @@ import { formatCurrency, initials, formatDate } from "@/lib/utils";
 import { PaymentForm } from "./payment-form";
 import { CreateFundForm } from "./create-fund-form";
 import { ReminderButton } from "./reminder-button";
+import { getServerDictionary } from "@/lib/i18n/server";
 
 export default async function AdminPaymentsPage() {
   const { session, membership } = await requireRole(["admin", "owner"]);
+  const { t } = await getServerDictionary();
   const [members, overdue, funds] = await Promise.all([
     listTenantMembers(membership.tenant_id),
     listOverdueMembers(membership.tenant_id),
@@ -49,7 +51,7 @@ export default async function AdminPaymentsPage() {
   return (
     <AppShell session={session} activePath="/admin/payments">
       <header>
-        <h1 className="text-2xl font-bold">Payments</h1>
+        <h1 className="text-2xl font-bold">{t.admin.paymentsTitle}</h1>
         <p className="text-sm text-muted-foreground">{membership.tenant.name}</p>
       </header>
 
@@ -58,11 +60,11 @@ export default async function AdminPaymentsPage() {
         <header className="mb-3 flex items-center gap-2">
           <AlertTriangle size={16} className="text-amber-300" />
           <h2 className="text-base font-semibold">
-            Overdue · {overdue.length}
+            {t.admin.overdue} · {overdue.length}
           </h2>
         </header>
         {overdue.length === 0 ? (
-          <EmptyState title="Nobody is in debt right now 🎉" />
+          <EmptyState title={t.admin.noOverdue} />
         ) : (
           <ul className="space-y-2">
             {overdue.map((row) => (
@@ -77,7 +79,7 @@ export default async function AdminPaymentsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{row.displayName}</p>
                   <p className="text-[11px] text-muted-foreground">
-                    Owes {formatCurrency(Math.abs(row.balance), row.currency)}
+                    {t.admin.owes} {formatCurrency(Math.abs(row.balance), row.currency)}
                   </p>
                 </div>
                 <span className="text-sm font-bold text-amber-300">
@@ -94,7 +96,7 @@ export default async function AdminPaymentsPage() {
       <Card>
         <header className="mb-3 flex items-center gap-2">
           <Wallet size={16} className="text-emerald-300" />
-          <h2 className="text-base font-semibold">Record payment</h2>
+          <h2 className="text-base font-semibold">{t.admin.recordPayment}</h2>
         </header>
         <PaymentForm members={memberOptions} />
       </Card>
@@ -103,13 +105,9 @@ export default async function AdminPaymentsPage() {
       <Card>
         <header className="mb-3 flex items-center gap-2">
           <Banknote size={16} className="text-violet-300" />
-          <h2 className="text-base font-semibold">Open a fund collection</h2>
+          <h2 className="text-base font-semibold">{t.admin.openFundCollection}</h2>
         </header>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Charge a chosen subset of members for an off-match expense
-          (equipment, referee, food). Each picked member's wallet drops by the
-          per-member amount until they pay.
-        </p>
+        <p className="mb-3 text-xs text-muted-foreground">{t.admin.fundCollectionHint}</p>
         <CreateFundForm
           members={memberOptions}
           currencyCode={membership.tenant.currency_code}
@@ -117,7 +115,7 @@ export default async function AdminPaymentsPage() {
         {funds.length > 0 && (
           <div className="mt-5">
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Past collections
+              {t.admin.pastCollections}
             </h3>
             <ul className="space-y-2">
               {funds.map((f) => (
@@ -142,7 +140,7 @@ export default async function AdminPaymentsPage() {
                       Number(f.amount_per_member),
                       f.currency_code,
                     )}{" "}
-                    /head
+                    {t.admin.perHead}
                   </Badge>
                 </li>
               ))}
@@ -153,7 +151,7 @@ export default async function AdminPaymentsPage() {
 
       {/* All member balances */}
       <Card>
-        <h2 className="mb-3 text-base font-semibold">All balances</h2>
+        <h2 className="mb-3 text-base font-semibold">{t.admin.allBalances}</h2>
         <ul className="grid gap-2 sm:grid-cols-2">
           {members.map((m) => {
             const display =

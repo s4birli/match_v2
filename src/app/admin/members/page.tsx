@@ -18,9 +18,11 @@ import {
   ConvertGuestButton,
   RestoreMemberButton,
 } from "./member-actions";
+import { getServerDictionary } from "@/lib/i18n/server";
 
 export default async function AdminMembersPage() {
   const { session, membership } = await requireRole(["admin", "owner"]);
+  const { t } = await getServerDictionary();
   const [members, archived, candidateAccounts] = await Promise.all([
     listTenantMembers(membership.tenant_id),
     listArchivedMembers(membership.tenant_id),
@@ -30,31 +32,29 @@ export default async function AdminMembersPage() {
   return (
     <AppShell session={session} activePath="/admin/members">
       <header>
-        <h1 className="text-2xl font-bold">Members</h1>
+        <h1 className="text-2xl font-bold">{t.nav.members}</h1>
         <p className="text-sm text-muted-foreground">{membership.tenant.name}</p>
       </header>
 
       <Card>
-        <h2 className="mb-3 text-base font-semibold">Add existing player</h2>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Pull a registered account from another group into this group.
-        </p>
+        <h2 className="mb-3 text-base font-semibold">{t.admin.addExistingPlayer}</h2>
+        <p className="mb-3 text-xs text-muted-foreground">{t.admin.addExistingPlayerHint}</p>
         <AddExistingPlayerForm accounts={candidateAccounts} />
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-base font-semibold">Add guest player</h2>
+        <h2 className="mb-3 text-base font-semibold">{t.admin.addGuestPlayerTitle}</h2>
         <CreateGuestForm />
       </Card>
 
       <Tabs defaultValue="active">
         <TabsList>
-          <TabsTrigger value="active">Active · {members.length}</TabsTrigger>
-          <TabsTrigger value="archived">Archived · {archived.length}</TabsTrigger>
+          <TabsTrigger value="active">{t.admin.activeTab} · {members.length}</TabsTrigger>
+          <TabsTrigger value="archived">{t.admin.archivedTab} · {archived.length}</TabsTrigger>
         </TabsList>
         <TabsContent value="active">
           {members.length === 0 ? (
-            <EmptyState title="No members." />
+            <EmptyState title={t.admin.noMembers} />
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2">
               {members.map((m) => {
@@ -73,7 +73,7 @@ export default async function AdminMembersPage() {
                       <p className="truncate text-sm font-semibold">{display}</p>
                       <div className="flex items-center gap-1.5">
                         <Badge variant="default">{m.role}</Badge>
-                        {m.is_guest_membership ? <Badge variant="warning">guest</Badge> : null}
+                        {m.is_guest_membership ? <Badge variant="warning">{t.admin.guestBadge}</Badge> : null}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -88,7 +88,7 @@ export default async function AdminMembersPage() {
         </TabsContent>
         <TabsContent value="archived">
           {archived.length === 0 ? (
-            <EmptyState title="No archived members." />
+            <EmptyState title={t.admin.noArchivedMembers} />
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2">
               {archived.map((m) => {
