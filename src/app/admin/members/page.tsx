@@ -20,6 +20,7 @@ import {
   RestoreMemberButton,
 } from "./member-actions";
 import { getServerDictionary } from "@/lib/i18n/server";
+import { LiveRefresh } from "@/lib/realtime/use-realtime-refresh";
 
 export default async function AdminMembersPage() {
   const { session, membership } = await requireRole(["admin", "owner"]);
@@ -32,6 +33,11 @@ export default async function AdminMembersPage() {
 
   return (
     <AppShell session={session} activePath="/admin/members">
+      <LiveRefresh
+        watches={[
+          { table: "memberships", filter: `tenant_id=eq.${membership.tenant_id}` },
+        ]}
+      />
       <header>
         <h1 className="text-2xl font-bold">{t.nav.members}</h1>
         <p className="text-sm text-muted-foreground">{membership.tenant.name}</p>

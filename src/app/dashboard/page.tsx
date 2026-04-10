@@ -17,6 +17,7 @@ import { requireMembership } from "@/server/auth/session";
 import { formatCurrency, formatDate, initials, relativeFromNow , bcp47Locale } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { AttendanceQuickActions } from "@/components/match/attendance-quick-actions";
+import { LiveRefresh } from "@/lib/realtime/use-realtime-refresh";
 
 export default async function DashboardPage() {
   const { session, membership } = await requireMembership();
@@ -39,6 +40,13 @@ export default async function DashboardPage() {
 
   return (
     <AppShell session={session} activePath="/dashboard">
+      <LiveRefresh
+        watches={[
+          { table: "ledger_transactions", filter: `membership_id=eq.${membership.id}` },
+          { table: "notifications", filter: `membership_id=eq.${membership.id}`, event: "INSERT" },
+          { table: "matches", filter: `tenant_id=eq.${membership.tenant_id}` },
+        ]}
+      />
       <section className="hero-card overflow-hidden">
         <div className="flex items-start justify-between gap-4">
           <div>

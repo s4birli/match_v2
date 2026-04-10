@@ -16,6 +16,7 @@ import { PaymentForm } from "./payment-form";
 import { CreateFundForm } from "./create-fund-form";
 import { ReminderButton } from "./reminder-button";
 import { getServerDictionary } from "@/lib/i18n/server";
+import { LiveRefresh } from "@/lib/realtime/use-realtime-refresh";
 
 export default async function AdminPaymentsPage() {
   const { session, membership } = await requireRole(["admin", "owner"]);
@@ -50,6 +51,11 @@ export default async function AdminPaymentsPage() {
 
   return (
     <AppShell session={session} activePath="/admin/payments">
+      <LiveRefresh
+        watches={[
+          { table: "ledger_transactions", filter: `tenant_id=eq.${membership.tenant_id}` },
+        ]}
+      />
       <header>
         <h1 className="text-2xl font-bold">{t.admin.paymentsTitle}</h1>
         <p className="text-sm text-muted-foreground">{membership.tenant.name}</p>

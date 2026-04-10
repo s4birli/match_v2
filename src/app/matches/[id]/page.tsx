@@ -13,6 +13,7 @@ import { getServerDictionary } from "@/lib/i18n/server";
 import { AttendanceQuickActions } from "@/components/match/attendance-quick-actions";
 import { PreMatchPoll } from "@/components/match/pre-match-poll";
 import { PostMatchVoting } from "@/components/match/post-match-voting";
+import { LiveRefresh } from "@/lib/realtime/use-realtime-refresh";
 
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -69,6 +70,20 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
 
   return (
     <AppShell session={session} activePath="/matches">
+      {/* Live updates: subscribe to anything that affects this match. A
+          team-assign / attendance change / poll vote / score entry on
+          another device pushes a Postgres NOTIFY → Supabase Realtime →
+          this hook → router.refresh() → server component re-runs and
+          the updated data streams in. Debounced so a burst of clicks
+          only refreshes once. */}
+      <LiveRefresh
+        watches={[
+          { table: "match_participants", filter: `match_id=eq.${match.id}` },
+          { table: "matches", filter: `id=eq.${match.id}` },
+          { table: "match_results", filter: `match_id=eq.${match.id}` },
+          ...(poll ? [{ table: "pre_match_poll_votes", filter: `poll_id=eq.${poll.id}` }] : []),
+        ]}
+      />
       <header className="hero-card">
         <div className="flex items-start justify-between gap-3">
           <div>

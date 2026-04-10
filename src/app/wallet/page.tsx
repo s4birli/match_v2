@@ -7,6 +7,7 @@ import { requireMembership } from "@/server/auth/session";
 import { getWalletBalance, listLedgerForMembership } from "@/server/db/queries";
 import { formatCurrency, formatDate , bcp47Locale } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
+import { LiveRefresh } from "@/lib/realtime/use-realtime-refresh";
 
 export default async function WalletPage() {
   const { session, membership } = await requireMembership();
@@ -19,6 +20,11 @@ export default async function WalletPage() {
 
   return (
     <AppShell session={session} activePath="/wallet">
+      <LiveRefresh
+        watches={[
+          { table: "ledger_transactions", filter: `membership_id=eq.${membership.id}` },
+        ]}
+      />
       <header>
         <h1 className="text-2xl font-bold">{t.nav.wallet}</h1>
         <p className="text-sm text-muted-foreground">{membership.tenant.name}</p>

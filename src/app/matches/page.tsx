@@ -9,6 +9,7 @@ import { requireMembership } from "@/server/auth/session";
 import { formatDate , bcp47Locale } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { CalendarDays, MapPin } from "lucide-react";
+import { LiveRefresh } from "@/lib/realtime/use-realtime-refresh";
 
 export default async function MatchesPage() {
   const { session, membership } = await requireMembership();
@@ -20,6 +21,9 @@ export default async function MatchesPage() {
 
   return (
     <AppShell session={session} activePath="/matches">
+      <LiveRefresh
+        watches={[{ table: "matches", filter: `tenant_id=eq.${membership.tenant_id}` }]}
+      />
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t.nav.matches}</h1>

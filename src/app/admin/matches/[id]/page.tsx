@@ -12,6 +12,7 @@ import { TeamAssignBoard } from "./team-assign-board";
 import { CloseMatchForm } from "./close-match-form";
 import { AddParticipantForm } from "./add-participant-form";
 import { getServerDictionary } from "@/lib/i18n/server";
+import { LiveRefresh } from "@/lib/realtime/use-realtime-refresh";
 
 export default async function AdminMatchDetail({
   params,
@@ -39,6 +40,13 @@ export default async function AdminMatchDetail({
 
   return (
     <AppShell session={session} activePath="/admin/matches">
+      <LiveRefresh
+        watches={[
+          { table: "match_participants", filter: `match_id=eq.${match.id}` },
+          { table: "matches", filter: `id=eq.${match.id}` },
+          { table: "match_results", filter: `match_id=eq.${match.id}` },
+        ]}
+      />
       <header className="flex items-start justify-between gap-3">
         <div>
           <Link href="/admin/matches" className="text-xs text-muted-foreground hover:text-foreground">

@@ -6,6 +6,7 @@ import { requireMembership } from "@/server/auth/session";
 import { listNotifications } from "@/server/db/queries";
 import { relativeFromNow } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
+import { LiveRefresh } from "@/lib/realtime/use-realtime-refresh";
 
 function localizedNotif(
   type: string,
@@ -24,6 +25,11 @@ export default async function NotificationsPage() {
 
   return (
     <AppShell session={session} activePath="/notifications">
+      <LiveRefresh
+        watches={[
+          { table: "notifications", filter: `membership_id=eq.${membership.id}`, event: "INSERT" },
+        ]}
+      />
       <header>
         <h1 className="text-2xl font-bold">{t.nav.notifications}</h1>
         <p className="text-sm text-muted-foreground">
