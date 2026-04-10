@@ -1,28 +1,63 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import type { NotificationType } from "@/lib/supabase/types";
 import { sendWebPush } from "./push";
+import { buildLocalizedNotification, dictForMembership } from "./locale";
 
 /**
  * Single source of truth for delivering a notification to a player.
- * Always writes the in-app row, and tries to send a web push if the
- * recipient has any active push_subscriptions.
+ *
+ * Behaviour:
+ *   1. Look up the recipient's preferred_language and resolve the
+ *      localized title/body from the dictionary (`t.notifications.types`).
+ *      If the type has no dictionary entry the caller-supplied
+ *      title/body fallback is used as-is.
+ *   2. Insert the in-app `notifications` row with those localized
+ *      strings — that way the historical row stays in the language
+ *      the user was on when the event happened, and the /notifications
+ *      page can render it without re-translating.
+ *   3. Best-effort web push to every active subscription. The push
+ *      payload also uses the localized title/body so the OS-level
+ *      notification banner is in the right language.
+ *
+ * Failures never throw — `notify()` is fire-and-forget from the
+ * caller's perspective and degrades gracefully if Realtime / web push
+ * is unavailable.
+ *
+ * `params` is an optional placeholder map (e.g. `{ amount: "£8" }`)
+ * that gets substituted into both title and body via the dictionary
+ * `{name}` syntax.
  */
 export async function notify(input: {
   tenantId: string;
   membershipId: string;
   notificationType: NotificationType;
+  /** Fallback English title used when the dictionary has no entry. */
   title: string;
+  /** Fallback English body used when the dictionary has no entry. */
   body: string;
+  /** Optional placeholders for templated dictionary entries. */
+  params?: Record<string, string | number>;
   payload?: Record<string, unknown> | null;
 }) {
   const admin = createSupabaseServiceClient();
+
+  // Localize at notify-time so the row + push payload speak the user's
+  // language. Frozen at write time on purpose — if they switch languages
+  // later, the historical notification still reads correctly.
+  const { t } = await dictForMembership(input.membershipId);
+  const localized = buildLocalizedNotification(
+    t,
+    input.notificationType,
+    { title: input.title, body: input.body },
+    input.params,
+  );
 
   const { error } = await admin.from("notifications").insert({
     tenant_id: input.tenantId,
     membership_id: input.membershipId,
     notification_type: input.notificationType,
-    title: input.title,
-    body: input.body,
+    title: localized.title,
+    body: localized.body,
     payload_json: input.payload ?? null,
   });
   if (error) {
@@ -52,9 +87,12 @@ export async function notify(input: {
       (subs ?? []).map(async (s) => {
         const sub = s as { endpoint: string; p256dh: string; auth: string };
         const res = await sendWebPush(sub, {
-          title: input.title,
-          body: input.body,
-          url: typeof input.payload?.url === "string" ? input.payload.url : "/notifications",
+          title: localized.title,
+          body: localized.body,
+          url:
+            typeof input.payload?.url === "string"
+              ? input.payload.url
+              : "/notifications",
           data: input.payload ?? {},
         });
         // Push service told us the subscription is gone — flip is_active=false
@@ -74,7 +112,11 @@ export async function notify(input: {
 }
 
 /**
- * Bulk version. Use a single in-app insert for performance, then loop pushes.
+ * Bulk version. Each recipient gets their own localized title/body so
+ * a multi-language group still receives the right strings. We can't
+ * batch the in-app insert as a single SQL call because each row has
+ * potentially different localized text — but the cost is dwarfed by
+ * the push fan-out anyway.
  */
 export async function notifyMany(
   recipients: Array<{ tenantId: string; membershipId: string }>,
@@ -82,22 +124,11 @@ export async function notifyMany(
     notificationType: NotificationType;
     title: string;
     body: string;
+    params?: Record<string, string | number>;
     payload?: Record<string, unknown> | null;
   },
 ) {
   if (recipients.length === 0) return;
-  const admin = createSupabaseServiceClient();
-  await admin.from("notifications").insert(
-    recipients.map((r) => ({
-      tenant_id: r.tenantId,
-      membership_id: r.membershipId,
-      notification_type: message.notificationType,
-      title: message.title,
-      body: message.body,
-      payload_json: message.payload ?? null,
-    })),
-  );
-  // Push fan-out (best effort, in parallel).
   await Promise.all(
     recipients.map((r) =>
       notify({ ...r, ...message }).catch(() => undefined),

@@ -7,6 +7,7 @@ import { requireRole } from "@/server/auth/session";
 import { audit } from "@/server/audit/log";
 import { notify, notifyMany } from "@/server/notifications/notify";
 import { formatDisplayName } from "@/lib/utils";
+import { rateLimit } from "@/lib/rate-limit";
 
 // ---------- Tenant defaults (used by /admin/settings) ----------
 const tenantDefaultsSchema = z.object({
@@ -95,6 +96,21 @@ export async function startGuestConversionAction(
     email: formData.get("email"),
   });
   if (!parsed.success) return { error: "invalidInput" };
+
+  // SEC-7: rate limit so a co-admin can't probe membership IDs / emails
+  // by repeatedly calling this action and timing the response. 10 guest
+  // conversions per admin per hour is generous for a real club. Disabled
+  // in dev/test.
+  if (process.env.NODE_ENV === "production") {
+    const limited = rateLimit({
+      bucket: "guest-conversion",
+      key: membership.id,
+      limit: 10,
+      windowSec: 60 * 60,
+    });
+    if (!limited.allowed) return { error: "rateLimited" };
+  }
+
   const admin = createSupabaseServiceClient();
 
   const { data: target } = await admin

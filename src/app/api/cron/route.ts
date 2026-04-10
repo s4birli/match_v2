@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 import { env } from "@/lib/env";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { notifyMany } from "@/server/notifications/notify";
@@ -30,7 +31,13 @@ import { audit } from "@/server/audit/log";
  */
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization") ?? "";
-  if (auth !== `Bearer ${env.CRON_SECRET}`) {
+  const expected = `Bearer ${env.CRON_SECRET}`;
+  // SEC-6: constant-time comparison so an attacker can't probe the
+  // CRON_SECRET length via timing differences. timingSafeEqual requires
+  // equal-length buffers — guard against the length-mismatch bypass.
+  const aBuf = Buffer.from(auth);
+  const eBuf = Buffer.from(expected);
+  if (aBuf.length !== eBuf.length || !timingSafeEqual(aBuf, eBuf)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
