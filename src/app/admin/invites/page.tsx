@@ -25,7 +25,7 @@ export default async function AdminInvitesPage() {
       <Card>
         <h2 className="mb-3 text-base font-semibold">{t.admin.groupInviteCodeTitle}</h2>
         <p className="text-sm text-muted-foreground">{t.admin.groupInviteCodeHint}</p>
-        <div className="mt-3 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+        <div className="mt-3 flex items-center justify-between rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-4 py-3">
           <code className="text-xl font-bold tracking-wider" data-testid="invite-code">
             {membership.tenant.invite_code}
           </code>
@@ -42,7 +42,7 @@ export default async function AdminInvitesPage() {
           {(invites ?? []).map((inv) => (
             <li
               key={inv.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
             >
               <code className="text-xs">{inv.token}</code>
               <a

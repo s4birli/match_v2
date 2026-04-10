@@ -32,7 +32,7 @@ export function ResetForm({
           minLength={8}
         />
       </div>
-      {state?.error ? <p className="text-xs text-red-300">{translateError(t, state.error)}</p> : null}
+      {state?.error ? <p className="text-xs text-red-600 dark:text-red-300">{translateError(t, state.error)}</p> : null}
       {state?.success ? (
         <p className="text-xs text-emerald-300">{labels.updated}</p>
       ) : null}

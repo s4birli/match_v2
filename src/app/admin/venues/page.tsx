@@ -36,7 +36,7 @@ export default async function AdminVenuesPage() {
               <li
                 key={v.id}
                 data-testid={`venue-${v.id}`}
-                className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                className="flex items-center justify-between rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
               >
                 <div>
                   <p className="text-sm font-semibold">{v.name}</p>

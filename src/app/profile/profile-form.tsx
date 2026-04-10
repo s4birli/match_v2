@@ -85,7 +85,7 @@ export function ProfileForm({
             {POSITION_CODES.map((code) => (
               <label
                 key={code}
-                className="flex cursor-pointer items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm hover:bg-white/[0.08]"
+                className="flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-3 py-2.5 text-sm hover:bg-slate-200 dark:hover:bg-white/[0.08]"
               >
                 <input
                   type="checkbox"

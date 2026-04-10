@@ -140,8 +140,8 @@ export async function AppShell({
                   data-testid={`nav-${item.label.toLowerCase()}`}
                   className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                     active
-                      ? "bg-white/[0.08] text-foreground"
-                      : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                      ? "bg-slate-200/80 dark:bg-white/[0.08] text-foreground"
+                      : "text-muted-foreground hover:bg-slate-200/60 dark:hover:bg-white/[0.04] hover:text-foreground"
                   }`}
                 >
                   <Icon size={18} />
@@ -164,8 +164,8 @@ export async function AppShell({
                       href={item.href}
                       className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                         active
-                          ? "bg-white/[0.08] text-foreground"
-                          : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                          ? "bg-slate-200/80 dark:bg-white/[0.08] text-foreground"
+                          : "text-muted-foreground hover:bg-slate-200/60 dark:hover:bg-white/[0.04] hover:text-foreground"
                       }`}
                     >
                       <Icon size={16} />
@@ -188,7 +188,7 @@ export async function AppShell({
               <Link
                 href="/notifications"
                 data-testid="nav-notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-foreground transition-colors hover:bg-white/[0.08]"
+                className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] text-foreground transition-colors hover:bg-slate-200 dark:hover:bg-white/[0.08]"
                 aria-label={t.nav.notifications}
               >
                 <Bell size={16} />
@@ -196,7 +196,7 @@ export async function AppShell({
             )}
             <ThemeToggle initial={themeChoice} />
             <LanguageToggle current={locale} />
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-1.5">
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-3 py-1.5">
               <Avatar className="h-8 w-8">
                 <AvatarFallback>{initials(session.person.display_name)}</AvatarFallback>
               </Avatar>
@@ -210,7 +210,7 @@ export async function AppShell({
                 <button
                   type="submit"
                   data-testid="logout-button"
-                  className="flex h-7 w-7 items-center justify-center rounded-xl text-muted-foreground hover:bg-white/[0.08] hover:text-foreground"
+                  className="flex h-7 w-7 items-center justify-center rounded-xl text-muted-foreground hover:bg-slate-200 dark:hover:bg-white/[0.08] hover:text-foreground"
                   aria-label={t.common.logout}
                 >
                   <LogOut size={14} />

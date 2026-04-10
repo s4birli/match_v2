@@ -55,7 +55,7 @@ export default async function OwnerDashboardPage() {
       <section className="hero-card overflow-hidden">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-violet-200/80">
+            <p className="text-xs font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-200/80">
               {t.owner.systemOverview}
             </p>
             <h1 className="mt-1 text-2xl font-bold">{session.person.display_name}</h1>
@@ -90,7 +90,7 @@ export default async function OwnerDashboardPage() {
         data-testid="owner-ledger-stat-link"
         className="block"
       >
-        <div className="stat-card transition-all hover:-translate-y-0.5 hover:bg-white/[0.07]">
+        <div className="stat-card transition-all hover:-translate-y-0.5 hover:bg-slate-200/70 dark:hover:bg-white/[0.07]">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-[11px] uppercase tracking-wider">{t.owner.ledgerEntries}</span>
             <Wallet size={18} />
@@ -148,7 +148,7 @@ export default async function OwnerDashboardPage() {
               <li
                 key={tenant.id}
                 data-testid={`recent-tenant-${tenant.id}`}
-                className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3"
+                className="flex items-center justify-between rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-4 py-3"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-violet-600 text-sm font-black text-emerald-950">
@@ -161,7 +161,7 @@ export default async function OwnerDashboardPage() {
                     </p>
                   </div>
                 </div>
-                <code className="rounded-lg bg-white/[0.04] px-2 py-1 text-[11px]">
+                <code className="rounded-lg bg-slate-100/70 dark:bg-white/[0.04] px-2 py-1 text-[11px]">
                   {tenant.invite_code}
                 </code>
               </li>
@@ -208,8 +208,8 @@ function ActionCard({
 }) {
   return (
     <Link href={href} className="group">
-      <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 transition-all hover:-translate-y-0.5 hover:bg-white/[0.07]">
-        <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/30 to-fuchsia-500/30 text-violet-200">
+      <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] p-5 transition-all hover:-translate-y-0.5 hover:bg-slate-200/70 dark:hover:bg-white/[0.07]">
+        <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/30 to-fuchsia-500/30 text-violet-700 dark:text-violet-200">
           {icon}
         </div>
         <p className="text-base font-bold group-hover:text-emerald-300">{title}</p>

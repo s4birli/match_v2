@@ -20,7 +20,7 @@ export function GroupSwitcher({ session }: { session: SessionContext }) {
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold leading-tight">System owner</p>
-          <p className="text-[10px] uppercase tracking-wider text-violet-200/80">
+          <p className="text-[10px] uppercase tracking-wider text-violet-700 dark:text-violet-200/80">
             global control
           </p>
         </div>
@@ -31,7 +31,7 @@ export function GroupSwitcher({ session }: { session: SessionContext }) {
   const active = session.activeMembership;
   if (!active) {
     return (
-      <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+      <div className="flex items-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-3 py-2">
         <span className="text-xs text-muted-foreground">No group</span>
       </div>
     );
@@ -42,7 +42,7 @@ export function GroupSwitcher({ session }: { session: SessionContext }) {
     return (
       <div
         data-testid="group-static"
-        className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2"
+        className="flex items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-3 py-2"
       >
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-violet-600 text-base font-black text-emerald-950">
           {active.tenant.name.slice(0, 1).toUpperCase()}
@@ -64,7 +64,7 @@ export function GroupSwitcher({ session }: { session: SessionContext }) {
       <DropdownMenu.Trigger asChild>
         <button
           data-testid="group-switcher"
-          className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2 text-left transition-colors hover:bg-white/[0.06]"
+          className="flex items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-3 py-2 text-left transition-colors hover:bg-slate-200/70 dark:hover:bg-white/[0.06]"
           disabled={pending}
         >
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-violet-600 text-base font-black text-emerald-950">
@@ -83,7 +83,7 @@ export function GroupSwitcher({ session }: { session: SessionContext }) {
         <DropdownMenu.Content
           align="start"
           sideOffset={8}
-          className="z-[100] min-w-[260px] rounded-2xl border border-white/10 bg-slate-950/95 p-1.5 shadow-xl backdrop-blur-xl"
+          className="z-[100] min-w-[260px] rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-950/95 p-1.5 shadow-xl backdrop-blur-xl"
         >
           {session.memberships.map((m) => (
             <DropdownMenu.Item
@@ -95,9 +95,9 @@ export function GroupSwitcher({ session }: { session: SessionContext }) {
                   router.refresh();
                 })
               }
-              className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm outline-none transition-colors hover:bg-white/[0.08]"
+              className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm outline-none transition-colors hover:bg-slate-200 dark:hover:bg-white/[0.08]"
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.08] text-xs font-bold">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-200/80 dark:bg-white/[0.08] text-xs font-bold">
                 {m.tenant.name.slice(0, 1).toUpperCase()}
               </div>
               <div className="flex-1">

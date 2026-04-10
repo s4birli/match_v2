@@ -210,7 +210,7 @@ export default async function AdminStatsPage() {
               <h2 className="text-base font-semibold">{t.admin.cashFlow}</h2>
             </header>
             <ul className="space-y-2 text-sm">
-              <li className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+              <li className="flex items-center justify-between rounded-xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.03] px-3 py-2.5">
                 <span className="text-muted-foreground">{t.admin.feesCharged}</span>
                 <span className="font-bold">
                   {formatCurrency(
@@ -220,7 +220,7 @@ export default async function AdminStatsPage() {
                   )}
                 </span>
               </li>
-              <li className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+              <li className="flex items-center justify-between rounded-xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.03] px-3 py-2.5">
                 <span className="text-muted-foreground">{t.admin.paymentsReceived}</span>
                 <span className="font-bold text-emerald-300">
                   +
@@ -231,7 +231,7 @@ export default async function AdminStatsPage() {
                   )}
                 </span>
               </li>
-              <li className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+              <li className="flex items-center justify-between rounded-xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.03] px-3 py-2.5">
                 <span className="text-muted-foreground">{t.admin.collectionRate}</span>
                 <span className="font-bold">{collectionRate}%</span>
               </li>
@@ -264,7 +264,7 @@ export default async function AdminStatsPage() {
                   return (
                     <li
                       key={row.membership_id}
-                      className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                      className="flex items-center gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
                     >
                       <Avatar className="h-9 w-9">
                         <AvatarFallback>{initials(display)}</AvatarFallback>
@@ -347,7 +347,7 @@ export default async function AdminStatsPage() {
             </li>
             <li className="flex justify-between">
               <span>{t.admin.stCancelled}</span>
-              <span className="font-semibold text-red-300">
+              <span className="font-semibold text-red-600 dark:text-red-300">
                 {cancelledMatches ?? 0}
               </span>
             </li>
@@ -397,7 +397,7 @@ export default async function AdminStatsPage() {
               <li
                 key={`${p.a}::${p.b}`}
                 data-testid={`pair-${p.a}-${p.b}`}
-                className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                className="flex items-center gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
               >
                 <div className="flex items-center -space-x-2">
                   <Avatar className="h-9 w-9 ring-2 ring-slate-950">
@@ -516,9 +516,9 @@ function Leaderboard({
                 <Link
                   href={`/admin/members/${r.membership_id}`}
                   data-testid={`leaderboard-row-${r.membership_id}`}
-                  className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5 transition-colors hover:bg-white/[0.06]"
+                  className="flex items-center gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5 transition-colors hover:bg-slate-200/70 dark:hover:bg-white/[0.06]"
                 >
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.06] text-xs font-bold">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/[0.06] text-xs font-bold">
                     {i + 1}
                   </div>
                   <Avatar className="h-9 w-9">

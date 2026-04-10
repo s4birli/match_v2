@@ -91,12 +91,12 @@ export default async function AdminMatchDetail({
               ) : (
                 <div
                   data-testid="close-locked-banner"
-                  className="flex items-start gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-amber-100"
+                  className="flex items-start gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-amber-700 dark:text-amber-100"
                 >
                   <Lock size={16} className="mt-0.5 shrink-0" />
                   <div>
                     <p className="text-sm font-semibold">{t.admin.matchNotOverYetTitle}</p>
-                    <p className="text-xs text-amber-200/80">
+                    <p className="text-xs text-amber-700 dark:text-amber-200/80">
                       {t.admin.matchNotOverYetHint.replace("{minutes}", String(minutesLeft))}
                     </p>
                   </div>
@@ -111,7 +111,7 @@ export default async function AdminMatchDetail({
         <Card>
           <h2 className="text-base font-semibold">{t.admin.finalScore}</h2>
           <p className="mt-2 text-3xl font-black">
-            <span className="text-red-300">{result.red_score}</span>
+            <span className="text-red-600 dark:text-red-300">{result.red_score}</span>
             <span className="mx-3 text-muted-foreground">—</span>
             <span className="text-blue-300">{result.blue_score}</span>
           </p>

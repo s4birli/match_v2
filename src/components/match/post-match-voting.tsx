@@ -74,7 +74,7 @@ export function PostMatchVoting({
         <header className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold">{t.matchUi.ratePlayersTitle}</h2>
           {myRatingAvg !== null && (
-            <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-200">
+            <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-200">
               {t.matchUi.yourAvg.replace("{avg}", myRatingAvg.toFixed(1))}
             </span>
           )}
@@ -86,7 +86,7 @@ export function PostMatchVoting({
             {teammates.map((p) => (
               <li
                 key={p.membershipId}
-                className="rounded-2xl border border-white/5 bg-white/[0.02] p-3"
+                className="rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] p-3"
                 data-testid={`rate-row-${p.membershipId}`}
               >
                 <div className="flex items-center gap-3">
@@ -104,8 +104,8 @@ export function PostMatchVoting({
                       onClick={() => setRating(p.membershipId, v)}
                       className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-all ${
                         ratings[p.membershipId] === v
-                          ? "border-emerald-400/60 bg-emerald-400/20 text-emerald-200"
-                          : "border-white/10 bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08]"
+                          ? "border-emerald-400/60 bg-emerald-400/20 text-emerald-700 dark:text-emerald-200"
+                          : "border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] text-muted-foreground hover:bg-slate-200 dark:hover:bg-white/[0.08]"
                       }`}
                       aria-label={`Rate ${v}`}
                     >
@@ -149,8 +149,8 @@ export function PostMatchVoting({
                   onClick={() => setMotm(p.membershipId)}
                   className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition-all ${
                     motm === p.membershipId
-                      ? "border-amber-400/40 bg-amber-400/10 text-amber-100"
-                      : "border-white/10 bg-white/[0.02] hover:bg-white/[0.06]"
+                      ? "border-amber-400/40 bg-amber-400/10 text-amber-700 dark:text-amber-100"
+                      : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-200/70 dark:hover:bg-white/[0.06]"
                   }`}
                 >
                   <Avatar className="h-9 w-9">

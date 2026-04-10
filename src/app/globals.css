@@ -5,7 +5,7 @@
 @layer base {
   /* Light mode (default for :root). */
   :root {
-    --background: 0 0% 99%;
+    --background: 220 20% 96%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -14,30 +14,30 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 158 64% 42%;
+    --primary: 158 64% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
+    --secondary: 220 14% 92%;
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 215 16% 40%;
 
     --accent: 263 70% 50%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 55%;
+    --destructive: 0 84% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 158 64% 42%;
+    --success: 158 64% 38%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
+    --warning: 38 92% 45%;
+    --warning-foreground: 0 0% 100%;
 
-    --border: 220 13% 88%;
-    --input: 220 13% 88%;
-    --ring: 158 64% 42%;
+    --border: 220 13% 82%;
+    --input: 220 13% 82%;
+    --ring: 158 64% 38%;
 
     --radius: 1rem;
   }
@@ -91,9 +91,9 @@
 
   body {
     background-image:
-      radial-gradient(1200px 600px at 10% -10%, rgba(124, 58, 237, 0.10), transparent 50%),
-      radial-gradient(1000px 700px at 100% 10%, rgba(16, 185, 129, 0.08), transparent 45%),
-      linear-gradient(180deg, #f6f8fb 0%, #eef2f8 45%, #f6f8fb 100%);
+      radial-gradient(1200px 600px at 10% -10%, rgba(124, 58, 237, 0.13), transparent 50%),
+      radial-gradient(1000px 700px at 100% 10%, rgba(16, 185, 129, 0.10), transparent 45%),
+      linear-gradient(180deg, #eef2f8 0%, #e2e8f0 45%, #eef2f8 100%);
     background-attachment: fixed;
     min-height: 100vh;
   }
@@ -136,26 +136,48 @@
     @apply border-white/10 bg-slate-950/70 shadow-[0_18px_45px_rgba(0,0,0,0.45)];
   }
   .hero-card {
-    @apply rounded-3xl border border-white/10 p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)];
+    @apply rounded-3xl border border-slate-200/80 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.10)];
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(124, 58, 237, 0.20));
+  }
+  .dark .hero-card {
+    @apply border-white/10 shadow-[0_18px_45px_rgba(0,0,0,0.35)];
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.24), rgba(124, 58, 237, 0.26));
   }
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-foreground;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs text-foreground;
+  }
+  .dark .chip {
+    @apply border-white/10 bg-white/[0.06];
   }
   .chip-success {
-    @apply chip border-emerald-400/20 bg-emerald-400/10 text-emerald-200;
+    @apply chip border-emerald-300/60 bg-emerald-100 text-emerald-800;
+  }
+  .dark .chip-success {
+    @apply border-emerald-400/20 bg-emerald-400/10 text-emerald-200;
   }
   .chip-warning {
-    @apply chip border-amber-400/20 bg-amber-400/10 text-amber-200;
+    @apply chip border-amber-300/60 bg-amber-100 text-amber-800;
+  }
+  .dark .chip-warning {
+    @apply border-amber-400/20 bg-amber-400/10 text-amber-200;
   }
   .chip-danger {
-    @apply chip border-red-400/20 bg-red-400/10 text-red-200;
+    @apply chip border-red-300/60 bg-red-100 text-red-800;
+  }
+  .dark .chip-danger {
+    @apply border-red-400/20 bg-red-400/10 text-red-200;
   }
   .chip-info {
-    @apply chip border-blue-400/20 bg-blue-400/10 text-blue-200;
+    @apply chip border-blue-300/60 bg-blue-100 text-blue-800;
+  }
+  .dark .chip-info {
+    @apply border-blue-400/20 bg-blue-400/10 text-blue-200;
   }
   .stat-card {
-    @apply rounded-2xl border border-white/10 bg-white/[0.04] p-4;
+    @apply rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_4px_18px_rgba(15,23,42,0.04)];
+  }
+  .dark .stat-card {
+    @apply border-white/10 bg-white/[0.04] shadow-none;
   }
   .section-title {
     @apply mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground;

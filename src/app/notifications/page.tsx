@@ -49,7 +49,7 @@ export default async function NotificationsPage() {
                   className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04]">
                       <Bell size={14} />
                     </div>
                     <div>

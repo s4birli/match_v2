@@ -25,10 +25,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             data-testid="toast"
             className={`pointer-events-auto w-full max-w-sm animate-slide-up rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-xl ${
               t.tone === "success"
-                ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-100"
+                ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-100"
                 : t.tone === "danger"
-                  ? "border-red-400/30 bg-red-500/15 text-red-100"
-                  : "border-white/15 bg-slate-900/80 text-foreground"
+                  ? "border-red-400/30 bg-red-500/15 text-red-700 dark:text-red-100"
+                  : "border-slate-200 dark:border-white/15 bg-slate-900/80 text-foreground"
             }`}
           >
             <p className="text-sm font-semibold">{t.title}</p>

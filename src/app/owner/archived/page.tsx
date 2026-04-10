@@ -36,7 +36,7 @@ export default async function OwnerArchivedPage() {
               <li
                 key={m.id}
                 data-testid={`archived-${m.id}`}
-                className="flex items-start gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-3"
+                className="flex items-start gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-3"
               >
                 <Avatar className="h-10 w-10">
                   <AvatarFallback>{initials(m.display_name)}</AvatarFallback>

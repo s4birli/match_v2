@@ -142,7 +142,7 @@ export function ConvertGuestButton({ id }: { id: string }) {
               <button
                 type="button"
                 onClick={close}
-                className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08]"
+                className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] text-muted-foreground hover:bg-slate-200 dark:hover:bg-white/[0.08]"
               >
                 <X size={14} />
               </button>
@@ -182,7 +182,7 @@ export function ConvertGuestButton({ id }: { id: string }) {
             ) : (
               <>
                 <div className="space-y-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-3">
-                  <p className="text-[11px] text-emerald-200">
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-200">
                     Share this link with {email}. When they register, every match
                     row stays under their existing player profile.
                   </p>

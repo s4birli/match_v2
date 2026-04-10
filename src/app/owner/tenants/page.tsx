@@ -106,7 +106,7 @@ function TenantGrid({
               className="block"
               data-testid={`tenant-${tn.id}`}
             >
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.06]">
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-4 transition-colors hover:bg-slate-200/70 dark:hover:bg-white/[0.06]">
                 <header className="flex items-start justify-between">
                   <div>
                     <p className="text-base font-bold">{tn.name}</p>
@@ -130,7 +130,7 @@ function TenantGrid({
                 </header>
                 <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                   <span>{tn.currency_code}</span>
-                  <code className="rounded-lg bg-white/[0.04] px-2 py-1">
+                  <code className="rounded-lg bg-slate-100/70 dark:bg-white/[0.04] px-2 py-1">
                     {tn.invite_code}
                   </code>
                 </div>

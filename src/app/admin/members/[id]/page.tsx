@@ -138,7 +138,7 @@ export default async function AdminMemberDetailPage({
                 <li
                   key={p.id}
                   data-testid={`participation-${p.id}`}
-                  className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                  className="flex items-center justify-between rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
                 >
                   <div>
                     <p className="text-sm font-semibold">
@@ -169,7 +169,7 @@ export default async function AdminMemberDetailPage({
             {ledger.map((tx) => (
               <li
                 key={tx.id}
-                className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                className="flex items-center justify-between rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
               >
                 <div>
                   <p className="text-sm font-semibold">{tx.description ?? tx.transaction_type}</p>

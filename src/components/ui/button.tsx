@@ -11,10 +11,10 @@ const buttonVariants = cva(
         default:
           "bg-gradient-to-br from-emerald-400 to-emerald-600 text-emerald-950 shadow-lg shadow-emerald-500/20 hover:from-emerald-300 hover:to-emerald-500",
         secondary:
-          "border border-white/10 bg-white/[0.06] text-foreground hover:bg-white/[0.1]",
+          "border border-slate-200/80 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] text-foreground hover:bg-white/[0.1]",
         outline:
-          "border border-white/15 bg-transparent text-foreground hover:bg-white/[0.06]",
-        ghost: "text-foreground hover:bg-white/[0.06]",
+          "border border-slate-200 dark:border-white/15 bg-transparent text-foreground hover:bg-slate-200/70 dark:hover:bg-white/[0.06]",
+        ghost: "text-foreground hover:bg-slate-200/70 dark:hover:bg-white/[0.06]",
         destructive:
           "bg-red-500/90 text-white hover:bg-red-500 shadow-lg shadow-red-500/20",
         accent:

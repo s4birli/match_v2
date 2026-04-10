@@ -26,7 +26,7 @@ export function LoginForm({ next, labels }: { next?: string; labels: { email: st
         <Input id="password" name="password" type="password" autoComplete="current-password" required data-testid="password-input" defaultValue="Test1234!" />
       </div>
       {state?.error ? (
-        <p data-testid="login-error" className="text-xs text-red-300">{translateError(t, state.error)}</p>
+        <p data-testid="login-error" className="text-xs text-red-600 dark:text-red-300">{translateError(t, state.error)}</p>
       ) : null}
       <Submit submit={labels.submit} pending={labels.pending} />
     </form>

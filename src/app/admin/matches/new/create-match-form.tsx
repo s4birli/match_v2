@@ -48,10 +48,10 @@ export function CreateMatchForm({
   if (venues.length === 0) {
     return (
       <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5">
-        <p className="text-sm font-semibold text-amber-100">
+        <p className="text-sm font-semibold text-amber-700 dark:text-amber-100">
           You need a venue first.
         </p>
-        <p className="mt-1 text-xs text-amber-200/80">
+        <p className="mt-1 text-xs text-amber-700 dark:text-amber-200/80">
           Create at least one venue, then come back here to schedule a match.
         </p>
         <Button asChild className="mt-3" variant="secondary">
@@ -73,7 +73,7 @@ export function CreateMatchForm({
             name="venueId"
             required
             data-testid="match-venue"
-            className="flex h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-foreground"
+            className="flex h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-4 py-2 text-sm text-foreground"
             defaultValue={venues[0]?.id ?? ""}
           >
             {venues.map((v) => (
@@ -111,7 +111,7 @@ export function CreateMatchForm({
             {FORMAT_OPTIONS.map((opt) => (
               <label
                 key={opt}
-                className="flex cursor-pointer items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-sm font-semibold has-[:checked]:border-emerald-400/40 has-[:checked]:bg-emerald-500/15 has-[:checked]:text-emerald-100"
+                className="flex cursor-pointer items-center justify-center rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] py-3 text-sm font-semibold has-[:checked]:border-emerald-400/40 has-[:checked]:bg-emerald-500/15 has-[:checked]:text-emerald-100"
               >
                 <input
                   type="radio"
@@ -131,7 +131,7 @@ export function CreateMatchForm({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm">
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-4 text-sm">
         <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
           Match fee
         </p>

@@ -134,7 +134,7 @@ export default async function OwnerTenantDetail({
           <Ticket size={16} className="text-muted-foreground" />
         </header>
         <p className="text-sm text-muted-foreground">{t.owner.inviteCodeHint}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-4 py-3">
           <code className="flex-1 text-xl font-bold tracking-wider" data-testid="invite-code">
             {tenant.invite_code}
           </code>
@@ -162,7 +162,7 @@ export default async function OwnerTenantDetail({
               <li
                 key={roleKey}
                 data-testid={`invite-row-${roleKey}`}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+                className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={roleKey === "admin" ? "accent" : "default"}>
@@ -226,7 +226,7 @@ export default async function OwnerTenantDetail({
           {FEATURE_KEYS.map((f) => (
             <li
               key={f.key}
-              className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3"
+              className="flex items-center justify-between rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-4 py-3"
             >
               <span className="text-sm font-semibold">{t.owner[f.labelKey]}</span>
               <FeatureFlagToggle
@@ -256,7 +256,7 @@ export default async function OwnerTenantDetail({
               <li
                 key={m.membership_id}
                 data-testid={`tenant-member-${m.membership_id}`}
-                className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                className="flex items-center gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
               >
                 <Avatar className="h-9 w-9">
                   <AvatarFallback>{initials(m.display_name)}</AvatarFallback>
@@ -313,7 +313,7 @@ export default async function OwnerTenantDetail({
       {/* Danger zone */}
       <Card>
         <header className="mb-3 flex items-center gap-2">
-          <ShieldAlert size={16} className="text-red-300" />
+          <ShieldAlert size={16} className="text-red-600 dark:text-red-300" />
           <h2 className="text-base font-semibold">Danger zone</h2>
         </header>
         <p className="mb-3 text-xs text-muted-foreground">

@@ -47,12 +47,12 @@ export default async function LoginPage({
         </div>
       </div>
       <div className="mt-6 grid gap-2 text-center text-[11px] text-muted-foreground">
-        <p>Demo accounts (password: <code className="rounded bg-white/[0.04] px-1">Test1234!</code>)</p>
+        <p>Demo accounts (password: <code className="rounded bg-slate-100/70 dark:bg-white/[0.04] px-1">Test1234!</code>)</p>
         <div className="flex flex-wrap justify-center gap-1.5">
-          <code className="rounded-lg bg-white/[0.04] px-2 py-1">owner@example.com</code>
-          <code className="rounded-lg bg-white/[0.04] px-2 py-1">admin.demo@example.com</code>
-          <code className="rounded-lg bg-white/[0.04] px-2 py-1">assistant.demo@example.com</code>
-          <code className="rounded-lg bg-white/[0.04] px-2 py-1">user.demo@example.com</code>
+          <code className="rounded-lg bg-slate-100/70 dark:bg-white/[0.04] px-2 py-1">owner@example.com</code>
+          <code className="rounded-lg bg-slate-100/70 dark:bg-white/[0.04] px-2 py-1">admin.demo@example.com</code>
+          <code className="rounded-lg bg-slate-100/70 dark:bg-white/[0.04] px-2 py-1">assistant.demo@example.com</code>
+          <code className="rounded-lg bg-slate-100/70 dark:bg-white/[0.04] px-2 py-1">user.demo@example.com</code>
         </div>
       </div>
     </div>

@@ -51,7 +51,7 @@ export function AddExistingPlayerForm({
           name="accountId"
           required
           data-testid="add-existing-account"
-          className="flex h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-foreground"
+          className="flex h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-4 py-2 text-sm text-foreground"
           defaultValue=""
         >
           <option value="" disabled>

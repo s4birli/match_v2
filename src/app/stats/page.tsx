@@ -121,9 +121,9 @@ function Leaderboard({
           return (
             <li
               key={r.membership_id}
-              className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+              className="flex items-center gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.06] text-xs font-bold">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/[0.06] text-xs font-bold">
                 {i + 1}
               </div>
               <Avatar className="h-9 w-9">

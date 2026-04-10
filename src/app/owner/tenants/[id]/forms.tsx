@@ -73,7 +73,7 @@ export function TenantSettingsForm({
           name="currencyCode"
           defaultValue={tenant.currency_code}
           data-testid="tenant-edit-currency"
-          className="flex h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-foreground"
+          className="flex h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-4 py-2 text-sm text-foreground"
         >
           <option value="GBP">GBP</option>
           <option value="USD">USD</option>
@@ -314,7 +314,7 @@ export function FeatureFlagToggle({
       className={`relative h-7 w-12 rounded-full border transition-colors ${
         checked
           ? "border-emerald-400/40 bg-emerald-500/30"
-          : "border-white/10 bg-white/[0.06]"
+          : "border-slate-200/80 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06]"
       }`}
     >
       <span
@@ -441,7 +441,7 @@ export function AssignAdminPanel({
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       {/* Existing account picker */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-4">
         <h3 className="mb-3 text-sm font-semibold">{labels.existingTitle}</h3>
         <form action={assignExisting} className="space-y-3">
           <div className="space-y-1">
@@ -451,7 +451,7 @@ export function AssignAdminPanel({
               name="accountId"
               required
               data-testid="assign-existing-account"
-              className="flex h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-foreground"
+              className="flex h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-4 py-2 text-sm text-foreground"
             >
               <option value="">—</option>
               {accounts.map((a) => (
@@ -468,7 +468,7 @@ export function AssignAdminPanel({
               name="role"
               defaultValue="admin"
               data-testid="assign-existing-role"
-              className="flex h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-foreground"
+              className="flex h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-4 py-2 text-sm text-foreground"
             >
               <option value="admin">{labels.roleAdmin}</option>
               <option value="assistant_admin">{labels.roleAssistant}</option>
@@ -487,7 +487,7 @@ export function AssignAdminPanel({
       </div>
 
       {/* New email invite */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-4">
         <h3 className="mb-3 text-sm font-semibold">{labels.newTitle}</h3>
         <form action={inviteNew} className="space-y-3">
           <div className="space-y-1">
@@ -508,7 +508,7 @@ export function AssignAdminPanel({
               name="role"
               defaultValue="admin"
               data-testid="assign-new-role"
-              className="flex h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-foreground"
+              className="flex h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-4 py-2 text-sm text-foreground"
             >
               <option value="admin">{labels.roleAdmin}</option>
               <option value="assistant_admin">{labels.roleAssistant}</option>
@@ -527,7 +527,7 @@ export function AssignAdminPanel({
         </form>
         {generatedUrl && (
           <div className="mt-3 space-y-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3">
-            <p className="text-[11px] text-emerald-200">{labels.shareHint}</p>
+            <p className="text-[11px] text-emerald-700 dark:text-emerald-200">{labels.shareHint}</p>
             <code
               className="block break-all rounded-lg bg-black/30 px-3 py-2 text-xs"
               data-testid="generated-invite-url"

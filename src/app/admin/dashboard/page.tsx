@@ -78,7 +78,7 @@ export default async function AdminDashboardPage() {
       <section className="hero-card overflow-hidden">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-200/80">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-200/80">
               {membership.role === "assistant_admin" ? t.admin.assistantRole : t.admin.adminRole} ·{" "}
               {membership.tenant.name}
             </p>
@@ -180,7 +180,7 @@ export default async function AdminDashboardPage() {
             <Link
               href={`/admin/matches/${nextMatch.id}`}
               data-testid={`next-match-${nextMatch.id}`}
-              className="block rounded-2xl border border-white/10 bg-white/[0.04] p-4 hover:bg-white/[0.08]"
+              className="block rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] p-4 hover:bg-slate-200 dark:hover:bg-white/[0.08]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -231,7 +231,7 @@ export default async function AdminDashboardPage() {
               {recentPast.map((m) => (
                 <li
                   key={m.id}
-                  className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3"
+                  className="flex items-center justify-between rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-4 py-3"
                 >
                   <div>
                     <p className="text-sm font-semibold">
@@ -277,7 +277,7 @@ function StatLink({
   return (
     <Link href={href} className="block">
       <div
-        className={`stat-card transition-all hover:-translate-y-0.5 hover:bg-white/[0.07] ${
+        className={`stat-card transition-all hover:-translate-y-0.5 hover:bg-slate-200/70 dark:hover:bg-white/[0.07] ${
           accent ? "ring-1 ring-emerald-400/30" : ""
         }`}
       >
@@ -304,8 +304,8 @@ function ActionCard({
 }) {
   return (
     <Link href={href} className="group">
-      <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 transition-all hover:-translate-y-0.5 hover:bg-white/[0.07]">
-        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400/30 to-violet-500/30 text-emerald-200">
+      <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] p-5 transition-all hover:-translate-y-0.5 hover:bg-slate-200/70 dark:hover:bg-white/[0.07]">
+        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400/30 to-violet-500/30 text-emerald-700 dark:text-emerald-200">
           {icon}
         </div>
         <p className="text-sm font-bold group-hover:text-emerald-300">{title}</p>

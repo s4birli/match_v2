@@ -42,7 +42,7 @@ export default async function DashboardPage() {
       <section className="hero-card overflow-hidden">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-200/80">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-200/80">
               {t.dashboard.hello}
             </p>
             <h1 className="mt-1 text-2xl font-bold">{session.person.display_name}</h1>
@@ -54,10 +54,10 @@ export default async function DashboardPage() {
         </div>
 
         {nextMatch ? (
-          <div className="mt-5 rounded-2xl border border-white/15 bg-black/20 p-4">
+          <div className="mt-5 rounded-2xl border border-slate-200 dark:border-white/15 bg-black/20 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-200/80">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-200/80">
                   {t.dashboard.yourNextMatch}
                 </p>
                 <p className="mt-1 text-base font-bold">
@@ -121,7 +121,7 @@ export default async function DashboardPage() {
                   <Link
                     href={`/matches/${m.id}`}
                     data-testid={`match-row-${m.id}`}
-                    className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 text-sm transition-colors hover:bg-white/[0.06]"
+                    className="flex items-center justify-between rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-4 py-3 text-sm transition-colors hover:bg-slate-200/70 dark:hover:bg-white/[0.06]"
                   >
                     <div>
                       <p className="font-semibold">{m.title ?? `${m.team_format_label} match`}</p>
@@ -156,9 +156,9 @@ export default async function DashboardPage() {
                 return (
                   <li
                     key={p.membership_id}
-                    className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                    className="flex items-center gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
                   >
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.06] text-xs font-bold">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/[0.06] text-xs font-bold">
                       {i + 1}
                     </div>
                     <Avatar className="h-9 w-9">
@@ -197,7 +197,7 @@ export default async function DashboardPage() {
               return (
                 <li
                   key={n.id}
-                  className="flex items-start justify-between rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 text-sm"
+                  className="flex items-start justify-between rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-4 py-3 text-sm"
                 >
                   <div>
                     <p className="font-semibold">{localized.title}</p>

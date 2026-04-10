@@ -83,7 +83,7 @@ function MatchList({
             data-testid={`match-card-${m.id}`}
             className="group"
           >
-            <Card className="transition-all hover:-translate-y-0.5 hover:bg-white/[0.06]">
+            <Card className="transition-all hover:-translate-y-0.5 hover:bg-slate-200/70 dark:hover:bg-white/[0.06]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-base font-bold group-hover:text-emerald-300">

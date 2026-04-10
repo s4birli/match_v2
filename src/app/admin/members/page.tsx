@@ -65,7 +65,7 @@ export default async function AdminMembersPage() {
                   <li
                     key={m.id}
                     data-testid={`member-${m.id}`}
-                    className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                    className="flex items-center gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
                   >
                     <Link
                       href={`/admin/members/${m.id}`}
@@ -104,7 +104,7 @@ export default async function AdminMembersPage() {
                 return (
                   <li
                     key={m.id}
-                    className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                    className="flex items-center gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
                   >
                     <Avatar className="h-9 w-9">
                       <AvatarFallback>{initials(display)}</AvatarFallback>

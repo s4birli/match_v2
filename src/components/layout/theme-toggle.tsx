@@ -103,7 +103,7 @@ export function ThemeToggle({ initial }: { initial: ThemeChoice }) {
         data-testid="theme-toggle"
         onClick={() => setOpen((v) => !v)}
         disabled={pending}
-        className="flex h-10 items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-[11px] font-bold uppercase text-foreground transition-colors hover:bg-white/[0.08]"
+        className="flex h-10 items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-3 text-[11px] font-bold uppercase text-foreground transition-colors hover:bg-slate-200 dark:hover:bg-white/[0.08]"
       >
         <Face size={14} className="opacity-80" />
         <ChevronDown size={12} className="opacity-70" />
@@ -113,7 +113,7 @@ export function ThemeToggle({ initial }: { initial: ThemeChoice }) {
         <ul
           role="listbox"
           data-testid="theme-menu"
-          className="glass-strong absolute right-0 top-full z-50 mt-2 min-w-[160px] overflow-hidden rounded-2xl border border-white/10 p-1 shadow-xl"
+          className="glass-strong absolute right-0 top-full z-50 mt-2 min-w-[160px] overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/10 p-1 shadow-xl"
         >
           {options.map(({ value, label, Icon }) => {
             const active = choice === value;
@@ -128,8 +128,8 @@ export function ThemeToggle({ initial }: { initial: ThemeChoice }) {
                   disabled={pending}
                   className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors ${
                     active
-                      ? "bg-white/[0.10] text-foreground"
-                      : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                      ? "bg-slate-200 dark:bg-white/[0.10] text-foreground"
+                      : "text-muted-foreground hover:bg-slate-200/70 dark:hover:bg-white/[0.06] hover:text-foreground"
                   }`}
                 >
                   <span className="flex items-center gap-2">

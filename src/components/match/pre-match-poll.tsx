@@ -63,12 +63,12 @@ export function PreMatchPoll({
       {locked && status === "open" && (
         <div
           data-testid="poll-locked-banner"
-          className="mb-3 flex items-start gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-3 text-amber-100"
+          className="mb-3 flex items-start gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-3 text-amber-700 dark:text-amber-100"
         >
           <Lock size={16} className="mt-0.5 shrink-0" />
           <div>
             <p className="text-sm font-semibold">{t.matchUi.votingLocked}</p>
-            <p className="text-xs text-amber-200/80">
+            <p className="text-xs text-amber-700 dark:text-amber-200/80">
               {lockReason ?? t.matchUi.votingLockedHint}
             </p>
           </div>
@@ -84,7 +84,7 @@ export function PreMatchPoll({
             return (
               <div
                 key={opt.id}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+                className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3"
                 data-testid={`poll-option-${opt.label.replace(/\s+/g, "-").toLowerCase()}`}
               >
                 <div className="flex items-center justify-between text-sm">

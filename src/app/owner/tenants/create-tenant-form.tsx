@@ -62,7 +62,7 @@ export function CreateTenantForm({
           name="currencyCode"
           defaultValue="GBP"
           data-testid="tenant-currency"
-          className="flex h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-foreground"
+          className="flex h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-4 py-2 text-sm text-foreground"
         >
           <option value="GBP">GBP — British Pound</option>
           <option value="USD">USD — US Dollar</option>

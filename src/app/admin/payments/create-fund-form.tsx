@@ -127,8 +127,8 @@ export function CreateFundForm({
                   data-testid={`fund-pick-${m.id}`}
                   className={`w-full truncate rounded-2xl border px-3 py-2 text-xs font-semibold transition-colors ${
                     isOn
-                      ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-100"
-                      : "border-white/10 bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08]"
+                      ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-100"
+                      : "border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] text-muted-foreground hover:bg-slate-200 dark:hover:bg-white/[0.08]"
                   }`}
                 >
                   {m.name}

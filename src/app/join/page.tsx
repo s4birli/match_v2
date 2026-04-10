@@ -26,7 +26,7 @@ export default function JoinPage() {
             <Label htmlFor="code">{t.auth.inviteCodePlaceholder}</Label>
             <Input id="code" name="code" required placeholder="READ123" data-testid="join-code" />
           </div>
-          {state?.error ? <p className="text-xs text-red-300">{translateError(t, state.error)}</p> : null}
+          {state?.error ? <p className="text-xs text-red-600 dark:text-red-300">{translateError(t, state.error)}</p> : null}
           <Submit />
         </form>
       </div>

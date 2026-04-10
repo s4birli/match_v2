@@ -110,12 +110,12 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
         </div>
 
         {result && (
-          <div className="mt-5 rounded-2xl border border-white/15 bg-black/30 p-4 text-center">
+          <div className="mt-5 rounded-2xl border border-slate-200 dark:border-white/15 bg-black/30 p-4 text-center">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {t.match.finalScore}
             </p>
             <p className="mt-2 text-3xl font-black">
-              <span className="text-red-300">{result.red_score}</span>
+              <span className="text-red-600 dark:text-red-300">{result.red_score}</span>
               <span className="mx-3 text-muted-foreground">—</span>
               <span className="text-blue-300">{result.blue_score}</span>
             </p>
@@ -129,7 +129,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
             {motm && motmName && (
               <div
                 data-testid="match-motm"
-                className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-200"
+                className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-200"
               >
                 <Crown size={12} />
                 {t.dashboard.motm}: {motmName}
@@ -161,7 +161,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
         <Card>
           <header className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-base font-semibold">
-              <Users size={16} className="text-red-300" />
+              <Users size={16} className="text-red-600 dark:text-red-300" />
               {t.match.teamRed}
             </h2>
             <span className="text-xs text-muted-foreground">
@@ -213,7 +213,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                 return (
                   <li
                     key={p.id}
-                    className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                    className="flex items-center gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
                   >
                     <Avatar className="h-9 w-9">
                       <AvatarFallback>{initials(display)}</AvatarFallback>
@@ -311,7 +311,7 @@ function PlayerList({
           <li
             key={p.id}
             data-testid={`player-row-${p.membership_id}`}
-            className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+            className="flex items-center gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
           >
             <Avatar className="h-9 w-9">
               <AvatarFallback>{initials(display)}</AvatarFallback>
@@ -336,7 +336,7 @@ function PlayerList({
             {avg && avg.raters > 0 ? (
               <span
                 data-testid={`player-avg-${p.membership_id}`}
-                className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] font-bold text-emerald-200"
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-200"
                 title={`${avg.raters} rater${avg.raters === 1 ? "" : "s"}`}
               >
                 <Star size={10} />

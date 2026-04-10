@@ -65,7 +65,7 @@ export function PwaInstaller() {
       <button
         type="button"
         aria-label="Dismiss"
-        className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground hover:bg-white/[0.08] hover:text-foreground"
+        className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground hover:bg-slate-200 dark:hover:bg-white/[0.08] hover:text-foreground"
         onClick={() => setDismissed(true)}
       >
         <X size={14} />

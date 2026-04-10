@@ -34,7 +34,7 @@ export function PaymentForm({ members }: { members: Array<{ id: string; name: st
           id="membershipId"
           name="membershipId"
           data-testid="payment-member"
-          className="flex h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-foreground"
+          className="flex h-12 w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-4 py-2 text-sm text-foreground"
           required
         >
           {members.map((m) => (

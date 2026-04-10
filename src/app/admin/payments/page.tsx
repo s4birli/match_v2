@@ -122,7 +122,7 @@ export default async function AdminPaymentsPage() {
                 <li
                   key={f.id}
                   data-testid={`fund-${f.id}`}
-                  className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                  className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold">{f.name}</p>
@@ -162,12 +162,12 @@ export default async function AdminPaymentsPage() {
               <li
                 key={m.id}
                 data-testid={`balance-${m.id}`}
-                className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                className="flex items-center justify-between rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-3 py-2.5"
               >
                 <span className="text-sm font-semibold">{display}</span>
                 <span
                   className={`text-sm font-bold ${
-                    !b || b.balance >= 0 ? "text-emerald-300" : "text-red-300"
+                    !b || b.balance >= 0 ? "text-emerald-300" : "text-red-600 dark:text-red-300"
                   }`}
                 >
                   {b

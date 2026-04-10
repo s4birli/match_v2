@@ -28,7 +28,7 @@ export default async function WalletPage() {
         <p className="text-[11px] uppercase tracking-wider text-foreground/70">{t.wallet.balance}</p>
         <p
           data-testid="wallet-balance"
-          className={`mt-2 text-4xl font-black ${balance >= 0 ? "text-emerald-300" : "text-red-300"}`}
+          className={`mt-2 text-4xl font-black ${balance >= 0 ? "text-emerald-300" : "text-red-600 dark:text-red-300"}`}
         >
           {formatCurrency(balance, currency, bcp47Locale(locale))}
         </p>
@@ -54,13 +54,13 @@ export default async function WalletPage() {
                 <li
                   key={tx.id}
                   data-testid={`tx-${tx.id}`}
-                  className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3"
+                  className="flex items-center gap-3 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] px-4 py-3"
                 >
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
                       credit
-                        ? "border border-emerald-400/30 bg-emerald-400/15 text-emerald-200"
-                        : "border border-red-400/30 bg-red-400/15 text-red-200"
+                        ? "border border-emerald-400/30 bg-emerald-400/15 text-emerald-700 dark:text-emerald-200"
+                        : "border border-red-400/30 bg-red-400/15 text-red-700 dark:text-red-200"
                     }`}
                   >
                     {credit ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
@@ -75,7 +75,7 @@ export default async function WalletPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-sm font-bold ${credit ? "text-emerald-300" : "text-red-300"}`}>
+                    <p className={`text-sm font-bold ${credit ? "text-emerald-300" : "text-red-600 dark:text-red-300"}`}>
                       {credit ? "+" : "-"}
                       {formatCurrency(tx.amount, tx.currency_code, bcp47Locale(locale))}
                     </p>

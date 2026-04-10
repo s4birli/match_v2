@@ -71,7 +71,7 @@ export function RegisterForm({
         </div>
       )}
       {state?.error ? (
-        <p data-testid="register-error" className="text-xs text-red-300">
+        <p data-testid="register-error" className="text-xs text-red-600 dark:text-red-300">
           {translateError(t, state.error, state.errorParams)}
         </p>
       ) : null}

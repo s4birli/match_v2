@@ -77,8 +77,8 @@ export function MobileBottomNav({
               data-testid={`bottom-nav-${item.label.toLowerCase()}`}
               className={`flex flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
                 active
-                  ? "bg-white/[0.12] text-foreground"
-                  : "text-muted-foreground hover:bg-white/[0.04]"
+                  ? "bg-slate-200 dark:bg-white/[0.12] text-foreground"
+                  : "text-muted-foreground hover:bg-slate-200/60 dark:hover:bg-white/[0.04]"
               }`}
             >
               <Icon size={18} />
@@ -96,8 +96,8 @@ export function MobileBottomNav({
             aria-expanded={moreOpen}
             className={`flex flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
               overflowActive
-                ? "bg-white/[0.12] text-foreground"
-                : "text-muted-foreground hover:bg-white/[0.04]"
+                ? "bg-slate-200 dark:bg-white/[0.12] text-foreground"
+                : "text-muted-foreground hover:bg-slate-200/60 dark:hover:bg-white/[0.04]"
             }`}
           >
             <MoreHorizontal size={18} />
@@ -119,7 +119,7 @@ export function MobileBottomNav({
             onClick={() => setMoreOpen(false)}
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
-          <div className="glass-strong relative w-full animate-slide-up rounded-t-3xl border-t border-white/10 px-4 pb-6 pt-4">
+          <div className="glass-strong relative w-full animate-slide-up rounded-t-3xl border-t border-slate-200/80 dark:border-white/10 px-4 pb-6 pt-4">
             <header className="mb-3 flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 More
@@ -127,7 +127,7 @@ export function MobileBottomNav({
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08]"
+                className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] text-muted-foreground hover:bg-slate-200 dark:hover:bg-white/[0.08]"
                 aria-label="Close"
               >
                 <X size={14} />
@@ -145,8 +145,8 @@ export function MobileBottomNav({
                       onClick={() => setMoreOpen(false)}
                       className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl px-2 py-3 text-xs font-semibold transition-colors ${
                         active
-                          ? "border border-emerald-400/30 bg-emerald-500/15 text-emerald-100"
-                          : "border border-white/10 bg-white/[0.04] text-foreground hover:bg-white/[0.08]"
+                          ? "border border-emerald-400/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-100"
+                          : "border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] text-foreground hover:bg-slate-200 dark:hover:bg-white/[0.08]"
                       }`}
                     >
                       <Icon size={20} />
