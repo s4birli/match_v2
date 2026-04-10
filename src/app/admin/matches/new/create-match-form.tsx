@@ -49,14 +49,14 @@ export function CreateMatchForm({
     return (
       <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5">
         <p className="text-sm font-semibold text-amber-700 dark:text-amber-100">
-          You need a venue first.
+          {t.admin.noVenueWarning}
         </p>
         <p className="mt-1 text-xs text-amber-700 dark:text-amber-200/80">
-          Create at least one venue, then come back here to schedule a match.
+          {t.admin.noVenueHint}
         </p>
         <Button asChild className="mt-3" variant="secondary">
           <Link href="/admin/venues" data-testid="goto-venues">
-            + Create a venue
+            {t.admin.createVenueFirst}
           </Link>
         </Button>
       </div>
@@ -67,7 +67,7 @@ export function CreateMatchForm({
     <form action={action} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="venueId">Venue</Label>
+          <Label htmlFor="venueId">{t.admin.venueLabel}</Label>
           <select
             id="venueId"
             name="venueId"
@@ -86,12 +86,12 @@ export function CreateMatchForm({
             href="/admin/venues"
             className="text-[11px] text-emerald-300 hover:underline"
           >
-            + Create another venue
+            {t.admin.createAnotherVenue}
           </Link>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="startsAt">Start (date & time)</Label>
+          <Label htmlFor="startsAt">{t.admin.startsAtLabel}</Label>
           <Input
             id="startsAt"
             name="startsAt"
@@ -101,12 +101,12 @@ export function CreateMatchForm({
             data-testid="match-starts-at"
           />
           <p className="text-[11px] text-muted-foreground">
-            Match always lasts 1 hour.
+            {t.admin.matchOneHourHint}
           </p>
         </div>
 
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="format">Format</Label>
+          <Label htmlFor="format">{t.admin.formatLabel}</Label>
           <div className="grid grid-cols-4 gap-2" role="radiogroup">
             {FORMAT_OPTIONS.map((opt) => (
               <label
@@ -126,24 +126,23 @@ export function CreateMatchForm({
             ))}
           </div>
           <p className="text-[11px] text-muted-foreground">
-            5v5 = 5 per team. The other half is filled by the opposing team.
+            {t.admin.formatHint}
           </p>
         </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-4 text-sm">
         <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-          Match fee
+          {t.admin.matchFee}
         </p>
         <p className="mt-1 text-base font-bold">
-          {formatCurrency(defaultMatchFee, currencyCode)} per played player
+          {t.admin.matchFeePerPlayer.replace(
+            "{amount}",
+            formatCurrency(defaultMatchFee, currencyCode),
+          )}
         </p>
         <p className="mt-1 text-[11px] text-muted-foreground">
-          Set by tenant default — change it under{" "}
-          <Link href="/admin/settings" className="text-emerald-300 hover:underline">
-            Settings
-          </Link>
-          .
+          {t.admin.matchFeeFromSettings}
         </p>
       </div>
 

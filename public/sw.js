@@ -2,7 +2,7 @@
  *
  * Versioned cache so future deploys can purge old assets cleanly.
  */
-const CACHE_NAME = "match-club-v1";
+const CACHE_NAME = "match-club-v2";
 const OFFLINE_URL = "/offline";
 
 self.addEventListener("install", (event) => {
@@ -43,9 +43,9 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
-// Push notifications: the server sends an empty body (we don't ship the full
-// encrypted-payload protocol locally), so we show a generic banner. The SW
-// could fetch /api/me/notifications to get the latest unread item.
+// Push notifications: the server (web-push npm package) ships an
+// encrypted JSON payload with `{ title, body, url, data }`. We render it
+// directly. The url is a deep link the click handler navigates to.
 self.addEventListener("push", (event) => {
   const data = (() => {
     try {
@@ -56,17 +56,33 @@ self.addEventListener("push", (event) => {
   })();
   const title = data.title ?? "Match Club";
   const body = data.body ?? "You have a new notification.";
+  const url = data.url ?? "/notifications";
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
       icon: "/icons/icon-192.svg",
       badge: "/icons/icon-192.svg",
-      data: data.data ?? {},
+      data: { url, ...(data.data ?? {}) },
+      tag: data.data?.kind ?? undefined,
     }),
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  event.waitUntil(self.clients.openWindow("/notifications"));
+  const url = event.notification.data?.url ?? "/notifications";
+  event.waitUntil(
+    (async () => {
+      // If a tab is already open on the same URL, focus it; otherwise open new.
+      const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of all) {
+        if ("focus" in client) {
+          await client.focus();
+          if ("navigate" in client) await client.navigate(url);
+          return;
+        }
+      }
+      await self.clients.openWindow(url);
+    })(),
+  );
 });

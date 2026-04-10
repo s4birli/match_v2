@@ -13,7 +13,6 @@ import { getServerDictionary } from "@/lib/i18n/server";
 import { AttendanceQuickActions } from "@/components/match/attendance-quick-actions";
 import { PreMatchPoll } from "@/components/match/pre-match-poll";
 import { PostMatchVoting } from "@/components/match/post-match-voting";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -261,16 +260,14 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
         <Card>
           <header className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-base font-semibold">
-              <Trophy size={16} /> Admin tools
+              <Trophy size={16} /> {t.admin.adminTools}
             </h2>
             <Link href={`/admin/matches/${match.id}`} className="text-xs text-emerald-300 hover:underline">
-              Open admin →
+              {t.admin.openAdmin}
             </Link>
           </header>
           {match.status !== "completed" && (
-            <div className="text-sm text-muted-foreground">
-              Use the admin view to assign teams and close the match.
-            </div>
+            <div className="text-sm text-muted-foreground">{t.admin.adminToolsHint}</div>
           )}
         </Card>
       )}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MoreHorizontal, X } from "lucide-react";
 import { NAV_ICON_MAP, type NavIconName } from "./nav-icons";
+import { useI18n } from "@/lib/i18n/client";
 
 export type MobileNavItem = {
   href: string;
@@ -33,6 +34,7 @@ export function MobileBottomNav({
   items: MobileNavItem[];
   activePath?: string;
 }) {
+  const { t } = useI18n();
   const [moreOpen, setMoreOpen] = useState(false);
 
   // Close the sheet when the route changes (Link click).
@@ -92,7 +94,7 @@ export function MobileBottomNav({
             type="button"
             data-testid="bottom-nav-more"
             onClick={() => setMoreOpen(true)}
-            aria-label="More navigation items"
+            aria-label={t.admin.moreNavLabel}
             aria-expanded={moreOpen}
             className={`flex flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
               overflowActive
@@ -101,7 +103,7 @@ export function MobileBottomNav({
             }`}
           >
             <MoreHorizontal size={18} />
-            <span className="w-full truncate text-center">More</span>
+            <span className="w-full truncate text-center">{t.admin.moreNav}</span>
           </button>
         )}
       </nav>
@@ -122,7 +124,7 @@ export function MobileBottomNav({
           <div className="glass-strong relative w-full animate-slide-up rounded-t-3xl border-t border-slate-200/80 dark:border-white/10 px-4 pb-6 pt-4">
             <header className="mb-3 flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                More
+                {t.admin.moreNav}
               </span>
               <button
                 type="button"

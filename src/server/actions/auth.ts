@@ -7,6 +7,7 @@ import { z } from "zod";
 import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase/server";
 import { ACTIVE_TENANT_COOKIE_NAME, getSessionContext } from "@/server/auth/session";
 import { formatDisplayName } from "@/lib/utils";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -29,6 +30,26 @@ export async function loginAction(prevState: unknown, formData: FormData) {
   });
   if (!parsed.success) {
     return { error: "invalidInput" };
+  }
+  // SEC-3: rate limit by (email, ip) so a single attacker can't
+  // brute-force a known account from a single host. 5 attempts /
+  // 15 minutes is enough room for a forgetful user but slow enough
+  // that exhaustive search becomes infeasible.
+  //
+  // Disabled in dev/test: the playwright suite logs the demo user in
+  // dozens of times in quick succession, which would otherwise lock
+  // every test out. The limiter only fires in production.
+  if (process.env.NODE_ENV === "production") {
+    const ip = await clientIp();
+    const limited = rateLimit({
+      bucket: "login",
+      key: `${parsed.data.email}::${ip}`,
+      limit: 5,
+      windowSec: 15 * 60,
+    });
+    if (!limited.allowed) {
+      return { error: "rateLimited" };
+    }
   }
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
@@ -281,7 +302,24 @@ export async function logoutAction() {
 }
 
 export async function forgotPasswordAction(prevState: unknown, formData: FormData) {
-  const email = String(formData.get("email") ?? "");
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!email) return { error: "invalidInput" };
+  // SEC-4: rate limit so an attacker can't spam someone's inbox or
+  // enumerate accounts via timing. 3 reset emails / hour per
+  // (email, ip) is generous for a real user. Production-only.
+  if (process.env.NODE_ENV === "production") {
+    const ip = await clientIp();
+    const limited = rateLimit({
+      bucket: "forgot",
+      key: `${email}::${ip}`,
+      limit: 3,
+      windowSec: 60 * 60,
+    });
+    if (!limited.allowed) {
+      // Return success to prevent enumeration via the rate-limit response.
+      return { success: true };
+    }
+  }
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${process.env.APP_URL ?? "http://localhost:3737"}/reset-password`,

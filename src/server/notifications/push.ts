@@ -1,44 +1,84 @@
 /**
- * Web push send helper. Uses VAPID. We do NOT pull in the `web-push` package
- * (extra dep, has Node-only crypto). Instead we POST directly to the push
- * endpoint with the application server identification headers.
+ * Web push delivery via the `web-push` npm package.
  *
- * The full push protocol (RFC 8030 + RFC 8291 message encryption) is non-
- * trivial. To stay dependency-free we ship UNENCRYPTED payloads via the
- * `Topic` + `Urgency` headers and let the service worker fetch the
- * notification body from `/api/me/notifications` on receive. The body sent
- * over the wire is empty.
+ * Replaces the previous "minimal VAPID" implementation that only sent the
+ * public key in a `Crypto-Key` header — push services rejected those
+ * because RFC 8292 requires a signed JWT in the `Authorization: vapid`
+ * header. The `web-push` library handles JWT signing + RFC 8291 payload
+ * encryption for us.
  *
- * If you want full e2e-encrypted payloads, swap this for the `web-push`
- * library — keep the same exported signature.
+ * The payload now includes the actual title + body + click URL, encrypted
+ * end-to-end so the user sees the real notification (not the SW's "you
+ * have a new notification" fallback).
+ *
+ * Failures stay silent and never throw — `notify()` always writes the
+ * in-app row first, and push is best-effort.
  */
+import webpush from "web-push";
 import { env } from "@/lib/env";
 
-const VAPID_SUBJECT = env.VAPID_SUBJECT;
+let vapidConfigured = false;
+function configureVapid() {
+  if (vapidConfigured) return;
+  if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) return;
+  try {
+    webpush.setVapidDetails(
+      env.VAPID_SUBJECT || "mailto:owner@example.com",
+      env.VAPID_PUBLIC_KEY,
+      env.VAPID_PRIVATE_KEY,
+    );
+    vapidConfigured = true;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn("[push] vapid configure failed", (err as Error).message);
+  }
+}
+
+export type PushPayload = {
+  title: string;
+  body: string;
+  url?: string;
+  data?: Record<string, unknown>;
+};
 
 export async function sendWebPush(
   sub: { endpoint: string; p256dh: string; auth: string },
-  _payload: { title: string; body: string; data?: Record<string, unknown> },
-): Promise<void> {
-  if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) return; // push disabled
-  // Build a minimal Authorization header per VAPID. Full JWT signing requires
-  // ECDSA P-256 — we ship the public key alone with `WebPush <public_key>`,
-  // which most browsers accept for testing/local but real production should
-  // use a signed JWT. For local Supabase + Chromium dev this is enough.
+  payload: PushPayload,
+): Promise<{ ok: boolean; gone?: boolean }> {
+  if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
+    return { ok: false }; // push disabled — no keys configured
+  }
+  configureVapid();
+  if (!vapidConfigured) return { ok: false };
+
+  const subscription = {
+    endpoint: sub.endpoint,
+    keys: { p256dh: sub.p256dh, auth: sub.auth },
+  };
   try {
-    await fetch(sub.endpoint, {
-      method: "POST",
-      headers: {
-        TTL: "60",
-        Urgency: "normal",
-        // Browsers ignore unknown headers; we send the subject so the push
-        // service can rate-limit per app.
-        ...(VAPID_SUBJECT ? { "Crypto-Key": `p256ecdsa=${env.VAPID_PUBLIC_KEY}` } : {}),
+    await webpush.sendNotification(
+      subscription,
+      JSON.stringify({
+        title: payload.title,
+        body: payload.body,
+        url: payload.url ?? "/notifications",
+        data: payload.data ?? {},
+      }),
+      {
+        TTL: 60 * 60, // 1 hour
+        urgency: "normal",
       },
-      // Empty body — the SW will fetch the latest in-app notification on
-      // receive (see /public/sw.js).
-    });
-  } catch {
-    // Push delivery failures are silent — the in-app row is still written.
+    );
+    return { ok: true };
+  } catch (err) {
+    const e = err as { statusCode?: number };
+    // 404 Not Found / 410 Gone → the subscription is dead, caller should
+    // mark it inactive so we stop trying.
+    if (e.statusCode === 404 || e.statusCode === 410) {
+      return { ok: false, gone: true };
+    }
+    // eslint-disable-next-line no-console
+    console.warn("[push] delivery failed", e.statusCode, (err as Error).message);
+    return { ok: false };
   }
 }

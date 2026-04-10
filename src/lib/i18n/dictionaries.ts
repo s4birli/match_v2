@@ -352,6 +352,12 @@ const dictionaries = {
       cancelBtn: "Cancel",
       removeMemberConfirm: "Remove this member from the tenant?",
       archiveTenantConfirm: "Archive this tenant?",
+      // UX-1 holdouts
+      adminTools: "Admin tools",
+      adminToolsHint: "Use the admin view to assign teams and close the match.",
+      openAdmin: "Open admin →",
+      moreNav: "More",
+      moreNavLabel: "More navigation items",
     },
     matchUi: {
       ratePlayersTitle: "Rate your teammates",
@@ -569,6 +575,7 @@ const dictionaries = {
       accountNotEligible: "Account not eligible.",
       alreadyMemberOfTenant: "Already a member of this tenant.",
       pickAtLeastOneMember: "Pick at least one member.",
+      rateLimited: "Too many attempts. Please wait a few minutes and try again.",
       votingOpensWhenTeamsReady: "Voting opens once both teams have {required} players each.",
       matchNotOverYet: "Match isn't over yet — try again in {minutes} minutes.",
       invalidMatchInput: "Invalid match input.",
@@ -949,6 +956,11 @@ const dictionaries = {
       cancelBtn: "İptal",
       removeMemberConfirm: "Bu üyeyi gruptan çıkarmak istediğinden emin misin?",
       archiveTenantConfirm: "Bu grubu arşivlemek istediğinden emin misin?",
+      adminTools: "Admin araçları",
+      adminToolsHint: "Takım atamak ve maçı kapatmak için admin görünümünü kullan.",
+      openAdmin: "Admini aç →",
+      moreNav: "Daha fazla",
+      moreNavLabel: "Daha fazla menü",
     },
     matchUi: {
       ratePlayersTitle: "Takım arkadaşlarını puanla",
@@ -1166,6 +1178,7 @@ const dictionaries = {
       accountNotEligible: "Hesap uygun değil.",
       alreadyMemberOfTenant: "Zaten bu grubun üyesi.",
       pickAtLeastOneMember: "En az bir üye seç.",
+      rateLimited: "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar dene.",
       votingOpensWhenTeamsReady: "Oylama her iki takımda {required} oyuncu olunca açılır.",
       matchNotOverYet: "Maç henüz bitmedi — {minutes} dakika sonra tekrar dene.",
       invalidMatchInput: "Geçersiz maç bilgisi.",
@@ -1482,6 +1495,7 @@ const esOverrides = {
     accountNotEligible: "La cuenta no es válida.",
     alreadyMemberOfTenant: "Ya es miembro de este grupo.",
     pickAtLeastOneMember: "Selecciona al menos un miembro.",
+    rateLimited: "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
     votingOpensWhenTeamsReady:
       "La votación se abre cuando ambos equipos tienen {required} jugadores.",
     matchNotOverYet: "El partido aún no ha terminado — inténtalo en {minutes} minutos.",
@@ -1723,6 +1737,12 @@ const esOverrides = {
     cancelBtn: "Cancelar",
     removeMemberConfirm: "¿Quitar este miembro del grupo?",
     archiveTenantConfirm: "¿Archivar este grupo?",
+    adminTools: "Herramientas de admin",
+    adminToolsHint:
+      "Usa la vista de admin para asignar equipos y cerrar el partido.",
+    openAdmin: "Abrir admin →",
+    moreNav: "Más",
+    moreNavLabel: "Más opciones de navegación",
   },
   owner: {
     systemOverview: "Vista general del sistema",

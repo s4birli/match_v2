@@ -85,19 +85,33 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-        <StatBlock label={t.dashboard.played} value={stats?.total_matches_played ?? 0} icon={<Users size={16} />} />
-        <StatBlock label={t.dashboard.winRate} value={`${stats?.win_rate ?? 0}%`} icon={<Trophy size={16} />} accent />
         <StatBlock
+          testid="stat-played"
+          label={t.dashboard.played}
+          value={stats?.total_matches_played ?? 0}
+          icon={<Users size={16} />}
+        />
+        <StatBlock
+          testid="stat-win-rate"
+          label={t.dashboard.winRate}
+          value={`${stats?.win_rate ?? 0}%`}
+          icon={<Trophy size={16} />}
+          accent
+        />
+        <StatBlock
+          testid="stat-avg-rating"
           label={t.dashboard.avgRating}
           value={stats?.avg_teammate_rating ? Number(stats.avg_teammate_rating).toFixed(1) : "—"}
           icon={<Star size={16} />}
         />
         <StatBlock
+          testid="stat-motm"
           label={t.dashboard.motm}
           value={stats?.motm_count ?? 0}
           icon={<Crown size={16} />}
         />
         <StatBlock
+          testid="stat-wallet"
           label={t.dashboard.walletBalance}
           value={formatCurrency(wallet.balance, wallet.currency, bcp47Locale(locale))}
           icon={<Wallet size={16} />}
@@ -221,14 +235,19 @@ function StatBlock({
   value,
   icon,
   accent,
+  testid,
 }: {
   label: string;
   value: number | string;
   icon: React.ReactNode;
   accent?: boolean;
+  testid?: string;
 }) {
   return (
-    <div className={`stat-card ${accent ? "ring-1 ring-emerald-400/20" : ""}`}>
+    <div
+      data-testid={testid}
+      className={`stat-card ${accent ? "ring-1 ring-emerald-400/20" : ""}`}
+    >
       <div className="flex items-center justify-between text-muted-foreground">
         <span className="text-[11px] uppercase tracking-wider">{label}</span>
         {icon}

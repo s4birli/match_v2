@@ -49,13 +49,23 @@ export async function notify(input: {
       .eq("is_active", true);
 
     await Promise.all(
-      (subs ?? []).map((s) =>
-        sendWebPush(s as { endpoint: string; p256dh: string; auth: string }, {
+      (subs ?? []).map(async (s) => {
+        const sub = s as { endpoint: string; p256dh: string; auth: string };
+        const res = await sendWebPush(sub, {
           title: input.title,
           body: input.body,
+          url: typeof input.payload?.url === "string" ? input.payload.url : "/notifications",
           data: input.payload ?? {},
-        }),
-      ),
+        });
+        // Push service told us the subscription is gone — flip is_active=false
+        // so we don't keep retrying every minute on a dead endpoint.
+        if (res.gone) {
+          await admin
+            .from("push_subscriptions")
+            .update({ is_active: false })
+            .eq("endpoint", sub.endpoint);
+        }
+      }),
     );
   } catch (err) {
     // eslint-disable-next-line no-console

@@ -178,14 +178,21 @@ export async function castMotmVoteAction(formData: FormData) {
   if (parsed.data.targetMembershipId === membership.id) {
     return { error: "cannotVoteSelf" };
   }
-  // Target must have played in the same match
+  // Target must have played in the same match. The FK chain enforces
+  // that a match_participants row implicitly belongs to the right tenant,
+  // but we add the explicit check to match the rest of the codebase's
+  // defensive style and to make tenant isolation auditable.
   const { data: target } = await admin
     .from("match_participants")
     .select("attendance_status, tenant_id")
     .eq("match_id", parsed.data.matchId)
     .eq("membership_id", parsed.data.targetMembershipId)
     .maybeSingle();
-  if (!target || target.attendance_status !== "played") {
+  if (
+    !target ||
+    target.attendance_status !== "played" ||
+    target.tenant_id !== membership.tenant_id
+  ) {
     return { error: "targetMustBePlayed" };
   }
 
@@ -477,6 +484,85 @@ export async function assignParticipantToTeamAction(formData: FormData) {
     .from("match_participants")
     .update({ team_id: teamId || null, joined_team_at: new Date().toISOString() })
     .eq("id", participantId);
+
+  // ── pre_match_poll_open notification ─────────────────────────────────
+  // CLAUDE.md: anyone in the group can vote on the winner prediction.
+  // The poll is locked until both teams are full (see castPollVoteAction).
+  // The cleanest moment to fan out the notification is right after the
+  // assignment that completes the rosters. We dedupe via audit_logs so
+  // re-clicking assignment buttons doesn't spam every member.
+  try {
+    const { data: matchInfo } = await admin
+      .from("matches")
+      .select("id, tenant_id, title, players_per_team")
+      .eq("id", matchId)
+      .maybeSingle();
+    if (matchInfo) {
+      const { data: roster } = await admin
+        .from("match_participants")
+        .select("team_id")
+        .eq("match_id", matchId)
+        .not("team_id", "is", null)
+        .in("attendance_status", ["confirmed", "checked_in", "played"]);
+      const counts = new Map<string, number>();
+      for (const row of roster ?? []) {
+        if (row.team_id)
+          counts.set(row.team_id, (counts.get(row.team_id) ?? 0) + 1);
+      }
+      const required = matchInfo.players_per_team;
+      const teamsReady =
+        counts.size >= 2 && [...counts.values()].every((c) => c >= required);
+      if (teamsReady) {
+        // Dedupe: have we notified already?
+        const { data: prior } = await admin
+          .from("audit_logs")
+          .select("id")
+          .eq("entity_type", "match")
+          .eq("entity_id", matchInfo.id)
+          .eq("action_type", "notify_pre_match_poll_open")
+          .limit(1)
+          .maybeSingle();
+        if (!prior) {
+          // Fan out to every active member of the tenant.
+          const { data: members } = await admin
+            .from("memberships")
+            .select("id")
+            .eq("tenant_id", matchInfo.tenant_id)
+            .neq("status", "archived");
+          if (members && members.length > 0) {
+            await notifyMany(
+              members.map((m) => ({
+                tenantId: matchInfo.tenant_id,
+                membershipId: m.id,
+              })),
+              {
+                notificationType: "pre_match_poll_open",
+                title: "Winner prediction poll is open",
+                body: matchInfo.title ?? "Cast your vote before kickoff.",
+                payload: {
+                  matchId: matchInfo.id,
+                  kind: "pre_match_poll_open",
+                  url: `/matches/${matchInfo.id}`,
+                },
+              },
+            );
+          }
+          await audit({
+            tenantId: matchInfo.tenant_id,
+            actorMembershipId: membership.id,
+            entityType: "match",
+            entityId: matchInfo.id,
+            actionType: "notify_pre_match_poll_open",
+            metadata: { teamsReady: true },
+          });
+        }
+      }
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn("[notify-poll-open]", (err as Error).message);
+  }
+
   revalidatePath(`/matches/${matchId}`);
   revalidatePath(`/admin/matches/${matchId}`);
   return { ok: true };
@@ -611,9 +697,36 @@ export async function closeMatchAction(formData: FormData) {
         notificationType: "post_match_rating_open",
         title: "Rate your teammates",
         body: "The match is over — rate your teammates and pick the player of the match. You have 1 minute.",
-        payload: { matchId: parsed.data.matchId, kind: "post_match_rating_open" },
+        payload: {
+          matchId: parsed.data.matchId,
+          kind: "post_match_rating_open",
+          url: `/matches/${parsed.data.matchId}`,
+        },
       },
     );
+
+    // NOTIF-4: their wallet just got debited the match fee — they deserve
+    // a wallet_updated notification too. Otherwise the player sees their
+    // balance drop with no explanation.
+    if (Number(match.match_fee) > 0) {
+      await notifyMany(
+        playedMemberIds.map((mid) => ({
+          tenantId: match.tenant_id,
+          membershipId: mid,
+        })),
+        {
+          notificationType: "wallet_updated",
+          title: "Wallet updated",
+          body: `Match fee ${match.match_fee} ${match.currency_code} has been added to your tab.`,
+          payload: {
+            matchId: parsed.data.matchId,
+            kind: "match_fee_charge",
+            amount: Number(match.match_fee),
+            url: "/wallet",
+          },
+        },
+      );
+    }
   }
 
   // Audit the close + score + fee application.

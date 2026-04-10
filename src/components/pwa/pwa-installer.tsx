@@ -25,7 +25,7 @@ export function PwaInstaller() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {
+      navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {
         // Ignore — push/offline simply won't be available.
       });
     }

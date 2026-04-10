@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { UserPlus, Copy, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -81,6 +81,21 @@ export function ConvertGuestButton({ id }: { id: string }) {
   const [email, setEmail] = useState("");
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
 
+  // UX-5: Esc closes the modal. Click-outside is already handled by the
+  // backdrop button. Keyboard users get the same affordance.
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        setEmail("");
+        setGeneratedUrl(null);
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
   function submit() {
     if (!email) return;
     start(async () => {
@@ -138,27 +153,27 @@ export function ConvertGuestButton({ id }: { id: string }) {
           />
           <div className="glass-strong relative w-full max-w-md animate-slide-up rounded-3xl p-5">
             <header className="mb-3 flex items-center justify-between">
-              <h3 className="text-base font-semibold">Convert guest to member</h3>
+              <h3 className="text-base font-semibold">{t.admin.convertGuestTitle}</h3>
               <button
                 type="button"
                 onClick={close}
+                aria-label={t.admin.cancelBtn}
                 className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] text-muted-foreground hover:bg-slate-200 dark:hover:bg-white/[0.08]"
               >
                 <X size={14} />
               </button>
             </header>
-            <p className="mb-3 text-xs text-muted-foreground">
-              All match history, ratings, MOTM votes and ledger entries stay
-              attached to this player. We just link them to a real account.
-            </p>
+            <p className="mb-3 text-xs text-muted-foreground">{t.admin.convertGuestHint}</p>
 
             {!generatedUrl ? (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="convert-email">Email</Label>
+                  <Label htmlFor="convert-email">{t.common.email}</Label>
                   <Input
                     id="convert-email"
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
                     placeholder="player@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -172,10 +187,10 @@ export function ConvertGuestButton({ id }: { id: string }) {
                     className="flex-1"
                     data-testid="convert-submit"
                   >
-                    {pending ? "Generating…" : "Generate invite link"}
+                    {pending ? t.admin.generating : t.admin.generateInviteLink}
                   </Button>
                   <Button variant="ghost" onClick={close}>
-                    Cancel
+                    {t.admin.cancelBtn}
                   </Button>
                 </div>
               </>
@@ -183,8 +198,7 @@ export function ConvertGuestButton({ id }: { id: string }) {
               <>
                 <div className="space-y-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-3">
                   <p className="text-[11px] text-emerald-700 dark:text-emerald-200">
-                    Share this link with {email}. When they register, every match
-                    row stays under their existing player profile.
+                    {t.admin.shareInviteWith.replace("{email}", email)}
                   </p>
                   <code
                     className="block break-all rounded-lg bg-black/30 px-3 py-2 text-xs"
@@ -198,7 +212,7 @@ export function ConvertGuestButton({ id }: { id: string }) {
                 </div>
                 <div className="mt-3 flex justify-end">
                   <Button variant="ghost" onClick={close}>
-                    Done
+                    {t.admin.done}
                   </Button>
                 </div>
               </>
