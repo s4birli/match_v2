@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireMembership } from "@/server/auth/session";
 import { listNotifications } from "@/server/db/queries";
+import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { relativeFromNow } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { LiveRefresh } from "@/lib/realtime/use-realtime-refresh";
@@ -22,6 +23,20 @@ export default async function NotificationsPage() {
   const { session, membership } = await requireMembership();
   const { t, locale } = await getServerDictionary();
   const notifs = await listNotifications(membership.id, 50);
+
+  // Mark every unread notification as read on visit. The bell badge in
+  // the AppShell observes the same membership_id via Supabase Realtime,
+  // so it'll drop to 0 instantly via the UPDATE event.
+  try {
+    const admin = createSupabaseServiceClient();
+    await admin
+      .from("notifications")
+      .update({ is_read: true, read_at: new Date().toISOString() })
+      .eq("membership_id", membership.id)
+      .eq("is_read", false);
+  } catch {
+    /* best effort — leaving rows unread is harmless */
+  }
 
   return (
     <AppShell session={session} activePath="/notifications">

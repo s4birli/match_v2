@@ -47,8 +47,10 @@ export function useRealtimeRefresh(watches: RealtimeWatch[], opts?: { debounceMs
     .join(";");
 
   useEffect(() => {
+    let cancelled = false;
     const supabase = createSupabaseBrowserClient();
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
     const fire = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
@@ -57,26 +59,45 @@ export function useRealtimeRefresh(watches: RealtimeWatch[], opts?: { debounceMs
       }, debounceMs);
     };
 
-    const channel = supabase.channel(`realtime:${watchKey}`);
-    for (const w of watches) {
-      // Supabase typings for postgres_changes are loose; we keep the
-      // shape minimal so future Supabase upgrades don't break us.
-      channel.on(
-        "postgres_changes" as never,
-        {
-          event: w.event ?? "*",
-          schema: "public",
-          table: w.table,
-          ...(w.filter ? { filter: w.filter } : {}),
-        } as never,
-        () => fire(),
-      );
-    }
-    channel.subscribe();
+    (async () => {
+      // RLS-protected tables require the realtime channel to carry the
+      // user's session JWT. Without this, anon channels get zero
+      // postgres_changes events for private rows.
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
+      if (accessToken) {
+        try {
+          (
+            supabase.realtime as unknown as { setAuth(token: string): void }
+          ).setAuth(accessToken);
+        } catch {
+          /* older clients pick it up from the session automatically */
+        }
+      }
+      if (cancelled) return;
+
+      channel = supabase.channel(`realtime:${watchKey}`);
+      for (const w of watches) {
+        // Supabase typings for postgres_changes are loose; we keep the
+        // shape minimal so future Supabase upgrades don't break us.
+        channel.on(
+          "postgres_changes" as never,
+          {
+            event: w.event ?? "*",
+            schema: "public",
+            table: w.table,
+            ...(w.filter ? { filter: w.filter } : {}),
+          } as never,
+          () => fire(),
+        );
+      }
+      channel.subscribe();
+    })();
 
     return () => {
+      cancelled = true;
       if (timer) clearTimeout(timer);
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchKey, debounceMs, router]);

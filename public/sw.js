@@ -2,7 +2,7 @@
  *
  * Versioned cache so future deploys can purge old assets cleanly.
  */
-const CACHE_NAME = "match-club-v2";
+const CACHE_NAME = "match-club-v3";
 const OFFLINE_URL = "/offline";
 
 self.addEventListener("install", (event) => {
@@ -46,25 +46,39 @@ self.addEventListener("fetch", (event) => {
 // Push notifications: the server (web-push npm package) ships an
 // encrypted JSON payload with `{ title, body, url, data }`. We render it
 // directly. The url is a deep link the click handler navigates to.
+//
+// DEBUG: every received push is logged so we can see in the SW console
+// (chrome://inspect/#service-workers → "inspect") whether the event
+// actually fires when a push is sent from the server.
 self.addEventListener("push", (event) => {
+  console.log("[sw] push event received", {
+    hasData: !!event.data,
+    timestamp: new Date().toISOString(),
+  });
   const data = (() => {
     try {
       return event.data ? event.data.json() : {};
-    } catch {
+    } catch (err) {
+      console.warn("[sw] push payload parse failed", err);
       return {};
     }
   })();
+  console.log("[sw] push payload", data);
   const title = data.title ?? "Match Club";
   const body = data.body ?? "You have a new notification.";
   const url = data.url ?? "/notifications";
   event.waitUntil(
-    self.registration.showNotification(title, {
-      body,
-      icon: "/icons/icon-192.svg",
-      badge: "/icons/icon-192.svg",
-      data: { url, ...(data.data ?? {}) },
-      tag: data.data?.kind ?? undefined,
-    }),
+    self.registration
+      .showNotification(title, {
+        body,
+        icon: "/icons/icon-192.svg",
+        badge: "/icons/icon-192.svg",
+        data: { url, ...(data.data ?? {}) },
+        tag: data.data?.kind ?? undefined,
+        requireInteraction: false,
+      })
+      .then(() => console.log("[sw] showNotification resolved"))
+      .catch((err) => console.error("[sw] showNotification failed", err)),
   );
 });
 

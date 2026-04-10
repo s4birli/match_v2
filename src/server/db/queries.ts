@@ -222,6 +222,24 @@ export async function listNotifications(membershipId: string, limit = 30) {
 }
 
 /**
+ * Count of unread notifications for the bell-icon badge in the top bar.
+ * Bounded by `cap` to avoid showing huge numbers — anything over the cap
+ * renders as `cap+`. Cheap query because of the
+ * `(membership_id, is_read, created_at DESC)` index.
+ */
+export async function countUnreadNotifications(
+  membershipId: string,
+  cap = 99,
+): Promise<number> {
+  const { count } = await db()
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("membership_id", membershipId)
+    .eq("is_read", false);
+  return Math.min(count ?? 0, cap);
+}
+
+/**
  * Pair / chemistry analytics: count how often each PAIR of memberships
  * has played on the same team in COMPLETED matches, and how often that
  * pair won together. Used by /admin/stats and /admin/dashboard insight

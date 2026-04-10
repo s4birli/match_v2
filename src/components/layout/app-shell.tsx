@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { Bell, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { initials } from "@/lib/utils";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { GroupSwitcher } from "@/components/layout/group-switcher";
 import { LanguageToggle } from "@/components/layout/language-toggle";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { resolveThemeChoice } from "@/lib/theme/server";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import { countUnreadNotifications } from "@/server/db/queries";
 import { NAV_ICON_MAP, type NavIconName } from "@/components/layout/nav-icons";
 import { logoutAction } from "@/server/actions/auth";
 import type { SessionContext } from "@/server/auth/session";
@@ -114,6 +116,11 @@ export async function AppShell({
   // System owner is a special "no group" mode handled distinctly from membership roles.
   const role: Role | undefined = session.isSystemOwner ? "owner" : session.activeMembership?.role;
   const nav = buildNavForRole(role, t);
+  // Bell unread badge — only meaningful for non-owner roles since the
+  // owner workspace doesn't surface notifications.
+  const unreadCount = session.isSystemOwner || !session.activeMembership
+    ? 0
+    : await countUnreadNotifications(session.activeMembership.id);
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-6 px-4 pb-32 pt-6 lg:flex-row lg:gap-8 lg:px-8">
@@ -184,15 +191,12 @@ export async function AppShell({
         <header className="glass flex flex-wrap items-center justify-between gap-3 p-3.5">
           <GroupSwitcher session={session} />
           <div className="flex items-center gap-2">
-            {!session.isSystemOwner && (
-              <Link
-                href="/notifications"
-                data-testid="nav-notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] text-foreground transition-colors hover:bg-slate-200 dark:hover:bg-white/[0.08]"
-                aria-label={t.nav.notifications}
-              >
-                <Bell size={16} />
-              </Link>
+            {!session.isSystemOwner && session.activeMembership && (
+              <NotificationsBell
+                membershipId={session.activeMembership.id}
+                initialCount={unreadCount}
+                ariaLabel={t.nav.notifications}
+              />
             )}
             <ThemeToggle initial={themeChoice} />
             <LanguageToggle current={locale} />
