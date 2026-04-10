@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase/server";
-import { ACTIVE_TENANT_COOKIE_NAME } from "@/server/auth/session";
+import { ACTIVE_TENANT_COOKIE_NAME, getSessionContext } from "@/server/auth/session";
 import { formatDisplayName } from "@/lib/utils";
 
 const loginSchema = z.object({
@@ -257,7 +257,7 @@ export async function registerAction(prevState: unknown, formData: FormData) {
 
   if (tenantToActivate) {
     const cookieStore = await cookies();
-    cookieStore.set(ACTIVE_TENANT_COOKIE_NAME, tenantToActivate, { path: "/" });
+    cookieStore.set(ACTIVE_TENANT_COOKIE_NAME, tenantToActivate, { path: "/", sameSite: "lax", secure: process.env.NODE_ENV === "production" });
   }
 
   // Auto-login for the brand new account so the user lands inside the app.
@@ -350,25 +350,55 @@ export async function joinWithCodeAction(prevState: unknown, formData: FormData)
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(ACTIVE_TENANT_COOKIE_NAME, tenant.id, { path: "/" });
+  cookieStore.set(ACTIVE_TENANT_COOKIE_NAME, tenant.id, { path: "/", sameSite: "lax", secure: process.env.NODE_ENV === "production" });
   redirect("/dashboard");
 }
 
 export async function switchActiveTenantAction(tenantId: string) {
+  // Security fix: this action used to set the cookie blindly, which let
+  // a malicious client poison its own active_tenant cookie with any UUID
+  // (IDOR — they couldn't actually read another tenant's data because the
+  // session resolver still validates membership, but the broken cookie
+  // would land them on /no-group with confusing redirects). Now we
+  // require a verified session and refuse the switch if the caller is
+  // not a member of the target tenant.
+  const session = await getSessionContext();
+  if (!session) {
+    return { error: "signInFirst" };
+  }
+  const allowed = session.memberships.some((m) => m.tenant_id === tenantId);
+  if (!allowed) {
+    return { error: "forbidden" };
+  }
   const cookieStore = await cookies();
-  cookieStore.set(ACTIVE_TENANT_COOKIE_NAME, tenantId, { path: "/" });
+  cookieStore.set(ACTIVE_TENANT_COOKIE_NAME, tenantId, {
+    path: "/",
+    sameSite: "lax",
+    httpOnly: false, // intentionally readable by client (group switcher reads it)
+    secure: process.env.NODE_ENV === "production",
+  });
   revalidatePath("/", "layout");
+  return { ok: true };
 }
 
 export async function setThemeAction(theme: "light" | "dark" | "system") {
   const cookieStore = await cookies();
-  cookieStore.set("theme", theme, { path: "/", maxAge: 60 * 60 * 24 * 365 });
+  cookieStore.set("theme", theme, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
   revalidatePath("/", "layout");
 }
 
 export async function setLocaleAction(locale: "en" | "tr" | "es") {
   const cookieStore = await cookies();
-  cookieStore.set("locale", locale, { path: "/" });
+  cookieStore.set("locale", locale, {
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
 
   // Persist the choice on the account row when the user is logged in, so the
   // preference survives across sessions / devices.
@@ -414,7 +444,11 @@ async function syncActiveTenantCookie(): Promise<string | null> {
     account.preferred_language === "en" ||
     account.preferred_language === "es"
   ) {
-    cookieStore.set("locale", account.preferred_language, { path: "/" });
+    cookieStore.set("locale", account.preferred_language, {
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
   }
 
   // System owners do NOT belong to any group, so they get no tenant cookie.
@@ -444,6 +478,6 @@ async function syncActiveTenantCookie(): Promise<string | null> {
     (a, b) => (order[a.role] ?? 99) - (order[b.role] ?? 99),
   );
   const top = sorted[0];
-  cookieStore.set(ACTIVE_TENANT_COOKIE_NAME, top.tenant_id, { path: "/" });
+  cookieStore.set(ACTIVE_TENANT_COOKIE_NAME, top.tenant_id, { path: "/", sameSite: "lax", secure: process.env.NODE_ENV === "production" });
   return top.role;
 }
