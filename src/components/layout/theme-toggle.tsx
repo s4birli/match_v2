@@ -40,6 +40,17 @@ export function ThemeToggle({ initial }: { initial: ThemeChoice }) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const wrapperRef = useRef<HTMLDivElement>(null);
+  // `mounted` flips to true on the first client effect. We use it to gate
+  // the Sun/Moon face icon so SSR + first client render agree (Sun by
+  // default), then swap to the *resolved* icon AFTER hydration. This
+  // avoids the React hydration mismatch error when the user is in
+  // "system" mode and the OS happens to be dark — server can't read
+  // matchMedia and would always render Sun, while the client would
+  // render Moon, blowing up the hydration.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Re-apply when system pref changes (only matters for "system" mode).
   useEffect(() => {
@@ -76,12 +87,15 @@ export function ThemeToggle({ initial }: { initial: ThemeChoice }) {
     });
   }
 
-  // Resolved face icon — what is the user currently *looking at*.
+  // Resolved face icon — what is the user currently *looking at*. Until
+  // hydration completes we always show Sun so SSR and the first client
+  // paint match. After mount we replace it with the resolved icon.
   const resolvedDark =
-    choice === "dark" ||
-    (choice === "system" &&
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+    mounted &&
+    (choice === "dark" ||
+      (choice === "system" &&
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-color-scheme: dark)").matches));
   const Face = resolvedDark ? Moon : Sun;
 
   const options: Array<{

@@ -2,124 +2,78 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /**
- * Subscribes to one or more Postgres changes via Supabase Realtime and
- * triggers `router.refresh()` whenever a row matching the filter is
- * inserted / updated / deleted. The server component re-runs and the
- * page streams in fresh data without a hard reload — this is the
- * "live updates" the user asked for.
+ * Lightweight live-update hook.
  *
- * Why router.refresh() instead of state surgery:
- *   - Server components are the source of truth in this app. Refreshing
- *     them is the simplest way to keep every derived view (dashboard,
- *     match detail, notifications, leaderboards) consistent with the DB.
- *   - The realtime payload itself is rarely enough to update a UI
- *     correctly (e.g. a vote count change requires re-aggregating).
+ * History: this used to subscribe to Supabase Realtime postgres_changes
+ * for each watched table. In our local Supabase setup the realtime
+ * server kept dropping the channel into a CHANNEL_ERROR ↔ CLOSED loop
+ * within milliseconds of subscribing — events never reached the
+ * client. After exhausting the auth / RLS / publication / replica
+ * identity rabbit hole we switched to dumb polling: refresh the page
+ * every N seconds while the tab is visible. The worst-case lag is
+ * the poll interval and there are zero edge cases.
  *
- * Debounced so a burst of updates (e.g. ten team-assign clicks in
- * 200ms) only triggers one refresh.
- *
- * Each entry in `tables` is a single subscription:
- *   { table, filter? }
- * `filter` uses Supabase Realtime's filter syntax:
- *   "match_id=eq.<uuid>", "tenant_id=eq.<uuid>", etc.
- *
- * Cleans up the channel on unmount or when the filter changes.
+ * For the surfaces that depend on this (match detail / dashboard /
+ * wallet / payments / members), the user already gets instant
+ * feedback from their own clicks via Next.js server actions; this
+ * hook just keeps OTHER tabs / OTHER users in sync.
  */
 export type RealtimeWatch = {
   table: string;
-  /** Optional Supabase Realtime filter expression. */
   filter?: string;
-  /** Restrict to one event type, otherwise listen for *. */
   event?: "INSERT" | "UPDATE" | "DELETE" | "*";
 };
 
-export function useRealtimeRefresh(watches: RealtimeWatch[], opts?: { debounceMs?: number }) {
-  const router = useRouter();
-  const debounceMs = opts?.debounceMs ?? 250;
+const DEFAULT_INTERVAL_MS = 8_000;
 
-  // Stable key for the dependency array — the array identity changes on
-  // every render but the contents usually don't.
-  const watchKey = watches
-    .map((w) => `${w.table}|${w.filter ?? ""}|${w.event ?? "*"}`)
-    .join(";");
+export function useRealtimeRefresh(
+  _watches: RealtimeWatch[],
+  opts?: { intervalMs?: number },
+) {
+  const router = useRouter();
+  const intervalMs = opts?.intervalMs ?? DEFAULT_INTERVAL_MS;
 
   useEffect(() => {
     let cancelled = false;
-    const supabase = createSupabaseBrowserClient();
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    const fire = () => {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        timer = null;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    function start() {
+      if (timer) clearInterval(timer);
+      timer = setInterval(() => {
+        if (cancelled || document.hidden) return;
         router.refresh();
-      }, debounceMs);
-    };
+      }, intervalMs);
+    }
+    start();
 
-    (async () => {
-      // RLS-protected tables require the realtime channel to carry the
-      // user's session JWT. Without this, anon channels get zero
-      // postgres_changes events for private rows.
-      const { data } = await supabase.auth.getSession();
-      const accessToken = data.session?.access_token;
-      if (accessToken) {
-        try {
-          (
-            supabase.realtime as unknown as { setAuth(token: string): void }
-          ).setAuth(accessToken);
-        } catch {
-          /* older clients pick it up from the session automatically */
-        }
+    function onWake() {
+      if (!document.hidden && !cancelled) {
+        router.refresh();
+        start();
       }
-      if (cancelled) return;
-
-      channel = supabase.channel(`realtime:${watchKey}`);
-      for (const w of watches) {
-        // Supabase typings for postgres_changes are loose; we keep the
-        // shape minimal so future Supabase upgrades don't break us.
-        channel.on(
-          "postgres_changes" as never,
-          {
-            event: w.event ?? "*",
-            schema: "public",
-            table: w.table,
-            ...(w.filter ? { filter: w.filter } : {}),
-          } as never,
-          () => fire(),
-        );
-      }
-      channel.subscribe();
-    })();
+    }
+    document.addEventListener("visibilitychange", onWake);
+    window.addEventListener("focus", onWake);
 
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
-      if (channel) supabase.removeChannel(channel);
+      if (timer) clearInterval(timer);
+      document.removeEventListener("visibilitychange", onWake);
+      window.removeEventListener("focus", onWake);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchKey, debounceMs, router]);
+  }, [router, intervalMs]);
 }
 
 /**
- * Convenience: drop-in component that just mounts the hook. Useful for
- * server components that want to attach a live refresh without making
- * the whole page client-rendered.
- *
- * Usage:
- *   <LiveRefresh
- *     watches={[
- *       { table: "match_participants", filter: `match_id=eq.${id}` },
- *       { table: "pre_match_poll_votes", filter: `poll_id=eq.${pollId}` },
- *     ]}
- *   />
+ * Drop-in component variant. Pass an empty `watches` array if you just
+ * want the page to poll regardless of which table changed.
  */
 export function LiveRefresh(props: {
   watches: RealtimeWatch[];
-  debounceMs?: number;
+  intervalMs?: number;
 }) {
-  useRealtimeRefresh(props.watches, { debounceMs: props.debounceMs });
+  useRealtimeRefresh(props.watches, { intervalMs: props.intervalMs });
   return null;
 }

@@ -3,21 +3,26 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /**
- * Top-bar bell with a live unread-count badge.
+ * Top-bar bell with unread-count badge.
  *
- * - Hydrates from `initialCount` so the very first paint is correct
- *   (server-rendered via the queries.countUnreadNotifications helper).
- * - Subscribes to Supabase Realtime on the user's own membership row
- *   in `notifications` and bumps the count on every INSERT, decrements
- *   on every UPDATE that flips is_read=true. This means a push that
- *   arrived while the bell is on screen updates the badge in real time.
- * - Caps the visible number at 99+ so the badge stays compact.
+ * Uses **polling** (10s interval) instead of Supabase Realtime
+ * postgres_changes. We tried postgres_changes first, but the local
+ * Supabase realtime service kept kicking the channel into a
+ * CHANNEL_ERROR ↔ CLOSED loop within milliseconds of subscribing,
+ * so the bell never received live events. Polling is simpler,
+ * survives Fast Refresh / hot reload, and the worst-case 10s lag
+ * is acceptable because the OS-level push notification fires
+ * instantly anyway — the bell badge is just a visual reinforcement.
+ *
+ * Polling pauses when the tab is hidden (Page Visibility API) and
+ * resumes immediately when the tab returns to focus, so we don't
+ * waste cycles on backgrounded tabs.
  */
+const POLL_MS = 10_000;
+
 export function NotificationsBell({
-  membershipId,
   initialCount,
   ariaLabel,
 }: {
@@ -29,78 +34,57 @@ export function NotificationsBell({
 
   useEffect(() => {
     let cancelled = false;
-    const supabase = createSupabaseBrowserClient();
-    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    (async () => {
-      // Realtime postgres_changes respects RLS. The notifications table
-      // policy requires an authenticated user, so the channel needs the
-      // session JWT BEFORE we subscribe — otherwise the row events are
-      // dropped silently and the badge never updates.
-      const { data } = await supabase.auth.getSession();
-      const accessToken = data.session?.access_token;
-      if (accessToken) {
-        // Newer @supabase/realtime-js exposes this on the realtime sub-client.
-        try {
-          (
-            supabase.realtime as unknown as { setAuth(token: string): void }
-          ).setAuth(accessToken);
-        } catch {
-          /* older clients pick the JWT from the session automatically */
+    async function tick() {
+      if (cancelled || document.hidden) return;
+      try {
+        const res = await fetch("/api/me/notifications/unread-count", {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const json = (await res.json()) as { count: number };
+        if (!cancelled && typeof json.count === "number") {
+          setCount(json.count);
         }
+      } catch {
+        /* network blip — try again next tick */
       }
-      if (cancelled) return;
+    }
 
-      channel = supabase.channel(`bell:${membershipId}`);
-      channel.on(
-        "postgres_changes" as never,
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `membership_id=eq.${membershipId}`,
-        } as never,
-        (payload: { new: { is_read?: boolean } }) => {
-          if (!payload.new?.is_read) {
-            setCount((c) => Math.min(c + 1, 99));
-          }
-        },
-      );
-      channel.on(
-        "postgres_changes" as never,
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "notifications",
-          filter: `membership_id=eq.${membershipId}`,
-        } as never,
-        (payload: { new: { is_read?: boolean }; old: { is_read?: boolean } }) => {
-          // Unread → read = decrement.
-          if (payload.old?.is_read === false && payload.new?.is_read === true) {
-            setCount((c) => Math.max(c - 1, 0));
-          }
-        },
-      );
-      channel.subscribe((status) => {
-        // eslint-disable-next-line no-console
-        if (status === "SUBSCRIBED") console.log("[bell] realtime subscribed");
-        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          // eslint-disable-next-line no-console
-          console.warn("[bell] realtime channel status:", status);
-        }
-      });
-    })();
+    function schedule() {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(async () => {
+        await tick();
+        if (!cancelled) schedule();
+      }, POLL_MS);
+    }
+
+    // Initial fetch right after mount so the badge is fresh even if the
+    // user just navigated in from another page (where a push might have
+    // arrived while they weren't looking at this AppShell instance).
+    void tick();
+    schedule();
+
+    // Re-poll immediately when the tab returns to foreground or the
+    // window regains focus.
+    function onWake() {
+      if (!document.hidden && !cancelled) {
+        void tick();
+        schedule();
+      }
+    }
+    document.addEventListener("visibilitychange", onWake);
+    window.addEventListener("focus", onWake);
 
     return () => {
       cancelled = true;
-      if (channel) supabase.removeChannel(channel);
+      if (timer) clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onWake);
+      window.removeEventListener("focus", onWake);
     };
-  }, [membershipId]);
+  }, []);
 
-  // When the user navigates to /notifications all rows get marked read
-  // server-side; we hide the badge optimistically here so the click feels
-  // instant. The realtime UPDATE event re-syncs us if the server result
-  // differs.
   const visible = count > 0;
 
   return (
