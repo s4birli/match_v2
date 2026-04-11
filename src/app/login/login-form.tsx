@@ -19,11 +19,26 @@ export function LoginForm({ next, labels }: { next?: string; labels: { email: st
       <input type="hidden" name="next" value={next ?? ""} />
       <div className="space-y-2">
         <Label htmlFor="email">{labels.email}</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" required data-testid="email-input" defaultValue="user.demo@example.com" />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          required
+          data-testid="email-input"
+        />
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">{labels.password}</Label>
-        <Input id="password" name="password" type="password" autoComplete="current-password" required data-testid="password-input" defaultValue="Test1234!" />
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          data-testid="password-input"
+        />
       </div>
       {state?.error ? (
         <p data-testid="login-error" className="text-xs text-red-600 dark:text-red-300">{translateError(t, state.error)}</p>
